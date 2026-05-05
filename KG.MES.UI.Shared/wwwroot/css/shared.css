@@ -1,4 +1,5 @@
 @import 'orderTraces.css';
+@import 'dashboard.css';
 
 .sticky-header {
 	position: sticky;

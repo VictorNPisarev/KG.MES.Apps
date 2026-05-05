@@ -1,0 +1,274 @@
+@typeparam TOrder
+@using KG.MES.Shared.Models.Dto
+@using KG.MES.Shared.Models.Config
+@using KG.MES.Shared.Models.Enums
+@using KG.MES.Shared.Services
+@using KG.MES.Shared.Helpers
+@using Microsoft.JSInterop
+@using System.Text.Json
+
+@inject ProductionApiService ApiService
+@inject IJSRuntime JSRuntime
+
+@if (isLoading)
+{
+	<div class="text-center py-5">
+		<div class="spinner-border text-primary" role="status"></div>
+	</div>
+}
+else if (order != null)
+{
+	<div class="dashboard-toolbar mb-3">
+		<button class="btn btn-sm btn-outline-secondary" @onclick="ToggleWidgetSettings">
+			<i class="bi bi-gear"></i> Настроить виджеты
+		</button>
+	</div>
+
+	@if (showWidgetSettings)
+	{
+		<div class="card mb-3 bg-light">
+			<div class="card-body">
+				<h6>Виджеты</h6>
+				@foreach (var widget in dashboardSettings.Widgets.OrderBy(w => w.Order))
+				{
+					<div class="d-flex align-items-center gap-2 py-1">
+						<button class="btn btn-sm btn-link p-0" @onclick="() => MoveWidget(widget.WidgetId, -1)">↑</button>
+						<button class="btn btn-sm btn-link p-0" @onclick="() => MoveWidget(widget.WidgetId, 1)">↓</button>
+						<div class="form-check mb-0">
+							<input type="checkbox" class="form-check-input"
+								   checked="@widget.Visible"
+								   @onchange="(e) => ToggleWidget(widget.WidgetId, (bool)(e.Value ?? false))" />
+							<label class="form-check-label">@widget.Title</label>
+						</div>
+						<select class="form-select form-select-sm ms-auto" style="width: 80px;"
+								@bind="widget.Column" @bind:after="SaveDashboard">
+							<option value="1">1 кол.</option>
+							<option value="2">2 кол.</option>
+						</select>
+					</div>
+				}
+			</div>
+		</div>
+	}
+
+	<div class="dashboard-grid">
+		@foreach (var widget in visibleWidgets)
+		{
+			<div class="dashboard-widget @GetWidgetClass(widget)"
+					draggable="true"
+					data-widget-id="@widget.WidgetId">
+		
+				@switch (widget.WidgetId)
+				{
+					case WidgetType.Main:
+						<div class="card">
+							<!--<div class="card-header">
+								<h6 class="mb-0">@widget.Title</h6>
+							</div>-->
+							<div class="card-body">
+								<OrderFieldsView TOrder="TOrder" Order="@order" Settings="@Settings" />
+							</div>
+						</div>
+						break;
+
+					case WidgetType.Trace:
+						<div class="card">
+							<!--<div class="card-header">
+								<h6 class="mb-0">@widget.Title</h6>
+							</div>-->
+							<div class="card-body">
+								<OrderTraceView OrderId="@OrderId" />
+							</div>
+						</div>
+						break;
+
+					case WidgetType.Notes:
+						<div class="card">
+							<!--<div class="card-header">
+								<h6 class="mb-0">@widget.Title</h6>
+							</div>-->
+							<div class="card-body">
+								<p class="text-muted mb-0">@GetNotes(order)</p>
+							</div>
+						</div>
+						break;
+				}
+			</div>
+		}
+	</div>
+}
+else
+{
+	<div class="alert alert-warning">Заказ не найден</div>
+}
+
+@code {
+	[Parameter] public Guid OrderId { get; set; }
+	[Parameter] public OrderViewSettings Settings { get; set; } = new();
+
+	private TOrder? order;
+	private DashboardSettings dashboardSettings = new();
+	private bool isLoading = true;
+	private bool showWidgetSettings;
+
+	private List<WidgetSettings> visibleWidgets => dashboardSettings.Widgets
+		.Where(w => w.Visible)
+		.OrderBy(w => w.Order)
+		.ToList();
+
+	private string dashboardKey => $"dashboard_{typeof(TOrder).Name}";
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadDashboard();
+		await LoadOrder();
+	}
+
+	private async Task LoadDashboard()
+	{
+		try
+		{
+			var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"dashboard_{dashboardKey}");
+			if (!string.IsNullOrEmpty(json))
+				dashboardSettings = JsonSerializer.Deserialize<DashboardSettings>(json, 
+					new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) 
+					?? GetDefaultDashboard();
+			else
+				dashboardSettings = GetDefaultDashboard();
+		}
+		catch
+		{
+			dashboardSettings = GetDefaultDashboard();
+		}
+	}
+
+	private DashboardSettings GetDefaultDashboard() => new()
+	{
+		Widgets = new List<WidgetSettings>
+		{
+			new() { WidgetId = WidgetType.Main, Title = "Основные данные", Order = 0, Column = 1 },
+			new() { WidgetId = WidgetType.Trace, Title = "История прохождения", Order = 1 },
+			new() { WidgetId = WidgetType.Notes, Title = "Примечания", Order = 2 }
+		}
+	};
+
+	private async Task SaveDashboard()
+	{
+		var json = JsonSerializer.Serialize(dashboardSettings);
+		await JSRuntime.InvokeVoidAsync("localStorage.setItem", $"dashboard_{dashboardKey}", json);
+		StateHasChanged();
+	}
+
+	private void ToggleWidgetSettings() => showWidgetSettings = !showWidgetSettings;
+
+	private async Task ToggleWidget(WidgetType widgetId, bool visible)
+	{
+		var widget = dashboardSettings.Widgets.FirstOrDefault(w => w.WidgetId == widgetId);
+		if (widget != null)
+		{
+			widget.Visible = visible;
+			await SaveDashboard();
+		}
+	}
+
+	private async Task MoveWidget(WidgetType widgetId, int direction)
+	{
+		var widget = dashboardSettings.Widgets.FirstOrDefault(w => w.WidgetId == widgetId);
+		if (widget == null) return;
+
+		var ordered = dashboardSettings.Widgets.OrderBy(w => w.Order).ToList();
+		var idx = ordered.IndexOf(widget);
+		var newIdx = idx + direction;
+		if (newIdx < 0 || newIdx >= ordered.Count) return;
+
+		(ordered[idx].Order, ordered[newIdx].Order) = (ordered[newIdx].Order, ordered[idx].Order);
+		await SaveDashboard();
+	}
+
+	private async Task LoadOrder()
+	{
+		isLoading = true;
+		StateHasChanged();
+		try
+		{
+			order = await ApiService.GetOrderByIdAsync<TOrder>(Settings.CardEndpoint, OrderId);
+		}
+		finally
+		{
+			isLoading = false;
+			StateHasChanged();
+		}
+	}
+
+	private WidgetSettings? draggedWidget;
+	private WidgetSettings? dragOverWidget;
+
+	private DotNetObjectReference<OrderDashboard<TOrder>>? dotnetRef;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			dotnetRef = DotNetObjectReference.Create(this);
+			await JSRuntime.InvokeVoidAsync("dashboardDragDrop.init", dotnetRef);
+		}
+	}
+
+	[JSInvokable]
+	public async Task OnWidgetDrop(string draggedId, string targetId)
+	{
+		Console.WriteLine($"=== OnWidgetDrop ===");
+		Console.WriteLine($"draggedId: {draggedId}, targetId: {targetId}");
+
+		var dragged = dashboardSettings.Widgets.FirstOrDefault(w => w.WidgetId.ToString() == draggedId);
+		var target = dashboardSettings.Widgets.FirstOrDefault(w => w.WidgetId.ToString() == targetId);
+
+		if (dragged == null) { Console.WriteLine("dragged is null"); return; }
+		if (target == null) { Console.WriteLine("target is null"); return; }
+		if (dragged == target) { Console.WriteLine("dragged == target"); return; }
+
+		var ordered = dashboardSettings.Widgets.OrderBy(w => w.Order).ToList();
+		
+		Console.WriteLine($"Before:");
+		for (int i = 0; i < ordered.Count; i++)
+			Console.WriteLine($"  [{i}] {ordered[i].Title} (Order={ordered[i].Order})");
+
+		var draggedIdx = ordered.IndexOf(dragged);
+		var targetIdx = ordered.IndexOf(target);
+
+		Console.WriteLine($"draggedIdx={draggedIdx}, targetIdx={targetIdx}");
+
+		// Вынимаем
+		ordered.RemoveAt(draggedIdx);
+
+		// Вставляем на позицию цели
+		ordered.Insert(targetIdx, dragged);
+
+		// Перенумеровываем
+		for (int i = 0; i < ordered.Count; i++)
+			ordered[i].Order = i;
+
+		Console.WriteLine($"After:");
+		for (int i = 0; i < ordered.Count; i++)
+			Console.WriteLine($"  [{i}] {ordered[i].Title} (Order={ordered[i].Order})");
+
+		await SaveDashboard();
+		StateHasChanged();
+	}	
+	public void Dispose()
+	{
+		dotnetRef?.Dispose();
+	}
+	private string GetWidgetClass(WidgetSettings widget)
+	{
+		var classes = new List<string>();
+		
+		if (widget.Column == 2) classes.Add("widget-span-2");
+		if (widget == dragOverWidget) classes.Add("drag-over");
+		
+		return string.Join(" ", classes);
+	}
+
+	private string? GetNotes(TOrder order) =>
+		order?.GetType().GetProperty("MasterNotes")?.GetValue(order)?.ToString() ?? "—";
+}

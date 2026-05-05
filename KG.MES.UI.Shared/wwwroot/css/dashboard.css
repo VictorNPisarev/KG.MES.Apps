@@ -1,0 +1,43 @@
+.dashboard-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
+	align-items: start;
+}
+
+.dashboard-widget {
+	grid-column: span 1;
+	width: fit-content;
+	max-width: 100%;
+	cursor: grab;
+	transition: opacity 0.15s, border 0.15s;
+	border: 2px solid transparent;
+	border-radius: 0.5rem;
+}
+
+.dashboard-widget.widget-span-2 {
+	grid-column: span 2;
+}
+
+.dashboard-widget:active {
+	cursor: grabbing;
+}
+
+.dashboard-widget.dragging {
+	opacity: 0.4;
+}
+
+.dashboard-widget.drag-over {
+	border-color: #0d6efd;
+	background: rgba(13, 110, 253, 0.05);
+}
+
+@media (max-width: 768px) {
+	.dashboard-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.dashboard-widget.widget-span-2 {
+		grid-column: span 1;
+	}
+}

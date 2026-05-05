@@ -246,7 +246,9 @@
 					<button type="button" class="btn-close" @onclick="CloseOrder"></button>
 				</div>
 				<div class="modal-body">
-					<OrderCardView TOrder="TOrder" OrderId="GetOrderId(selectedOrder)" Settings = "Settings" />
+					<OrderDashboard TOrder="TOrder" 
+									OrderId="@GetOrderId(selectedOrder)" 
+									Settings="@Settings" />
 				</div>
 			</div>
 		</div>
