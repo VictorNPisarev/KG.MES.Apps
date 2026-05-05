@@ -1,4 +1,5 @@
 @typeparam TOrder
+@using KG.MES.Shared.Models.Config
 @using KG.MES.Shared.Models.Dto
 @using KG.MES.Shared.Services
 @using KG.MES.Shared.Helpers
@@ -78,6 +79,13 @@ else if (order != null)
 						</div>
 					</div>
 				}
+				@if (showTrace)
+				{
+					<div class="mt-4">
+						<!--<h6><i class="bi bi-clock-history"></i> История прохождения</h6>-->
+						<OrderTraceView OrderId="@OrderId" />
+					</div>
+				}
 			</div>
 		</div>
 
@@ -92,11 +100,14 @@ else
 }
 
 @code {
-	[Parameter] public string Endpoint { get; set; } = "orders";
 	[Parameter] public Guid OrderId { get; set; }
+	[Parameter] public OrderViewSettings Settings { get; set; } = new();
 	[Parameter] public RenderFragment? HeaderActions { get; set; }
 	[Parameter] public RenderFragment? Footer { get; set; }
 
+
+	private string Endpoint => Settings.CardEndpoint;
+	private bool showTrace => Settings.ShowTrace;
 	private TOrder? order;
 	private List<ColumnInfo> fieldInfos = new();
 	private List<ColumnSetting> fieldSettings = new();

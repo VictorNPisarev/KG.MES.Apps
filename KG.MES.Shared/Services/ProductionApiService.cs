@@ -366,5 +366,25 @@ namespace KG.MES.Shared.Services
 				return default;
 			}
 		}
+
+		/// <summary>
+		/// Получение трекинга заказа на производстве
+		/// </summary>
+		/// <param name="orderId"></param>
+		/// <returns></returns>
+		public async Task<OrderTrace?> GetOrderTraceAsync(Guid orderId)
+		{
+			try
+			{
+				var url = $"{BaseUrl}/orders/{orderId}/trace";
+				var response = await _httpClient.GetFromJsonAsync<OrderTraceResponse>(url);
+				return response?.OrderTraces?.FirstOrDefault();
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error fetching trace for order {Id}", orderId);
+				return null;
+			}
+		}
 	}
 }

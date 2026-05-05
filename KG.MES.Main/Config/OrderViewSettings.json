@@ -6,6 +6,7 @@
 	"canExport": true,
 	"canEdit": true,
 	"canDelete": true,
+	"showTrace": false,
 	"additional":
 	{
 		"defaultSortBy": "ready_date",
