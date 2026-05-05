@@ -303,4 +303,36 @@ else
 			StateHasChanged();
 		}
 	}
+
+	[JSInvokable]
+	public async Task OnDropToMain(string draggedId)
+	{
+		Console.WriteLine($"OnDropToMain: {draggedId}");
+
+		var widget = dashboardSettings.Widgets.FirstOrDefault(w => w.WidgetId.ToString() == draggedId);
+		if (widget != null && widget.IsTabbed)
+		{
+			widget.IsTabbed = false;
+			activeTab = "main";
+			await SaveDashboard();
+			StateHasChanged();
+		}
+	}
+
+	[JSInvokable]
+	public async Task OnDropTabToWidget(string draggedId, string targetId)
+	{
+		Console.WriteLine($"OnDropTabToWidget: {draggedId} -> {targetId}");
+
+		var dragged = dashboardSettings.Widgets.FirstOrDefault(w => w.WidgetId.ToString() == draggedId);
+		var target = dashboardSettings.Widgets.FirstOrDefault(w => w.WidgetId.ToString() == targetId);
+
+		if (dragged == null || target == null) return;
+
+		dragged.IsTabbed = false;
+		activeTab = "main";
+
+		await SaveDashboard();
+		StateHasChanged();
+	}
 }
