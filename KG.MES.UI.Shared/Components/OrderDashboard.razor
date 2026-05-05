@@ -18,84 +18,84 @@
 }
 else if (order != null)
 {
-	<div class="dashboard-toolbar mb-3">
-		<button class="btn btn-sm btn-outline-secondary" @onclick="ToggleWidgetSettings">
-			<i class="bi bi-gear"></i> Настроить виджеты
+	@* Панель вкладок *@
+	<div class="dashboard-tabs">
+		<button class="dashboard-tab @(activeTab == "main" ? "active" : "")"
+				@onclick="ActivateMainTab">
+			<i class="bi bi-grid"></i> Обзор
 		</button>
-	</div>
-
-	@if (showWidgetSettings)
-	{
-		<div class="card mb-3 bg-light">
-			<div class="card-body">
-				<h6>Виджеты</h6>
-				@foreach (var widget in dashboardSettings.Widgets.OrderBy(w => w.Order))
-				{
-					<div class="d-flex align-items-center gap-2 py-1">
-						<button class="btn btn-sm btn-link p-0" @onclick="() => MoveWidget(widget.WidgetId, -1)">↑</button>
-						<button class="btn btn-sm btn-link p-0" @onclick="() => MoveWidget(widget.WidgetId, 1)">↓</button>
-						<div class="form-check mb-0">
-							<input type="checkbox" class="form-check-input"
-								   checked="@widget.Visible"
-								   @onchange="(e) => ToggleWidget(widget.WidgetId, (bool)(e.Value ?? false))" />
-							<label class="form-check-label">@widget.Title</label>
-						</div>
-						<select class="form-select form-select-sm ms-auto" style="width: 80px;"
-								@bind="widget.Column" @bind:after="SaveDashboard">
-							<option value="1">1 кол.</option>
-							<option value="2">2 кол.</option>
-						</select>
-					</div>
-				}
-			</div>
-		</div>
-	}
-
-	<div class="dashboard-grid">
-		@foreach (var widget in visibleWidgets)
+		@foreach (var widget in tabbedWidgets)
 		{
-			<div class="dashboard-widget @GetWidgetClass(widget)"
+			<button class="dashboard-tab @(activeTab == widget.WidgetId.ToString() ? "active" : "")"
+					@onclick="() => ActivateTab(widget.WidgetId.ToString())"
 					draggable="true"
-					data-widget-id="@widget.WidgetId">
-		
-				@switch (widget.WidgetId)
-				{
-					case WidgetType.Main:
-						<div class="card">
-							<!--<div class="card-header">
-								<h6 class="mb-0">@widget.Title</h6>
-							</div>-->
-							<div class="card-body">
-								<OrderFieldsView TOrder="TOrder" Order="@order" Settings="@Settings" />
-							</div>
-						</div>
-						break;
-
-					case WidgetType.Trace:
-						<div class="card">
-							<!--<div class="card-header">
-								<h6 class="mb-0">@widget.Title</h6>
-							</div>-->
-							<div class="card-body">
-								<OrderTraceView OrderId="@OrderId" />
-							</div>
-						</div>
-						break;
-
-					case WidgetType.Notes:
-						<div class="card">
-							<!--<div class="card-header">
-								<h6 class="mb-0">@widget.Title</h6>
-							</div>-->
-							<div class="card-body">
-								<p class="text-muted mb-0">@GetNotes(order)</p>
-							</div>
-						</div>
-						break;
-				}
-			</div>
+					data-widget-id="@widget.WidgetId"
+					data-tab="true">
+				@widget.Title
+			</button>
 		}
 	</div>
+
+	@* Основная область *@
+	@if (activeTab == "main")
+	{
+		<div class="dashboard-grid">
+			@foreach (var widget in gridWidgets)
+			{
+				<div class="dashboard-widget @GetWidgetClass(widget)"
+					draggable="true"
+					data-widget-id="@widget.WidgetId">
+					@switch (widget.WidgetId)
+					{
+						case WidgetType.Main:
+							<div class="card">
+								<div class="card-body">
+									<OrderFieldsView TOrder="TOrder" Order="@order" Settings="@Settings" />
+								</div>
+							</div>
+							break;
+						case WidgetType.Trace:
+							<div class="card">
+								<div class="card-body">
+									<OrderTraceView OrderId="@OrderId" />
+								</div>
+							</div>
+							break;
+						case WidgetType.Notes:
+							<div class="card">
+								<div class="card-body">
+									<p class="text-muted mb-0">@GetNotes(order)</p>
+								</div>
+							</div>
+							break;
+					}
+				</div>
+			}
+		</div>
+	}
+	else
+	{
+		var activeWidget = dashboardSettings.Widgets.FirstOrDefault(w => w.WidgetId.ToString() == activeTab);
+		if (activeWidget != null)
+		{
+			<div class="card h-100">
+				<div class="card-body">
+					@switch (activeWidget.WidgetId)
+					{
+						case WidgetType.Main:
+							<OrderFieldsView TOrder="TOrder" Order="@order" Settings="@Settings" />
+							break;
+						case WidgetType.Trace:
+							<OrderTraceView OrderId="@OrderId" />
+							break;
+						case WidgetType.Notes:
+							<p class="text-muted mb-0">@GetNotes(order)</p>
+							break;
+					}
+				</div>
+			</div>
+		}
+	}
 }
 else
 {
@@ -271,4 +271,36 @@ else
 
 	private string? GetNotes(TOrder order) =>
 		order?.GetType().GetProperty("MasterNotes")?.GetValue(order)?.ToString() ?? "—";
+
+	private string activeTab = "main";
+
+	private List<WidgetSettings> gridWidgets => dashboardSettings.Widgets
+	.Where(w => w.Visible && !w.IsTabbed)
+	.OrderBy(w => w.Order)
+	.ToList();
+
+	private List<WidgetSettings> tabbedWidgets => dashboardSettings.Widgets
+	.Where(w => w.Visible && w.IsTabbed)
+	.OrderBy(w => w.Order)
+	.ToList();
+
+	private void ActivateMainTab() => ActivateTab("main");
+	private void ActivateTab(string tabId) { activeTab = tabId; StateHasChanged(); }
+
+	private void OnTabDragOver(DragEventArgs e) { }
+
+	[JSInvokable]
+	public async Task OnDropToTabs(string draggedId)
+	{
+		Console.WriteLine($"OnDropToTabs: {draggedId}");
+
+		var widget = dashboardSettings.Widgets.FirstOrDefault(w => w.WidgetId.ToString() == draggedId);
+		if (widget != null && !widget.IsTabbed)
+		{
+			widget.IsTabbed = true;
+			activeTab = draggedId;
+			await SaveDashboard();
+			StateHasChanged();
+		}
+	}
 }

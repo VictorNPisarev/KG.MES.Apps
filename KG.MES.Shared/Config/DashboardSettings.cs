@@ -14,5 +14,6 @@ namespace KG.MES.Shared.Models.Config
 		public bool Visible { get; set; } = true;
 		public int Order { get; set; }
 		public int Column { get; set; } = 1; // 1 или 2 колонки
+		public bool IsTabbed { get; set; }
 	}
 }
