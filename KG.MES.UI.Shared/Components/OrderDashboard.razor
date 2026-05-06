@@ -62,17 +62,17 @@ else if (order != null)
 								</div>
 							</div>
 							break;
-						case WidgetType.Notes:
-							<div class="card">
-								<div class="card-body">
-									<p class="text-muted mb-0">@GetNotes(order)</p>
-								</div>
-							</div>
-							break;
 						case WidgetType.Supplies:
 							<div class="card">
 								<div class="card-body">
 									<OrderSuppliesWidget OrderId="@OrderId" />
+								</div>
+							</div>
+							break;
+						case WidgetType.Notes:
+							<div class="card">
+								<div class="card-body">
+									<p class="text-muted mb-0">@GetNotes(order)</p>
 								</div>
 							</div>
 							break;
@@ -96,11 +96,11 @@ else if (order != null)
 						case WidgetType.Trace:
 							<OrderTraceWidget OrderId="@OrderId" />
 							break;
-						case WidgetType.Notes:
-							<p class="text-muted mb-0">@GetNotes(order)</p>
-							break;
 						case WidgetType.Supplies:
 							<OrderSuppliesWidget OrderId="@OrderId" />
+							break;
+						case WidgetType.Notes:
+							<p class="text-muted mb-0">@GetNotes(order)</p>
 							break;
 					}
 				</div>
@@ -140,12 +140,33 @@ else
 		try
 		{
 			var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"dashboard_{dashboardKey}");
+			var defaults = GetDefaultDashboard();
+
 			if (!string.IsNullOrEmpty(json))
-				dashboardSettings = JsonSerializer.Deserialize<DashboardSettings>(json, 
-					new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) 
-					?? GetDefaultDashboard();
-			else
-				dashboardSettings = GetDefaultDashboard();
+			{
+				var saved = JsonSerializer.Deserialize<DashboardSettings>(json,
+					new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+				if (saved?.Widgets != null)
+				{
+					// Удаляем те, которых нет в дефолтных
+					saved.Widgets.RemoveAll(w => !defaults.Widgets.Any(d => d.WidgetId == w.WidgetId));
+
+					// Добавляем недостающие из дефолтных
+					foreach (var def in defaults.Widgets)
+					{
+						if (!saved.Widgets.Any(w => w.WidgetId == def.WidgetId))
+						{
+							saved.Widgets.Add(def);
+						}
+					}
+
+					dashboardSettings = saved;
+					return;
+				}
+			}
+
+			dashboardSettings = defaults;
 		}
 		catch
 		{

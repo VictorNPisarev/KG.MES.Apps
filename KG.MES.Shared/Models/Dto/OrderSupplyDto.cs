@@ -6,45 +6,53 @@ namespace KG.MES.Shared.Models.Dto
 	public class OrderSupplyDto
 	{
 		[JsonPropertyName("material_type_id")]
-		[Column("type_id", Visible = false)]
 		public string MaterialTypeId { get; set; } = string.Empty;
 
 		[JsonPropertyName("name")]
-		[Column("Наименование", Visible = false)]
+		[Column("Код", Visible = false)]
 		public string Name { get; set; } = string.Empty;
 
 		[JsonPropertyName("display_name")]
-		[Column("Тип комплектующих", Visible = true)]
+		[Column("Материал", Order = 0)]
 		public string DisplayName { get; set; } = string.Empty;
 
+		[JsonPropertyName("quantity")]
+		[Column("Количество", Order = 1)]
+		public double? Quantity { get; set; }
+
 		[JsonPropertyName("unit")]
-		[Column("Ед.изм", Visible = false)]
+		[Column("Ед.", Order = 2)]
 		public string? Unit { get; set; }
 
 		[JsonPropertyName("status_code")]
-		[Column("Статус", Visible = false)]
+		[Column("Статус", Order = 3, IsBadge = true)]
 		public string? StatusCode { get; set; }
-
-		[JsonPropertyName("status_display")]
-		[Column("Статус", Visible = true)]
-		public string? StatusDisplay { get; set; }
 
 		[JsonPropertyName("status_color")]
 		public string? StatusColor { get; set; }
 
 		[JsonPropertyName("expected_date")]
-		[Column("Дата поставки", Visible = true)]
+		[Column("Ожидаемая дата", Order = 4, DisplayFormat = "dd.MM.yyyy")]
 		public DateTime? ExpectedDate { get; set; }
 
-		[JsonPropertyName("quantity")]
-		[Column("Количество", Visible = false)]
-		public double? Quantity { get; set; }
-
 		[JsonPropertyName("comment")]
-		[Column("Примечание", Visible = true)]
+		[Column("Примечание", Order = 5)]
 		public string? Comment { get; set; }
 
 		public string QuantityDisplay => Quantity.HasValue ? $"{Quantity:F2} {Unit}" : "—";
 		public string ExpectedDateDisplay => ExpectedDate?.ToString("dd.MM.yyyy") ?? "—";
 	}
+
+	public static class OrderSupplyDtoExtensions
+	{
+		public static string GetStatusCodeDisplayText(this OrderSupplyDto supply) => supply.StatusCode?.ToLower() switch
+		{
+			"not_available" => "Нет в наличии",
+			"delayed" => "Задерживается",
+			"ordered" => "Заказан",
+			"in_stock" => "На складе",
+			_ => supply.StatusCode ?? "—"
+		};
+	}
+
 }
