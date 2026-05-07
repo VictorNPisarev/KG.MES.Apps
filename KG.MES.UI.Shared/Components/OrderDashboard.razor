@@ -66,7 +66,7 @@ else if (order != null)
 						case WidgetType.Supplies:
 							<div class="card">
 								<div class="card-body">
-									<OrderSuppliesWidget OrderId="@OrderId" />
+									<OrderSuppliesWidget OrderId="@OrderId"  CanEdit="@Settings.EditSupply"/>
 								</div>
 							</div>
 							break;
@@ -98,7 +98,7 @@ else if (order != null)
 							<OrderTraceWidget OrderId="@OrderId" />
 							break;
 						case WidgetType.Supplies:
-							<OrderSuppliesWidget OrderId="@OrderId" />
+							<OrderSuppliesWidget OrderId="@OrderId"  CanEdit="@Settings.EditSupply"/>
 							break;
 						case WidgetType.Notes:
 							<p class="text-muted mb-0">@GetNotes(order)</p>

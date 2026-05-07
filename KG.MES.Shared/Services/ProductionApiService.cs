@@ -407,5 +407,19 @@ namespace KG.MES.Shared.Services
 			}
 		}
 
+		public async Task<bool> UpdateOrderSuppliesAsync(Guid orderId, object updates)
+		{
+			try
+			{
+				var response = await _httpClient.PutAsJsonAsync(
+					$"{BaseUrl}/orders/{orderId}/supplies", updates);
+				return response.IsSuccessStatusCode;
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error updating supplies for order {Id}", orderId);
+				return false;
+			}
+		}
 	}
 }

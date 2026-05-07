@@ -1,8 +1,10 @@
+@using KG.MES.Shared.Helpers
 @using KG.MES.Shared.Models.Dto
 @using KG.MES.Shared.Services
-@using KG.MES.Shared.Helpers
+@using Microsoft.JSInterop
 
 @inject ProductionApiService ApiService
+@inject IJSRuntime JSRuntime
 
 @if (isLoading)
 {
@@ -10,48 +12,149 @@
 		<div class="spinner-border spinner-border-sm text-primary" role="status"></div>
 	</div>
 }
-else if (supplies.Any())
-{
-	<div class="supplies-panel">
-		<h6 class="trace-title"><i class="bi bi-clock-history"></i> Отметки снабжения</h6>
-		<table class="supplies-table">
-			<tbody>
-				@foreach (var s in supplies)
-				{
-					<tr>
-						<td class=".supplies-material_type">@s.DisplayName</td>
-						<td class="supplies-status">
-							@if (!string.IsNullOrEmpty(s.StatusCode))
-							{
-								<span class="badge @BadgeHelper.GetBadgeClass(s.StatusCode)">
-									@s.GetStatusCodeDisplayText()
-								</span>
-							}
-							else
-							{
-								<span class="text-muted">—</span>
-							}
-						</td>
-					</tr>
-				}
-			</tbody>
-		</table>
-	</div>
-}
 else
 {
-	<p class="text-muted mb-0">Нет данных о снабжении</p>
+	@if (supplies.Any())
+	{
+		<div class="supplies-panel">
+			<div class="d-flex justify-content-between align-items-center mb-2">
+				<h6 class="trace-title"><i class="bi bi-box-seam"></i>Снабжение</h6>
+				<div class="d-flex gap-1">
+					@if (EditMode)
+					{
+						<button class="btn btn-sm btn-link text-secondary p-0" @onclick="SaveChanges">
+							<i class="bi bi-check-lg"></i>
+						</button>
+						<button class="btn btn-sm btn-link text-secondary p-0" @onclick="CancelEdit">
+							<i class="bi bi-x-lg"></i>
+						</button>
+					}
+					else if (CanEdit)
+					{
+						<button class="btn btn-sm btn-link text-secondary p-0" @onclick="EnterEditMode">
+							<i class="bi bi-pencil"></i>
+						</button>
+					}
+				</div>
+			</div>
+			<table class="supplies-table">
+				<tbody>
+					@foreach (var s in supplies)
+					{
+						<tr>
+							<td class="supplies-material">
+								<strong>@s.DisplayName</strong>
+							</td>
+							<td class="supplies-status">
+								<div class="d-flex align-items-center gap-1">
+									@if (EditMode)
+									{
+										<select class="form-select form-select-sm" @bind="s.StatusCode">
+											<option value="">—</option>
+											<option value="in_stock">На складе</option>
+											<option value="ordered">Заказано</option>
+											<option value="missing">Задерживается</option>
+											<option value="missing">Нет в наличии</option>
+										</select>
+									}
+									else if (!string.IsNullOrEmpty(s.StatusCode))
+									{
+										<span class="badge @BadgeHelper.GetBadgeClass(s.StatusCode)">
+											@s.GetStatusCodeDisplayText()
+										</span>
+									}
+									else
+									{
+										<span class="text-muted">—</span>
+									}
+									<button class="btn btn-sm btn-link text-secondary p-0" 
+											@onclick="() => ToggleComment(s)" title="Комментарий">
+										<i class="bi bi-chat-left-text"></i>
+									</button>
+								</div>
+							</td>
+						</tr>
+						@if (showComments.GetValueOrDefault(s.MaterialTypeId))
+						{
+							<tr>
+								<div class="mt-2">
+									<input class="form-control form-control-sm" 
+										@bind="s.Comment" 
+										placeholder="Примечание" />
+								</div>
+							</tr>
+						}
+					}
+				</tbody>
+			</table>
+		</div>
+	}
+	else
+	{
+		<p class="text-muted small mb-0">Нет данных о снабжении</p>
+	}
 }
 
 @code {
 	[Parameter] public Guid OrderId { get; set; }
+	[Parameter] public bool CanEdit { get; set; }
 
 	private List<OrderSupplyDto> supplies = new();
+	private List<OrderSupplyDto> backup = new();
 	private bool isLoading = true;
+	private bool EditMode;
 
 	protected override async Task OnInitializedAsync()
 	{
 		supplies = await ApiService.GetOrderSuppliesAsync(OrderId);
 		isLoading = false;
+	}
+
+	private void EnterEditMode()
+	{
+		backup = supplies.Select(s => new OrderSupplyDto
+		{
+			MaterialTypeId = s.MaterialTypeId,
+			StatusCode = s.StatusCode,
+			Comment = s.Comment
+		}).ToList();
+		EditMode = true;
+	}
+
+	private void CancelEdit()
+	{
+		for (int i = 0; i < supplies.Count; i++)
+		{
+			supplies[i].StatusCode = backup[i].StatusCode;
+			supplies[i].Comment = backup[i].Comment;
+		}
+		EditMode = false;
+	}
+
+	private async Task SaveChanges()
+	{
+		var updates = supplies.Select(s => new
+		{
+			materialTypeId = s.MaterialTypeId,
+			statusCode = s.StatusCode,
+			comment = s.Comment
+		}).ToList();
+
+		var success = await ApiService.UpdateOrderSuppliesAsync(OrderId, updates);
+
+		if (success)
+		{
+			EditMode = false;
+			// Перезагружаем данные
+			supplies = await ApiService.GetOrderSuppliesAsync(OrderId);
+		}
+	}
+
+	private Dictionary<string, bool> showComments = new();
+
+	private void ToggleComment(OrderSupplyDto supply)
+	{
+		var key = supply.MaterialTypeId;
+		showComments[key] = !showComments.GetValueOrDefault(key);
 	}
 }
