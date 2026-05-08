@@ -4,6 +4,8 @@
 @using Microsoft.JSInterop
 
 @inject ProductionApiService ApiService
+@inject SupplyService SupplyService
+@inject OrderSupplyDtoFactory SupplyFactory
 @inject IJSRuntime JSRuntime
 
 @if (isLoading)
@@ -18,7 +20,7 @@ else
 	{
 		<div class="supplies-panel">
 			<div class="d-flex justify-content-between align-items-center mb-2">
-				<h6 class="trace-title"><i class="bi bi-box-seam"></i>Снабжение</h6>
+				<h6 class="trace-title"><i class="bi bi-box-seam"></i> Снабжение</h6>
 				<div class="d-flex gap-1">
 					@if (EditMode)
 					{
@@ -42,48 +44,74 @@ else
 					@foreach (var s in supplies)
 					{
 						<tr>
-							<td class="supplies-material">
-								<strong>@s.DisplayName</strong>
-							</td>
+							<td class="supplies-material">@s.SupplyType?.DisplayName()</td>
 							<td class="supplies-status">
 								<div class="d-flex align-items-center gap-1">
 									@if (EditMode)
 									{
-										<select class="form-select form-select-sm" @bind="s.StatusCode">
-											<option value="">—</option>
-											<option value="in_stock">На складе</option>
-											<option value="ordered">Заказано</option>
-											<option value="missing">Задерживается</option>
-											<option value="missing">Нет в наличии</option>
-										</select>
+										<div class="dropdown">
+											<span class="badge @(BadgeHelper.GetBadgeClass(s.SupplyCondition?.ConditionCode) ?? "bg-light text-dark")"
+												style="cursor: pointer;" data-bs-toggle="dropdown">
+												@(s.SupplyCondition?.DisplayName() ?? "—")
+												<i class="bi bi-chevron-down ms-1 small"></i>
+											</span>
+											<ul class="dropdown-menu">
+												@foreach (var c in conditions)
+												{
+													<li>
+														<a class="dropdown-item" @onclick="() => s.SupplyConditionId = c.Id">
+															<span class="badge @BadgeHelper.GetBadgeClass(c.ConditionCode)">@c.DisplayName()</span>
+														</a>
+													</li>
+												}
+											</ul>
+										</div>
 									}
-									else if (!string.IsNullOrEmpty(s.StatusCode))
+									else if (!string.IsNullOrEmpty(s.SupplyConditionId))
 									{
-										<span class="badge @BadgeHelper.GetBadgeClass(s.StatusCode)">
-											@s.GetStatusCodeDisplayText()
+										<span class="badge @BadgeHelper.GetBadgeClass(s.SupplyCondition?.ConditionCode)">
+											@s.SupplyCondition?.DisplayName()
 										</span>
 									}
 									else
 									{
 										<span class="text-muted">—</span>
 									}
-									<button class="btn btn-sm btn-link text-secondary p-0" 
-											@onclick="() => ToggleComment(s)" title="Комментарий">
-										<i class="bi bi-chat-left-text"></i>
-									</button>
+
+									@* Кнопка комментария *@
+									@if (showComments.GetValueOrDefault(s.SupplyTypeId))
+									{
+										<button class="btn btn-sm btn-link text-success p-0"
+												@onclick="() => SaveComment(s)" title="Сохранить">
+											<i class="bi bi-check-lg"></i>
+										</button>
+									}
+									else
+									{
+										<button class="btn btn-sm btn-link p-0 @(string.IsNullOrEmpty(s.Comment) ? "text-secondary" : "text-primary")"
+												@onclick="() => ToggleComment(s)" title="Комментарий">
+											<i class="bi bi-chat-left-text"></i>
+											@if (!string.IsNullOrEmpty(s.Comment))
+											{
+												<small class="ms-1 text-primary" style="font-size: 0.7rem;">
+													@(s.Comment.Length > 10 ? s.Comment[..10] + "…" : s.Comment)
+												</small>
+											}
+										</button>
+									}
 								</div>
+
+								@* Поле комментария *@
+								@if (showComments.GetValueOrDefault(s.SupplyTypeId))
+								{
+									<div class="mt-1">
+										<input class="form-control form-control-sm"
+											   @bind="s.Comment"
+											   placeholder="Примечание" />
+									</div>
+								}
 							</td>
 						</tr>
-						@if (showComments.GetValueOrDefault(s.MaterialTypeId))
-						{
-							<tr>
-								<div class="mt-2">
-									<input class="form-control form-control-sm" 
-										@bind="s.Comment" 
-										placeholder="Примечание" />
-								</div>
-							</tr>
-						}
 					}
 				</tbody>
 			</table>
@@ -101,12 +129,19 @@ else
 
 	private List<OrderSupplyDto> supplies = new();
 	private List<OrderSupplyDto> backup = new();
+	private List<SupplyCondition> conditions = new();
+	private List<SupplyType> types = new();
+
 	private bool isLoading = true;
 	private bool EditMode;
+	private Dictionary<string, bool> showComments = new();
 
 	protected override async Task OnInitializedAsync()
 	{
-		supplies = await ApiService.GetOrderSuppliesAsync(OrderId);
+		conditions = await SupplyService.GetConditionsAsync();
+		types = await SupplyService.GetTypesAsync();
+		supplies = await SupplyFactory.CreateAsync(OrderId, ApiService);
+
 		isLoading = false;
 	}
 
@@ -114,8 +149,8 @@ else
 	{
 		backup = supplies.Select(s => new OrderSupplyDto
 		{
-			MaterialTypeId = s.MaterialTypeId,
-			StatusCode = s.StatusCode,
+			SupplyTypeId = s.SupplyTypeId,
+			SupplyConditionId = s.SupplyConditionId,
 			Comment = s.Comment
 		}).ToList();
 		EditMode = true;
@@ -125,18 +160,19 @@ else
 	{
 		for (int i = 0; i < supplies.Count; i++)
 		{
-			supplies[i].StatusCode = backup[i].StatusCode;
+			supplies[i].SupplyConditionId = backup[i].SupplyConditionId;
 			supplies[i].Comment = backup[i].Comment;
 		}
 		EditMode = false;
+		showComments.Clear();
 	}
 
 	private async Task SaveChanges()
 	{
 		var updates = supplies.Select(s => new
 		{
-			materialTypeId = s.MaterialTypeId,
-			statusCode = s.StatusCode,
+			supplyTypeId = s.SupplyTypeId,
+			supplyConditionId = s.SupplyConditionId,
 			comment = s.Comment
 		}).ToList();
 
@@ -145,16 +181,33 @@ else
 		if (success)
 		{
 			EditMode = false;
-			// Перезагружаем данные
+			showComments.Clear();
 			supplies = await ApiService.GetOrderSuppliesAsync(OrderId);
 		}
 	}
 
-	private Dictionary<string, bool> showComments = new();
+	private async Task SaveComment(OrderSupplyDto supply)
+	{
+		// Сохраняем только комментарий
+		var success = await ApiService.UpdateOrderSuppliesAsync(OrderId, new List<object>
+		{
+			new
+			{
+				supplyTypeId = supply.SupplyTypeId,
+				supplyConditionId = supply.SupplyConditionId,
+				comment = supply.Comment
+			}
+		});
+		
+		if (success)
+		{
+			showComments.Remove(supply.SupplyTypeId);
+		}
+	}
 
 	private void ToggleComment(OrderSupplyDto supply)
 	{
-		var key = supply.MaterialTypeId;
+		var key = supply.SupplyTypeId;
 		showComments[key] = !showComments.GetValueOrDefault(key);
 	}
 }

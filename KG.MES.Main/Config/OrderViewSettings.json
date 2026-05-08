@@ -6,7 +6,7 @@
 	"canExport": true,
 	"canEdit": true,
 	"canDelete": true,
-	"showTrace": false,
+	"showTrace": true,
 	"showSupply": true,
 	"editSupply": false,
 	"additional": {

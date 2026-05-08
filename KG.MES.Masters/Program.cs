@@ -10,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddHttpClient<ProductionApiService>();
 builder.Services.AddSingleton(LoadViewSettings());
+builder.Services.AddSingleton<SupplyService>();
+builder.Services.AddSingleton<OrderSupplyDtoFactory>();
 
 var app = builder.Build();
 
