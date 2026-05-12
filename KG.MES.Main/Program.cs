@@ -24,6 +24,7 @@ builder.Services.AddSingleton<HolidayCalendarService>();
 builder.Services.AddSingleton<IMaterialFactory, MaterialFactory>();
 builder.Services.AddScoped<IDocumentItemFactory, DocumentItemFactory>();
 builder.Services.AddSingleton(LoadViewSettings());
+builder.Services.AddSingleton<SupplyService>();
 
 
 var app = builder.Build();

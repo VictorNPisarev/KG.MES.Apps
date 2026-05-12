@@ -117,7 +117,7 @@ namespace KG.MES.Shared.Services
 
 					return new PaginatedResponse<ProductionOrderDto>
 					{
-						Data = order != null ? new List<ProductionOrderDto> { order } : new(),
+						Data = order != null ? [order] : [],
 						Pagination = new PaginationInfo { Page = 1, Limit = 1, Total = order != null ? 1 : 0, Pages = 1 }
 					};
 				}
@@ -275,12 +275,12 @@ namespace KG.MES.Shared.Services
 			try
 			{
 				var response = await _httpClient.GetFromJsonAsync<List<WorkplaceDto>>($"{BaseUrl}/workplaces/active");
-				return response ?? new List<WorkplaceDto>();
+				return response ?? [];
 			}
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, "Error fetching active workplaces");
-				return new List<WorkplaceDto>();
+				return [];
 			}
 		}
 
@@ -290,12 +290,12 @@ namespace KG.MES.Shared.Services
 			try
 			{
 				var response = await _httpClient.GetFromJsonAsync<List<WorkplaceDto>>($"{BaseUrl}/workplaces/all");
-				return response ?? new List<WorkplaceDto>();
+				return response ?? [];
 			}
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, "Error fetching all workplaces");
-				return new List<WorkplaceDto>();
+				return [];
 			}
 		}
 
@@ -397,15 +397,78 @@ namespace KG.MES.Shared.Services
 			try
 			{
 				var url = $"{BaseUrl}/orders/{orderId}/supplies";
-				return await _httpClient.GetFromJsonAsync<List<OrderSupplyDto>>(url)
-					   ?? new List<OrderSupplyDto>();
+				var supplies = await _httpClient.GetFromJsonAsync<List<OrderSupplyDto>>(url)
+							   ?? [];
+
+				return supplies;
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "Error fetching materials for order {Id}", orderId);
-				return new List<OrderSupplyDto>();
+				_logger.LogError(ex, "Error fetching supplies for order {Id}", orderId);
+				return [];
 			}
 		}
 
+
+		public async Task<bool> UpdateOrderSuppliesAsync(Guid orderId, object updates)
+		{
+			try
+			{
+				var response = await _httpClient.PutAsJsonAsync(
+					$"{BaseUrl}/orders/{orderId}/supplies", updates);
+				return response.IsSuccessStatusCode;
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error updating supplies for order {Id}", orderId);
+				return false;
+			}
+		}
+
+		public async Task<bool> UpdateOrderSuppliesAsync(Guid orderId, List<object> supplies)
+		{
+			try
+			{
+				var body = new { supplies };
+				var response = await _httpClient.PutAsJsonAsync(
+					$"{BaseUrl}/orders/{orderId}/supplies", body);
+				return response.IsSuccessStatusCode;
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error updating supplies for order {Id}", orderId);
+				return false;
+			}
+		}
+
+		public async Task<List<SupplyCondition>> GetSupplyConditionsAsync()
+		{
+			try
+			{
+				var url = $"{BaseUrl}/supplies/conditions";
+				return await _httpClient.GetFromJsonAsync<List<SupplyCondition>>(url)
+					   ?? [];
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error fetching supply conditions");
+				return [];
+			}
+		}
+
+		public async Task<List<SupplyType>> GetSupplyTypesAsync()
+		{
+			try
+			{
+				var url = $"{BaseUrl}/supplies/types";
+				return await _httpClient.GetFromJsonAsync<List<SupplyType>>(url)
+					   ?? [];
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error fetching supply types");
+				return [];
+			}
+		}
 	}
 }

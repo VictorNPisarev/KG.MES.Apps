@@ -1,33 +1,28 @@
 using KG.MES.Shared.Helpers;
-using KG.MES.Shared.Services;
-using KG.MES.Masters.Components;
 using KG.MES.Shared.Models.Config;
+using KG.MES.Shared.Services;
+using KG.MES.Supply.Components;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddHttpClient<ProductionApiService>();
 builder.Services.AddSingleton(LoadViewSettings());
 builder.Services.AddSingleton<SupplyService>();
 
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
 	app.UseExceptionHandler("/Error", createScopeForErrors: true);
 	app.UseHsts();
 }
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
 
 app.UseAntiforgery();
-
 app.MapStaticAssets();
-app.MapRazorComponents<App>()
-	.AddInteractiveServerRenderMode();
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 await LoadDataAsync(app.Services, app.Environment);
 
@@ -38,17 +33,11 @@ async Task LoadDataAsync(IServiceProvider services, IWebHostEnvironment env)
 	using var scope = services.CreateScope();
 	var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
-	//Загрузка конфига для выделения цветом полей-ярлыков
 	try
 	{
 		var baseConfig = Path.Combine(env.ContentRootPath, "..", "KG.MES.Shared", "Config", "BadgeStyles.Base.json");
 		var appConfig = Path.Combine(env.ContentRootPath, "Config", "BadgeStyles.json");
-
-		logger.LogInformation($"baseConfig: ${baseConfig}");
-		logger.LogInformation($"appConfig: ${appConfig}");
-
 		BadgeHelper.LoadConfig(baseConfig, appConfig);
-
 		logger.LogInformation("Badges config loaded successfully");
 	}
 	catch (Exception ex)
@@ -57,20 +46,14 @@ async Task LoadDataAsync(IServiceProvider services, IWebHostEnvironment env)
 	}
 }
 
-/// Загрузка настроек отображения списка заказов и карточки
 OrderViewSettings LoadViewSettings()
 {
 	var settingsPath = Path.Combine(builder.Environment.ContentRootPath, "Config", "orderViewSettings.json");
 	if (File.Exists(settingsPath))
 	{
 		var json = File.ReadAllText(settingsPath);
-		var appSettings = JsonSerializer.Deserialize<OrderViewSettings>(json,
+		return JsonSerializer.Deserialize<OrderViewSettings>(json,
 			new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new OrderViewSettings();
-
-		return appSettings;
 	}
-	else
-	{
-		return new OrderViewSettings();
-	}
+	return new OrderViewSettings();
 }
