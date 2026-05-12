@@ -50,21 +50,21 @@ else if (order != null)
 						case WidgetType.Main:
 							<div class="card">
 								<div class="card-body">
-									<OrderFieldsWidget TOrder="TOrder" Order="@order" Settings="@Settings" />
+									<OrderFieldsWidget @ref="fieldsWidget" TOrder="TOrder" Order="@order" Settings="@Settings" />
 								</div>
 							</div>
 							break;
 						case WidgetType.Trace:
 							<div class="card">
 								<div class="card-body">
-									<OrderTraceWidget OrderId="@OrderId" />
+									<OrderTraceWidget @ref="traceWidget" OrderId="@OrderId" />
 								</div>
 							</div>
 							break;
 						case WidgetType.Supplies:
 							<div class="card">
 								<div class="card-body">
-									<OrderSuppliesWidget OrderId="@OrderId"  CanEdit="@Settings.EditSupply"/>
+									<OrderSuppliesWidget @ref="suppliesWidget" OrderId="@OrderId"  CanEdit="@Settings.EditSupply"/>
 								</div>
 							</div>
 							break;
