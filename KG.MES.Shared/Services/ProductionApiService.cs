@@ -454,5 +454,140 @@ namespace KG.MES.Shared.Services
 				return [];
 			}
 		}
+
+		public async Task<List<OrderCommentDto>> GetOrderCommentsAsync(Guid orderId)
+		{
+			try
+			{
+				var url = $"{BaseUrl}/orders/{orderId}/comments";
+				return await _httpClient.GetFromJsonAsync<List<OrderCommentDto>>(url)
+					   ?? new List<OrderCommentDto>();
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error fetching comments for order {Id}", orderId);
+				return new List<OrderCommentDto>();
+			}
+		}
+
+		public async Task<bool> SaveSupplyCommentAsync(Guid orderId, OrderCommentDto comment)
+		{
+			try
+			{
+				Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
+				HttpResponseMessage response;
+				if (comment.IsNew)
+				{
+					// POST /api/orders/{orderId}/comments
+					response = await _httpClient.PostAsJsonAsync(
+						$"{BaseUrl}/orders/{orderId}/OrderSupplyComments",
+						new { content = comment.Content });
+
+					return response.IsSuccessStatusCode;
+
+				}
+				else
+				{
+					return await UpdateCommentAsync(orderId, comment);
+				}
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error saving comment for order {OrderId}", orderId);
+				return false;
+			}
+		}
+
+		public async Task<bool> SaveProductionOrderCommentAsync(Guid orderId, OrderCommentDto comment)
+		{
+			try
+			{
+				Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
+				HttpResponseMessage response;
+				if (comment.IsNew)
+				{
+					// POST /api/orders/{orderId}/comments
+					response = await _httpClient.PostAsJsonAsync(
+						$"{BaseUrl}/orders/{orderId}/productionOrderComments",
+						new { content = comment.Content });
+
+					return response.IsSuccessStatusCode;
+
+				}
+				else
+				{
+					return await UpdateCommentAsync(orderId, comment);
+				}
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error saving comment for order {OrderId}", orderId);
+				return false;
+			}
+		}
+
+		public async Task<bool> SaveCommentAsync(Guid orderId, OrderCommentDto comment)
+		{
+			try
+			{
+				Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
+				HttpResponseMessage response;
+				if (comment.IsNew)
+				{
+					// POST /api/orders/{orderId}/comments
+					response = await _httpClient.PostAsJsonAsync(
+						$"{BaseUrl}/orders/{orderId}/comments",
+						new { content = comment.Content });
+
+					return response.IsSuccessStatusCode;
+				}
+				else
+				{
+					return await UpdateCommentAsync(orderId, comment);
+				}
+
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error saving comment for order {OrderId}", orderId);
+				return false;
+			}
+		}
+
+		public async Task<bool> UpdateCommentAsync(Guid orderId, OrderCommentDto comment)
+		{
+			try
+			{
+				Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
+				HttpResponseMessage response;
+
+				// PUT /api/orders/{orderId}/comments/{commentId}
+				response = await _httpClient.PutAsJsonAsync(
+					$"{BaseUrl}/orders/{orderId}/comments/{comment.Id}",
+					new { content = comment.Content });
+
+				return response.IsSuccessStatusCode;
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error saving comment for order {OrderId}", orderId);
+				return false;
+			}
+		}
+
+		public async Task<bool> DeleteCommentAsync(Guid orderId, Guid commentId)
+		{
+			try
+			{
+				var response = await _httpClient.DeleteAsync(
+					$"{BaseUrl}/orders/{orderId}/comments/{commentId}");
+				return response.IsSuccessStatusCode;
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error deleting comment {CommentId}", commentId);
+				return false;
+			}
+		}
 	}
 }
