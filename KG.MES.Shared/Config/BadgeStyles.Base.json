@@ -17,7 +17,9 @@
 		"not_available": "bg-danger bg-opacity-25 text-danger",
 		"delayed": "bg-warning bg-opacity-25 text-warning",
 		"ordered": "bg-primary bg-opacity-25 text-primary",
-		"in_stock": "bg-success bg-opacity-25 text-success"
+		"in_stock": "bg-success bg-opacity-25 text-success",
+		"COMPLETE": "bg-success bg-opacity-25 text-success",
+		"START":"bg-primary bg-opacity-25 text-primary"
 	},
 	"booleans":
 	{

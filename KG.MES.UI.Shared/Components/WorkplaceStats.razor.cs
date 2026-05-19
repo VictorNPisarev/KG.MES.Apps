@@ -12,6 +12,9 @@ public partial class WorkplaceStats
 	private List<BlockedOrderDto> blocks = [];
 	private List<WorkplaceHistoryDto> history = [];
 	private Guid? selectedWorkplaceId;
+	private DateTime dateFrom = DateTime.Now.AddDays(-7);
+	private DateTime dateTo = DateTime.Now;
+	private bool showDateFilter;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -24,8 +27,18 @@ public partial class WorkplaceStats
 		selectedWorkplaceId = id;
 		stats = await ApiService.GetWorkplaceStatsAsync(id);
 		blocks = await ApiService.GetWorkplaceBlocksAsync(id);
+		history = await ApiService.GetWorkplaceHistoryAsync(id, dateFrom, dateTo, 1000);
+		StateHasChanged();
+	}
+
+	private async Task ApplyFilter()
+	{
+		showDateFilter = false;
+
+		if (selectedWorkplaceId == null) return;
+		
 		history = await ApiService.GetWorkplaceHistoryAsync(
-			id, DateTime.Now.AddDays(-7), DateTime.Now, 10);
+			(Guid)selectedWorkplaceId, dateFrom, dateTo, 1000);
 		StateHasChanged();
 	}
 }

@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using KG.MES.Shared.Attributes;
 
 namespace KG.MES.Shared.Models.Dto;
 public class WorkplaceHistoryDto
@@ -7,6 +8,7 @@ public class WorkplaceHistoryDto
 	public DateTime OperationTime { get; set; }
 
 	[JsonPropertyName("operation_type")]
+	[Column("Операция", IsBadge = true)]
 	public string OperationType { get; set; } = string.Empty;
 
 	[JsonPropertyName("order_number")]

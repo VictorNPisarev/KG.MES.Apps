@@ -1,3 +1,4 @@
+@using KG.MES.Shared.Helpers
 <PageTitle>Статистика рабочих мест</PageTitle>
 
 <div class="container-fluid py-4">
@@ -22,7 +23,6 @@
 				</div>
 			</div>
 		</div>
-
 		<div class="col-md-9">
 			@if (selectedWorkplaceId != null && stats != null)
 			{
@@ -90,9 +90,28 @@
 				</div>
 
 				<div class="card">
-					<div class="card-header">
-						<h6 class="mb-0">Последние операции (7 дней)</h6>
+					<div class="card-header d-flex align-items-center">
+						<h6 class="mb-0">
+							История операций 
+							<small class="text-muted ms-2">@dateFrom.ToString("dd.MM.yyyy") – @dateTo.ToString("dd.MM.yyyy")</small>
+						</h6>
+						<button class="btn btn-sm btn-link text-secondary p-0 ms-2" @onclick="() => showDateFilter = !showDateFilter">
+							<i class="bi bi-calendar3"></i>
+						</button>
 					</div>
+					
+					@if (showDateFilter)
+					{
+						<div class="card-body bg-light border-bottom py-2">
+							<div class="d-flex align-items-center gap-2">
+								<label class="form-label small mb-0">С</label>
+								<input type="date" class="form-control form-control-sm" style="width: auto;" @bind="dateFrom" />
+								<label class="form-label small mb-0">По</label>
+								<input type="date" class="form-control form-control-sm" style="width: auto;" @bind="dateTo" />
+								<button class="btn btn-sm btn-primary" @onclick="ApplyFilter">Применить</button>
+							</div>
+						</div>
+					}
 					<div class="card-body p-0">
 						@if (history.Any())
 						{
@@ -111,8 +130,8 @@
 									{
 										<tr>
 											<td>
-												<span class="badge @(h.OperationType switch { "COMPLETE" => "bg-success", "START" => "bg-primary", _ => "bg-secondary" })">
-													@(h.OperationType switch { "COMPLETE" => "Завершено", "START" => "Начато", _ => h.OperationType })
+												<span class="badge @BadgeHelper.GetBadgeClass(h.OperationType.ToString(), false)">
+													@h.OperationType
 												</span>
 											</td>
 											<td>@h.OrderNumber</td>

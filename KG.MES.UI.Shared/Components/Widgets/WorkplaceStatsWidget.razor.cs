@@ -29,7 +29,7 @@ public partial class WorkplaceStatsWidget : ComponentBase, ISavableWidget
 		id,
 		DateTime.Now.AddDays(-7),
 		DateTime.Now,
-		5);
+		1000);
 	}
 
 	public bool HasUnsavedChanges() => false;

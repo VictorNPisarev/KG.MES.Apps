@@ -644,7 +644,7 @@ namespace KG.MES.Shared.Services
 		}
 
 		public async Task<List<WorkplaceHistoryDto>> GetWorkplaceHistoryAsync(
-			Guid workplaceId, DateTime from, DateTime to, int limit = 10)
+			Guid workplaceId, DateTime from, DateTime to, int limit = 1000)
 		{
 			try
 			{
