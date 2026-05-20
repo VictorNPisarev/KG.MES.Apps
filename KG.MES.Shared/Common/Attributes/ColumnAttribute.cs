@@ -8,6 +8,9 @@ namespace KG.MES.Shared.Attributes
 		public string? DisplayFormat { get; set; }
 		public int Order { get; set; }
 		public bool IsBadge { get; set; }
+		public string? BadgeProperty { get; set; }
+		public string? BadgeGroup { get; set; }
+		public int Width { get; set; }
 
 		public ColumnAttribute(string title)
 		{

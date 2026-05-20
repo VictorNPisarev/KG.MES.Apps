@@ -3,6 +3,7 @@ using KG.MES.Shared.Services;
 using KG.MES.Masters.Components;
 using KG.MES.Shared.Models.Config;
 using System.Text.Json;
+using KG.MES.Shared.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,8 @@ builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddHttpClient<ProductionApiService>();
 builder.Services.AddSingleton(LoadViewSettings());
 builder.Services.AddSingleton<SupplyService>();
+builder.Services.AddSingleton<IEventAggregator, EventAggregator>();
+
 
 var app = builder.Build();
 
