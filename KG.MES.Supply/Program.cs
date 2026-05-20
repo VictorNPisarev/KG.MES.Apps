@@ -1,4 +1,5 @@
 using KG.MES.Shared.Helpers;
+using KG.MES.Shared.Interfaces;
 using KG.MES.Shared.Models.Config;
 using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Services;
@@ -11,6 +12,8 @@ builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddHttpClient<ProductionApiService>();
 builder.Services.AddSingleton(LoadViewSettings());
 builder.Services.AddSingleton<SupplyService>();
+builder.Services.AddSingleton<IEventAggregator, EventAggregator>();
+
 
 var app = builder.Build();
 
