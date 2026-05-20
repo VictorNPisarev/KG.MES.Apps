@@ -307,10 +307,6 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 	{
 		if (eventData.OrderId == OrderId)
 		{
-			Console.WriteLine();
-			Console.WriteLine("eventData.OrderId == OrderId");
-			Console.WriteLine();
-
 			await LoadSupplies();
 			await InvokeAsync(StateHasChanged);
 		}
