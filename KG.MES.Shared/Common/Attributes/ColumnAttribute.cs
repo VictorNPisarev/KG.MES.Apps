@@ -11,6 +11,7 @@ namespace KG.MES.Shared.Attributes
 		public string? BadgeProperty { get; set; }
 		public string? BadgeGroup { get; set; }
 		public int Width { get; set; }
+		public string? CommentFlagField { get; set; }
 
 		public ColumnAttribute(string title)
 		{

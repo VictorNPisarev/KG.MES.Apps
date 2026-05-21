@@ -18,23 +18,38 @@ namespace KG.MES.Shared.Models.Dto
 		public DateTime? ReadyDate { get; set; }
 
 		[JsonPropertyName("lumber")]
-		[Column("Пиломатериалы", Order = 2, IsBadge = true)]
+		[Column("Пиломатериалы", Order = 2, IsBadge = true, CommentFlagField = "LumberHasComment")]
 		public string? Lumber { get; set; }
 
+		[JsonPropertyName("lumber_has_comment")]
+		public bool? LumberHasComment { get; set; }
+
 		[JsonPropertyName("paint")]
-		[Column("ЛКМ", Order = 3, IsBadge = true)]
+		[Column("ЛКМ", Order = 3, IsBadge = true, CommentFlagField = "PaintHasComment")]
 		public string? Paint { get; set; }
 
+		[JsonPropertyName("paint_has_comment")]
+		public bool? PaintHasComment { get; set; }
+
 		[JsonPropertyName("glass")]
-		[Column("Стекло", Order = 4, IsBadge = true)]
+		[Column("Стекло", Order = 4, IsBadge = true, CommentFlagField = "GlassHasComment")]
 		public string? Glass { get; set; }
 
+		[JsonPropertyName("glass_has_comment")]
+		public bool? GlassHasComment { get; set; }
+
 		[JsonPropertyName("furniture")]
-		[Column("Фурнитура", Order = 5, IsBadge = true)]
+		[Column("Фурнитура", Order = 5, IsBadge = true, CommentFlagField = "FurnitureHasComment")]
 		public string? Furniture { get; set; }
 
+		[JsonPropertyName("furniture_has_comment")]
+		public bool? FurnitureHasComment { get; set; }
+
 		[JsonPropertyName("alumwatershield")]
-		[Column("ППС, В/О", Order = 6, IsBadge = true)]
+		[Column("ППС, В/О", Order = 6, IsBadge = true, CommentFlagField = "AlumWaterShieldHasComment")]
 		public string? AlumWaterShield { get; set; }
+
+		[JsonPropertyName("alumWaterShield_has_comment")]
+		public bool? AlumWaterShieldHasComment { get; set; }
 	}
 }
