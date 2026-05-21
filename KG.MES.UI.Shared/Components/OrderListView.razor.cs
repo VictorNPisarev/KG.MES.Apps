@@ -196,12 +196,14 @@ public partial class OrderListView<TOrder> : ComponentBase
 		StateHasChanged();
 	}
 
-	private void CloseOrder()
+	private async Task CloseOrder()
 	{
 		isModalOpen = false;
 		selectedOrder = default;
+		await LoadOrders(); // ← перезагружаем список заказов
 		StateHasChanged();
 	}
+
 	private Guid GetOrderId(TOrder order)
 	{
 		var prop = typeof(TOrder).GetProperty("Id");

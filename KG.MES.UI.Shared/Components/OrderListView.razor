@@ -152,18 +152,31 @@
 							@foreach (var col in visibleData)
 							{
 								<td>
-									@if (col.Info.IsBadge && order != null)
+									@if(order != null)
 									{
-										var prop = order.GetType().GetProperty(col.Info.BadgeProperty ?? col.Info.PropertyName);
-										var value = prop?.GetValue(order);
+										@if (col.Info.IsBadge)
+										{
+											var prop = order.GetType().GetProperty(col.Info.BadgeProperty ?? col.Info.PropertyName);
+											var value = prop?.GetValue(order);
 
-										<span class="badge @BadgeHelper.GetBadgeClass(value?.ToString())">
-											@BadgeHelper.GetFormattedBadgeValue(order, col.Info)
-										</span>
-									}
-									else if (order != null)
-									{
-										@ColumnHelper.GetFormattedValue(order, col.Info)
+											<span class="badge @BadgeHelper.GetBadgeClass(value?.ToString())">
+												@BadgeHelper.GetFormattedBadgeValue(order, col.Info)
+											</span>
+										}
+										else
+										{
+											@ColumnHelper.GetFormattedValue(order, col.Info)
+										}
+										
+										@if (!string.IsNullOrEmpty(col.Info.CommentFlagField))
+										{
+											var hasComment = order.GetType().GetProperty(col.Info.CommentFlagField)?.GetValue(order) as bool? == true;
+											
+											if (hasComment)
+											{
+												<i class="bi bi-chat-left-text text-primary ms-1 small" title="Есть комментарий"></i>
+											}
+										}
 									}
 								</td>
 							}

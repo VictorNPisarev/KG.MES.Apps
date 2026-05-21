@@ -21,7 +21,8 @@ namespace KG.MES.Shared.Helpers
 					Title = x.Attr!.Title,
 					Format = x.Attr.DisplayFormat,
 					IsBadge = x.Attr.IsBadge,
-					BadgeGroup = x.Attr.BadgeGroup
+					BadgeGroup = x.Attr.BadgeGroup,
+					CommentFlagField = x.Attr.CommentFlagField
 				})
 				.ToList();
 		}
