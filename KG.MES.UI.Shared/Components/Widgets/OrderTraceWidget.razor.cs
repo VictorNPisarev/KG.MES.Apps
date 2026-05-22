@@ -51,22 +51,26 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 
 	private async Task SaveChanges()
 	{
-		if (orderTrace == null) return;
+		if (orderTrace == null || orderTrace.ProductionOrderId == Guid.Empty) return;
 
-		var updates = orderTrace.WorkplaceTraces.Select(w => new
+		foreach (var wp in orderTrace.WorkplaceTraces)
 		{
-			workplaceId = w.WorkplaceId,
-			status = w.Status
-		}).ToList();
+			if (wp.WorkplaceId == Guid.Empty) continue;
 
-		var success = await ApiService.UpdateOrderTraceAsync(OrderId, updates);
-
-		if (success)
-		{
-			orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
-			EditMode = false;
-			openDropdowns.Clear();
+			var original = backupTrace?.WorkplaceTraces.FirstOrDefault(b => b.WorkplaceId == wp.WorkplaceId);
+			if (original == null || wp.Status != original.Status)
+			{
+				await ApiService.UpdateOrderTraceAsync(
+					orderTrace.ProductionOrderId!,
+					wp.WorkplaceId,
+					wp.Status
+				);
+			}
 		}
+
+		orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
+		EditMode = false;
+		openDropdowns.Clear();
 	}
 
 	private void ToggleDropdown(string key)
