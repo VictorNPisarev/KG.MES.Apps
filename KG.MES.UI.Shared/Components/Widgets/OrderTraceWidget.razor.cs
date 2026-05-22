@@ -1,3 +1,4 @@
+using KG.MES.Shared.Interfaces;
 using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Services;
 using KG.MES.UI.Shared.Interfaces;
@@ -11,6 +12,7 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 	[Parameter] public bool CanEdit { get; set; }
 
 	[Inject] private ProductionApiService ApiService { get; set; } = null!;
+	[Inject] private ISocketService SocketService { get; set; } = null!;
 
 	private OrderTrace? orderTrace;
 	private OrderTrace? backupTrace;
@@ -20,8 +22,27 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 
 	protected override async Task OnInitializedAsync()
 	{
+		SocketService.OnMessage += OnSocketMessage;
 		orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
+
+		if (orderTrace?.ProductionOrderId != Guid.Empty)
+		{
+			await SocketService.SubscribeAsync("order", orderTrace.ProductionOrderId.ToString());
+		}
+
 		isLoading = false;
+	}
+
+	private void OnSocketMessage(string channel, object data)
+	{
+		if (channel == "order")
+		{
+			InvokeAsync(async () =>
+			{
+				orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
+				StateHasChanged();
+			});
+		}
 	}
 
 	private void EnterEditMode()

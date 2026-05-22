@@ -16,6 +16,7 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 	[Inject] private ProductionApiService ApiService { get; set; } = null!;
 	[Inject] private SupplyService SupplyService { get; set; } = null!;
 	[Inject] private IEventAggregator EventAggregator { get; set; } = null!;
+	[Inject] private ISocketService SocketService { get; set; } = null!;
 
 	private List<OrderSupply> supplies = [];
 	private List<OrderSupply> originalSupplies = [];
@@ -31,6 +32,9 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 
 	protected override async Task OnInitializedAsync()
 	{
+		await SocketService.SubscribeAsync("supply");
+		SocketService.OnMessage += OnSocketMessage;
+
 		//Подписываюсь на изменение комментария
 		EventAggregator.Subscribe<OrderCommentUpdatedEvent>(OnOrderCommentUpdated);
 
@@ -252,6 +256,19 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 			await InvokeAsync(StateHasChanged);
 		}
 	}
+
+	private void OnSocketMessage(string channel, object data)
+	{
+		if (channel == "supply")
+		{
+			//var orderId = data.orderId;
+
+		//if (orderId == OrderId)
+		//		InvokeAsync(async () => await LoadSupplies());
+		}
+	}
+
+
 	public void Dispose()
 	{
 		EventAggregator.Unsubscribe<OrderCommentUpdatedEvent>(OnOrderCommentUpdated);
