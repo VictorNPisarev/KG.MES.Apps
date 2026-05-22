@@ -18,7 +18,7 @@ namespace KG.MES.Shared.Models.Dto
 		public Guid OrderId { get; set; }
 
 		[JsonPropertyName("productionOrderId")]
-		public string? ProductionOrderId { get; set; }
+		public Guid ProductionOrderId { get; set; }
 
 		[JsonPropertyName("orderNumber")]
 		public string OrderNumber { get; set; } = string.Empty;
