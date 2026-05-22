@@ -27,6 +27,8 @@ builder.Services.AddScoped<IDocumentItemFactory, DocumentItemFactory>();
 builder.Services.AddSingleton(LoadViewSettings());
 builder.Services.AddSingleton<SupplyService>();
 builder.Services.AddSingleton<IEventAggregator, EventAggregator>();
+builder.Services.AddScoped<ISocketService, SocketService>();
+
 
 
 var app = builder.Build();
