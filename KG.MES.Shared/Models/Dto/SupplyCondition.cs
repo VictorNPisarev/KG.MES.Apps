@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using KG.MES.Shared.Helpers;
 
 namespace KG.MES.Shared.Models.Dto
 {
@@ -13,13 +14,7 @@ namespace KG.MES.Shared.Models.Dto
 
 	public static class SupplyConditionExtensions
 	{
-		public static string DisplayName(this SupplyCondition condition) => condition.ConditionCode?.ToLower() switch
-		{
-			"not_available" => "Нет в наличии",
-			"delayed" => "Задерживается",
-			"ordered" => "Заказан",
-			"in_stock" => "На складе",
-			_ => condition.ConditionCode ?? "—"
-		};
+		public static string DisplayName(this SupplyCondition condition)
+			=> BadgeHelper.GetDisplayValue(condition.ConditionCode, "supply_status");
 	}
 }

@@ -14,7 +14,7 @@ namespace KG.MES.Shared.Models.Dto
 		public string OrderNumber { get; set; } = string.Empty;
 
 		[JsonPropertyName("current_status")]
-		[Column("Статус", Order = 3, IsBadge = true)]
+		[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name")]
 		public string? Status { get; set; }
 
 
@@ -69,10 +69,6 @@ namespace KG.MES.Shared.Models.Dto
 		[JsonPropertyName("current_workplace_name")]
 		[Column("Участок", Order = 8)]
 		public string? CurrentWorkplaceName { get; set; }
-
-		[JsonPropertyName("master_notes")]
-		[Column("Заметки мастера", Visible = false)]
-		public string? MasterNotes { get; set; }
 	}
 
 }

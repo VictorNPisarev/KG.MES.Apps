@@ -4,11 +4,11 @@
 	{
 		"workplaces":
 		{
-			"торцовка": "bg-info",
-			"столярка": "bg-warning",
-			"профилирование": "bg-warning",
-			"сборка": "bg-primary",
-			"покраска": "bg-info"
+			"торцовка": "bg-primary bg-opacity-25 text-primary",
+			"столярка": "bg-primary bg-opacity-25 text-primary",
+			"профилирование": "bg-primary bg-opacity-25 text-primary",
+			"сборка": "bg-primary bg-opacity-25 text-primary",
+			"покраска": "bg-primary bg-opacity-25 text-primary"
 		}
 	}
 }

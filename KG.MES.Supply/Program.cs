@@ -48,10 +48,10 @@ async Task LoadDataAsync(IServiceProvider services, IWebHostEnvironment env)
 
 		var supplyService = scope.ServiceProvider.GetRequiredService<SupplyService>();
 		var conditions = await supplyService.GetConditionsAsync();
-		foreach (SupplyCondition c in conditions)
-		{
-			BadgeHelper.RegisterStatusDisplayName(c.ConditionCode, c.DisplayName());
-		}
+		//foreach (SupplyCondition c in conditions)
+		//{
+		//	BadgeHelper.RegisterStatusDisplayName(c.ConditionCode, c.DisplayName());
+		//}
 	}
 	catch (Exception ex)
 	{

@@ -12,6 +12,7 @@ namespace KG.MES.Shared.Attributes
 		public string? BadgeGroup { get; set; }
 		public int Width { get; set; }
 		public string? CommentField { get; set; }
+		public string? DisplayGroup { get; set; }  // группа для поиска отображаемого текста в конфиге
 
 		public ColumnAttribute(string title)
 		{

@@ -18,7 +18,7 @@ namespace KG.MES.Shared.Models.Dto
 		public DateTime? ReadyDate { get; set; }
 
 		[JsonPropertyName("current_status")]
-		[Column("Статус", Order = 3, IsBadge = true)]
+		[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name")]
 		public string? Status { get; set; }
 
 		[JsonPropertyName("window_count")]
@@ -69,9 +69,6 @@ namespace KG.MES.Shared.Models.Dto
 		[Column("Участок", Order = 8)]
 		public string? CurrentWorkplaceName { get; set; }
 
-		[JsonPropertyName("master_notes")]
-		[Column("Заметки мастера", Order = 9)]
-		public string? MasterNotes { get; set; }
 	}
 
 }

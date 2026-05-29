@@ -4,17 +4,17 @@
 		"workplaces":
 		{
 			"none": "bg-secondary",
-			"торцовка": "bg-warning",
-			"столярка": "bg-warning",
-			"профилирование": "bg-warning",
-			"сборка": "bg-warning",
-			"шлифовка": "bg-warning",
-			"покраска": "bg-primary",
-			"фурнитура": "bg-warning",
-			"остекление": "bg-warning",
-			"упаковка": "bg-warning",
-			"готово": "bg-success",
-			"отгружен": "bg-dark"
+			"торцовка": "bg-primary bg-opacity-25 text-primary",
+			"столярка": "bg-primary bg-opacity-25 text-primary",
+			"профилирование": "bg-primary bg-opacity-25 text-primary",
+			"сборка": "bg-primary bg-opacity-25 text-primary",
+			"шлифовка": "bg-primary bg-opacity-25 text-primary",
+			"покраска": "bg-primary bg-opacity-25 text-primary",
+			"фурнитура": "bg-primary bg-opacity-25 text-primary",
+			"остекление": "bg-primary bg-opacity-25 text-primary",
+			"упаковка": "bg-primary bg-opacity-25 text-primary",
+			"готово": "bg-success bg-opacity-25 text-success",
+			"отгружен": "bg-success"
 		},
 		"workplace_statuses":
 		{
@@ -46,5 +46,30 @@
 	{
 		"defaultStatus": "bg-light text-dark",
 		"defaultBoolean": "bg-light text-dark"
+	},
+	"displays":
+	{
+		"workplace_name":
+		{
+			"none": "Ожидает",
+			"торцовка": "В работе",
+			"столярка": "В работе",
+			"профилирование": "В работе",
+			"сборка": "В работе",
+			"шлифовка": "В работе",
+			"покраска": "В работе",
+			"фурнитура": "В работе",
+			"остекление": "В работе",
+			"упаковка": "В работе",
+			"готово": "Готово",
+			"отгружен": "Отгружен"
+		},
+		"supply_status":
+		{
+			"not_available": "Нет в наличии",
+			"delayed": "Задерживается",
+			"ordered": "Заказан",
+			"in_stock": "На складе"
+		}
 	}
 }
