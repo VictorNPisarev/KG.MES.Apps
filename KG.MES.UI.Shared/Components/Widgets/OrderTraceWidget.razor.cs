@@ -27,7 +27,7 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 
 		if (orderTrace?.ProductionOrderId != Guid.Empty)
 		{
-			await SocketService.SubscribeAsync("order", orderTrace.ProductionOrderId.ToString());
+			await SocketService.SubscribeAsync("order", orderTrace?.ProductionOrderId.ToString());
 		}
 
 		isLoading = false;
