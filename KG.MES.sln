@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KG.MES.Masters", "KG.MES.Ma
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KG.MES.Supply", "KG.MES.Supply\KG.MES.Supply.csproj", "{B857DD8F-99B0-4A14-AF7C-E6005A7FA88C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KG.MES.Sales", "KG.MES.Sales\KG.MES.Sales.csproj", "{DACE1D83-E0E2-481B-BC0F-1EE0E1C0321C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,18 @@ Global
 		{B857DD8F-99B0-4A14-AF7C-E6005A7FA88C}.Release|x64.Build.0 = Release|Any CPU
 		{B857DD8F-99B0-4A14-AF7C-E6005A7FA88C}.Release|x86.ActiveCfg = Release|Any CPU
 		{B857DD8F-99B0-4A14-AF7C-E6005A7FA88C}.Release|x86.Build.0 = Release|Any CPU
+		{DACE1D83-E0E2-481B-BC0F-1EE0E1C0321C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DACE1D83-E0E2-481B-BC0F-1EE0E1C0321C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DACE1D83-E0E2-481B-BC0F-1EE0E1C0321C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DACE1D83-E0E2-481B-BC0F-1EE0E1C0321C}.Debug|x64.Build.0 = Debug|Any CPU
+		{DACE1D83-E0E2-481B-BC0F-1EE0E1C0321C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DACE1D83-E0E2-481B-BC0F-1EE0E1C0321C}.Debug|x86.Build.0 = Debug|Any CPU
+		{DACE1D83-E0E2-481B-BC0F-1EE0E1C0321C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DACE1D83-E0E2-481B-BC0F-1EE0E1C0321C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DACE1D83-E0E2-481B-BC0F-1EE0E1C0321C}.Release|x64.ActiveCfg = Release|Any CPU
+		{DACE1D83-E0E2-481B-BC0F-1EE0E1C0321C}.Release|x64.Build.0 = Release|Any CPU
+		{DACE1D83-E0E2-481B-BC0F-1EE0E1C0321C}.Release|x86.ActiveCfg = Release|Any CPU
+		{DACE1D83-E0E2-481B-BC0F-1EE0E1C0321C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
