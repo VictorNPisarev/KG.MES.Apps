@@ -4,11 +4,18 @@
 	{
 		"workplaces":
 		{
-			"торцовка": "bg-info",
-			"столярка": "bg-warning",
-			"профилирование": "bg-warning",
+			"none": "bg-secondary",
+			"торцовка": "bg-primary",
+			"столярка": "bg-primary",
+			"профилирование": "bg-primary",
 			"сборка": "bg-primary",
-			"покраска": "bg-info"
+			"шлифовка": "bg-primary",
+			"покраска": "bg-primary",
+			"фурнитура": "bg-primary",
+			"остекление": "bg-primary",
+			"упаковка": "bg-primary",
+			"готово": "bg-success",
+			"отгружен": "bg-dark"
 		}
 	}
 }
