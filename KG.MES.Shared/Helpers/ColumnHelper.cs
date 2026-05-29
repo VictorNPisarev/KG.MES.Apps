@@ -22,7 +22,8 @@ namespace KG.MES.Shared.Helpers
 					Format = x.Attr.DisplayFormat,
 					IsBadge = x.Attr.IsBadge,
 					BadgeGroup = x.Attr.BadgeGroup,
-					CommentField = x.Attr.CommentField
+					CommentField = x.Attr.CommentField,
+					DisplayGroup = x.Attr.DisplayGroup
 				})
 				.ToList();
 		}
@@ -43,6 +44,9 @@ namespace KG.MES.Shared.Helpers
 				if (value is decimal m)
 					return m.ToString(column.Format);
 			}
+
+			if (value is string s && !string.IsNullOrEmpty(column.DisplayGroup))
+				return BadgeHelper.GetDisplayValue(s, column.DisplayGroup);
 
 			return value.ToString();
 		}

@@ -5,10 +5,10 @@ namespace KG.MES.Shared.Helpers
 {
 	public static class BadgeHelper
 	{
-		private static Dictionary<string, Dictionary<string, string>> _badgeStyles = new();
-		private static Dictionary<string, string> _defaultStyles = new();
-		private static Dictionary<string, string> _statusDisplayNames = new();
-
+		private static Dictionary<string, Dictionary<string, string>> _badgeStyles = [];
+		private static Dictionary<string, string> _defaultStyles = [];
+		private static Dictionary<string, string> _statusDisplayNames = [];
+		private static Dictionary<string, Dictionary<string, string>> _displayValues = [];
 		public static void LoadConfig(string baseConfigPath, string? appConfigPath = null)
 		{
 			if (File.Exists(baseConfigPath))
@@ -28,7 +28,7 @@ namespace KG.MES.Shared.Helpers
 				foreach (var (groupName, styles) in config.Groups)
 				{
 					if (!_badgeStyles.ContainsKey(groupName))
-						_badgeStyles[groupName] = new Dictionary<string, string>();
+						_badgeStyles[groupName] = [];
 
 					foreach (var kvp in styles)
 						_badgeStyles[groupName][kvp.Key.ToLower()] = kvp.Value;
@@ -39,6 +39,17 @@ namespace KG.MES.Shared.Helpers
 			{
 				foreach (var kvp in config.Defaults)
 					_defaultStyles[kvp.Key] = kvp.Value;
+			}
+
+			if (config?.Displays != null)
+			{
+				foreach (var (group, values) in config.Displays)
+				{
+					if (!_displayValues.ContainsKey(group))
+						_displayValues[group] = new();
+					foreach (var kvp in values)
+						_displayValues[group][kvp.Key.ToLower()] = kvp.Value;
+				}
 			}
 		}
 
@@ -84,19 +95,42 @@ namespace KG.MES.Shared.Helpers
 			return value switch
 			{
 				bool b => b ? "Да" : "Нет",
-				string s => GetStatusDisplayName(s),
+				string s => GetDisplayValue(s, column.DisplayGroup),
 				null => "—",
 				_ => value.ToString() ?? "—"
 			};
 		}
 
+		public static string GetDisplayValue(string? value, string? group = null)
+		{
+			if (string.IsNullOrEmpty(value)) return "—";
+
+			if (group != null && _displayValues.TryGetValue(group, out var groupValues))
+			{
+				if (groupValues.TryGetValue(value.ToLower(), out var display))
+					return display;
+			}
+
+			// Ищем по всем группам
+			foreach (var g in _displayValues.Values)
+			{
+				if (g.TryGetValue(value.ToLower(), out var display))
+					return display;
+			}
+
+			return value;
+		}
+
 		private class BadgeConfig
 		{
 			[JsonPropertyName("groups")]
-			public Dictionary<string, Dictionary<string, string>> Groups { get; set; } = new();
+			public Dictionary<string, Dictionary<string, string>> Groups { get; set; } = [];
 
 			[JsonPropertyName("defaults")]
-			public Dictionary<string, string> Defaults { get; set; } = new();
+			public Dictionary<string, string> Defaults { get; set; } = [];
+
+			[JsonPropertyName("displays")]
+			public Dictionary<string, Dictionary<string, string>> Displays { get; set; } = [];
 		}
 	}
 }

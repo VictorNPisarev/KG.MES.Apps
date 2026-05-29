@@ -1,9 +1,8 @@
+using KG.MES.Sales.Components;
 using KG.MES.Shared.Helpers;
 using KG.MES.Shared.Interfaces;
 using KG.MES.Shared.Models.Config;
-using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Services;
-using KG.MES.Supply.Components;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,10 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddHttpClient<ProductionApiService>();
 builder.Services.AddSingleton(LoadViewSettings());
-builder.Services.AddSingleton<SupplyService>();
 builder.Services.AddSingleton<IEventAggregator, EventAggregator>();
 builder.Services.AddScoped<ISocketService, SocketService>();
-
 
 var app = builder.Build();
 
@@ -45,13 +42,6 @@ async Task LoadDataAsync(IServiceProvider services, IWebHostEnvironment env)
 		var appConfig = Path.Combine(env.ContentRootPath, "Config", "BadgeStyles.json");
 		BadgeHelper.LoadConfig(baseConfig, appConfig);
 		logger.LogInformation("Badges config loaded successfully");
-
-		var supplyService = scope.ServiceProvider.GetRequiredService<SupplyService>();
-		var conditions = await supplyService.GetConditionsAsync();
-		//foreach (SupplyCondition c in conditions)
-		//{
-		//	BadgeHelper.RegisterStatusDisplayName(c.ConditionCode, c.DisplayName());
-		//}
 	}
 	catch (Exception ex)
 	{
