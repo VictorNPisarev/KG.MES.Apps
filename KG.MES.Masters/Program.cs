@@ -7,6 +7,18 @@ using KG.MES.Shared.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+	options.Cookie.Name = "AuthCookie_Masters";
+	options.Cookie.Path = "/masters";
+});
+
+builder.Services.AddSession(options =>
+{
+	options.Cookie.Name = ".Session.Masters";
+	options.Cookie.Path = "/masters";
+});
+
 // Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddHttpClient<ProductionApiService>();
@@ -17,6 +29,8 @@ builder.Services.AddScoped<ISocketService, SocketService>();
 
 
 var app = builder.Build();
+
+app.UsePathBase("/masters");
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -45,7 +59,8 @@ async Task LoadDataAsync(IServiceProvider services, IWebHostEnvironment env)
 	//Загрузка конфига для выделения цветом полей-ярлыков
 	try
 	{
-		var baseConfig = Path.Combine(env.ContentRootPath, "..", "KG.MES.Shared", "Config", "BadgeStyles.Base.json");
+		//var baseConfig = Path.Combine(env.ContentRootPath, "..", "KG.MES.Shared", "Config", "BadgeStyles.Base.json");
+		var baseConfig = Path.Combine(env.ContentRootPath, "Config", "BadgeStyles.Base.json");
 		var appConfig = Path.Combine(env.ContentRootPath, "Config", "BadgeStyles.json");
 
 		logger.LogInformation($"baseConfig: ${baseConfig}");

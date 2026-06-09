@@ -5,7 +5,7 @@ namespace KG.MES.Shared.Models.Dto
 	public class PaginatedResponse<T>
 	{
 		[JsonPropertyName("data")]
-		public List<T> Data { get; set; } = new();
+		public List<T> Data { get; set; } = [];
 
 		[JsonPropertyName("pagination")]
 		public PaginationInfo Pagination { get; set; } = new();

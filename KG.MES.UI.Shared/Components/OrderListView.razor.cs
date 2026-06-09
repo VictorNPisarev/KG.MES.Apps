@@ -24,9 +24,9 @@ public partial class OrderListView<TOrder> : ComponentBase
 	private string Title => Settings.Title;
 	private bool ShowActions => Settings.ShowActions;
 	private PaginatedResponse<TOrder> orders = new();
-	private List<WorkplaceDto> workplaces = new();
-	private List<ColumnInfo> columnInfos = new();
-	private List<ColumnSetting> columnSettings = new();
+	private List<WorkplaceDto> workplaces = [];
+	private List<ColumnInfo> columnInfos = [];
+	private List<ColumnSetting> columnSettings = [];
 	private bool isLoading = false;
 	private string searchNumber = "";
 	private int currentPage = 1;

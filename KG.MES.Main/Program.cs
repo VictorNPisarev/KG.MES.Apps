@@ -14,6 +14,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+	options.Cookie.Name = "AuthCookie_Main";
+	options.Cookie.Path = "/main";
+});
+
+builder.Services.AddSession(options =>
+{
+	options.Cookie.Name = ".Session.Main";
+	options.Cookie.Path = "/main";
+});
+
 // Add our custom services
 builder.Services.AddScoped<IXmlReaderService, XmlReaderService>();
 builder.Services.AddHttpClient<I1CExportService, OneCExportService>();
@@ -28,8 +40,6 @@ builder.Services.AddSingleton(LoadViewSettings());
 builder.Services.AddSingleton<SupplyService>();
 builder.Services.AddSingleton<IEventAggregator, EventAggregator>();
 builder.Services.AddScoped<ISocketService, SocketService>();
-
-
 
 var app = builder.Build();
 
@@ -56,11 +66,11 @@ async Task LoadDataAsync(IServiceProvider services, IWebHostEnvironment env)
 	var indicatorService = scope.ServiceProvider.GetRequiredService<SortingIndicatorService>();
 	var materialTypeConfigService = scope.ServiceProvider.GetRequiredService<MaterialTypeConfigService>();
 	var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-	
+
 	var indicatorsPath = Path.Combine(env.ContentRootPath, "Data", "sorting_indicators.json");
 	var categoriesPath = Path.Combine(env.ContentRootPath, "Data", "indicator_categories.json");
 	var materialTypeConfigPath = Path.Combine(env.ContentRootPath, "Data", "material_types_rules.json");
-	
+
 	try
 	{
 		await indicatorService.LoadAsync(indicatorsPath, categoriesPath);
@@ -78,9 +88,9 @@ async Task LoadDataAsync(IServiceProvider services, IWebHostEnvironment env)
 	{
 		var baseConfig = Path.Combine(env.ContentRootPath, "..", "KG.MES.Shared", "Config", "BadgeStyles.Base.json");
 		var appConfig = Path.Combine(env.ContentRootPath, "Config", "BadgeStyles.json");
-	
+
 		BadgeHelper.LoadConfig(baseConfig, appConfig);
-		
+
 		logger.LogInformation("Badges config loaded successfully");
 	}
 	catch (Exception ex)
@@ -98,7 +108,7 @@ OrderViewSettings LoadViewSettings()
 		var json = File.ReadAllText(settingsPath);
 		var appSettings = JsonSerializer.Deserialize<OrderViewSettings>(json,
 			new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new OrderViewSettings();
-		
+
 		return appSettings;
 	}
 	else

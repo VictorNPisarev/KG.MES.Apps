@@ -156,7 +156,7 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 			ClearState();
 			return;
 		}
-
+		
 		var success = await ApiService.UpdateOrderSuppliesAsync(OrderId, updates);
 
 		if (success)
@@ -166,12 +166,17 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 			originalSupplies = supplyDtos.Select(s => new OrderSupply(s, SupplyService)).ToList(); 
 			supplies = supplyDtos.Select(s => new OrderSupply(s, SupplyService)).ToList();
 
+
 			// Публикую событие
 			EventAggregator.Publish(new OrderCommentUpdatedEvent
 			{
 				OrderId = OrderId,
 				Source = "supply"
 			});
+		}
+		else
+		{
+			Console.Error.WriteLine("UpdateOrderSuppliesAsync fail");
 		}
 	}
 
