@@ -1,10 +1,9 @@
 using KG.MES.Shared.Helpers;
-using KG.MES.Shared.Interfaces;
-using KG.MES.Shared.Models.Config;
-using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Services;
 using KG.MES.Supply.Components;
+using KG.MES.Shared.Models.Config;
 using System.Text.Json;
+using KG.MES.Shared.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,18 +19,20 @@ builder.Services.AddSession(options =>
 	options.Cookie.Path = "/supply";
 });
 
+// Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddHttpClient<ProductionApiService>();
 builder.Services.AddSingleton(LoadViewSettings());
 builder.Services.AddSingleton<SupplyService>();
 builder.Services.AddSingleton<IEventAggregator, EventAggregator>();
-//builder.Services.AddScoped<ISocketService, SocketService>();
+builder.Services.AddScoped<ISocketService, SocketService>();
 
 
 var app = builder.Build();
 
 app.UsePathBase("/supply");
 
+// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
 	app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -41,8 +42,10 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 app.UseHttpsRedirection();
 
 app.UseAntiforgery();
+
 app.MapStaticAssets();
-app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+app.MapRazorComponents<App>()
+	.AddInteractiveServerRenderMode();
 
 await LoadDataAsync(app.Services, app.Environment);
 
@@ -53,20 +56,19 @@ async Task LoadDataAsync(IServiceProvider services, IWebHostEnvironment env)
 	using var scope = services.CreateScope();
 	var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
+	//Загрузка конфига для выделения цветом полей-ярлыков
 	try
 	{
 		//var baseConfig = Path.Combine(env.ContentRootPath, "..", "KG.MES.Shared", "Config", "BadgeStyles.Base.json");
 		var baseConfig = Path.Combine(env.ContentRootPath, "Config", "BadgeStyles.Base.json");
 		var appConfig = Path.Combine(env.ContentRootPath, "Config", "BadgeStyles.json");
-		BadgeHelper.LoadConfig(baseConfig, appConfig);
-		logger.LogInformation("Badges config loaded successfully");
 
-		var supplyService = scope.ServiceProvider.GetRequiredService<SupplyService>();
-		var conditions = await supplyService.GetConditionsAsync();
-		//foreach (SupplyCondition c in conditions)
-		//{
-		//	BadgeHelper.RegisterStatusDisplayName(c.ConditionCode, c.DisplayName());
-		//}
+		logger.LogInformation($"baseConfig: ${baseConfig}");
+		logger.LogInformation($"appConfig: ${appConfig}");
+
+		BadgeHelper.LoadConfig(baseConfig, appConfig);
+
+		logger.LogInformation("Badges config loaded successfully");
 	}
 	catch (Exception ex)
 	{
@@ -74,14 +76,20 @@ async Task LoadDataAsync(IServiceProvider services, IWebHostEnvironment env)
 	}
 }
 
+/// Загрузка настроек отображения списка заказов и карточки
 OrderViewSettings LoadViewSettings()
 {
 	var settingsPath = Path.Combine(builder.Environment.ContentRootPath, "Config", "orderViewSettings.json");
 	if (File.Exists(settingsPath))
 	{
 		var json = File.ReadAllText(settingsPath);
-		return JsonSerializer.Deserialize<OrderViewSettings>(json,
+		var appSettings = JsonSerializer.Deserialize<OrderViewSettings>(json,
 			new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new OrderViewSettings();
+
+		return appSettings;
 	}
-	return new OrderViewSettings();
+	else
+	{
+		return new OrderViewSettings();
+	}
 }
