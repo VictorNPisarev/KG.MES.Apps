@@ -23,7 +23,8 @@ builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddHttpClient<ProductionApiService>();
 builder.Services.AddSingleton(LoadViewSettings());
 builder.Services.AddScoped<IEventAggregator, EventAggregator>();
-builder.Services.AddScoped<ISocketService, SocketService>();
+//builder.Services.AddScoped<ISocketService, SocketService>();
+builder.Services.AddScoped<ISocketService, SignalRService>();
 
 var app = builder.Build();
 

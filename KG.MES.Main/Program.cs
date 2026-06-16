@@ -39,9 +39,12 @@ builder.Services.AddScoped<IDocumentItemFactory, DocumentItemFactory>();
 builder.Services.AddSingleton(LoadViewSettings());
 builder.Services.AddSingleton<SupplyService>();
 builder.Services.AddScoped<IEventAggregator, EventAggregator>();
-builder.Services.AddScoped<ISocketService, SocketService>();
+//builder.Services.AddScoped<ISocketService, SocketService>();
+builder.Services.AddScoped<ISocketService, SignalRService>();
 
 var app = builder.Build();
+
+app.UsePathBase("/main");
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

@@ -168,11 +168,11 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 
 
 			// Публикую событие
-			//EventAggregator.Publish(new OrderCommentUpdatedEvent
-			//{
-			//	OrderId = OrderId,
-			//	Source = "supply"
-			//});
+			EventAggregator.Publish(new OrderCommentUpdatedEvent
+			{
+				OrderId = OrderId,
+				Source = "supply"
+			});
 			//_ = Task.Run(() => EventAggregator.Publish(new OrderCommentUpdatedEvent
 			//{
 			//	OrderId = OrderId,
@@ -225,11 +225,11 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 			original?.Comment = supply.Comment;
 
 			// Публикую событие
-			//EventAggregator.Publish(new OrderCommentUpdatedEvent
-			//{
-			//	OrderId = OrderId,
-			//	Source = "supply"
-			//});
+			EventAggregator.Publish(new OrderCommentUpdatedEvent
+			{
+				OrderId = OrderId,
+				Source = "supply"
+			});
 			//_ = Task.Run(() => EventAggregator.Publish(new OrderCommentUpdatedEvent
 			//{
 			//	OrderId = OrderId,

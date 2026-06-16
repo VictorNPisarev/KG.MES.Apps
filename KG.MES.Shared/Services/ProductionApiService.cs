@@ -99,7 +99,7 @@ namespace KG.MES.Shared.Services
 		/// <param name="sortBy"></param>
 		/// <param name="sortOrder"></param>
 		/// <returns></returns>
-		public async Task<PaginatedResponse<ProductionOrderDto>> GetOrdersAsync(
+		public async Task<PaginatedResponse<OrderDto>> GetOrdersAsync(
 			string? status = null,
 			string? number = null,
 			int page = 1,
@@ -113,9 +113,9 @@ namespace KG.MES.Shared.Services
 				if (!string.IsNullOrEmpty(number))
 				{
 					var orderUrl = $"{BaseUrl}/orders/{Uri.EscapeDataString(number)}";
-					var order = await _httpClient.GetFromJsonAsync<ProductionOrderDto>(orderUrl);
+					var order = await _httpClient.GetFromJsonAsync<OrderDto>(orderUrl);
 
-					return new PaginatedResponse<ProductionOrderDto>
+					return new PaginatedResponse<OrderDto>
 					{
 						Data = order != null ? [order] : [],
 						Pagination = new PaginationInfo { Page = 1, Limit = 1, Total = order != null ? 1 : 0, Pages = 1 }
@@ -144,13 +144,13 @@ namespace KG.MES.Shared.Services
 
 				_logger.LogInformation("Fetching orders: {Url}", listUrl);
 
-				var response = await _httpClient.GetFromJsonAsync<PaginatedResponse<ProductionOrderDto>>(listUrl);
-				return response ?? new PaginatedResponse<ProductionOrderDto>();
+				var response = await _httpClient.GetFromJsonAsync<PaginatedResponse<OrderDto>>(listUrl);
+				return response ?? new PaginatedResponse<OrderDto>();
 			}
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, "Error fetching orders from API");
-				return new PaginatedResponse<ProductionOrderDto>();
+				return new PaginatedResponse<OrderDto>();
 			}
 		}
 
@@ -168,7 +168,7 @@ namespace KG.MES.Shared.Services
 			}
 		}
 
-		public async Task<PaginatedResponse<ProductionOrderDto>> GetOrdersAsync(
+		public async Task<PaginatedResponse<OrderDto>> GetOrdersAsync(
 			Guid? workplaceId = null,
 			string? orderNumber = null,
 			int page = 1,
@@ -209,13 +209,13 @@ namespace KG.MES.Shared.Services
 
 				_logger.LogInformation("Fetching orders: {Url}", listUrl);
 
-				var response = await _httpClient.GetFromJsonAsync<PaginatedResponse<ProductionOrderDto>>(listUrl);
-				return response ?? new PaginatedResponse<ProductionOrderDto>();
+				var response = await _httpClient.GetFromJsonAsync<PaginatedResponse<OrderDto>>(listUrl);
+				return response ?? new PaginatedResponse<OrderDto>();
 			}
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, "Error fetching orders");
-				return new PaginatedResponse<ProductionOrderDto>();
+				return new PaginatedResponse<OrderDto>();
 			}
 		}
 
@@ -257,11 +257,11 @@ namespace KG.MES.Shared.Services
 				?? new PaginatedResponse<T>();
 		}
 
-		public async Task<ProductionOrderDto?> GetOrderByIdAsync(Guid id)
+		public async Task<OrderDto?> GetOrderByIdAsync(Guid id)
 		{
 			try
 			{
-				return await _httpClient.GetFromJsonAsync<ProductionOrderDto>($"{BaseUrl}/orders/{id}");
+				return await _httpClient.GetFromJsonAsync<OrderDto>($"{BaseUrl}/orders/{id}");
 			}
 			catch (Exception ex)
 			{
@@ -684,7 +684,8 @@ namespace KG.MES.Shared.Services
 			try
 			{
 				var url = $"{BaseUrl}/traces/{productionOrderId}/workplace/{workplaceId}";
-				var body = new { status, userId = "admin-uuid", notes };
+				//var body = new { status, userId, notes };
+				var body = new {status};
 
 				var response = await _httpClient.PutAsJsonAsync(url, body);
 				return response.IsSuccessStatusCode;

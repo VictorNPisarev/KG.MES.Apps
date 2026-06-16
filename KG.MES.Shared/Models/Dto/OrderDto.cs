@@ -3,7 +3,7 @@ using KG.MES.Shared.Attributes;
 
 namespace KG.MES.Shared.Models.Dto
 {
-	public class ProductionOrderDto
+	public class OrderDto
 	{
 		[JsonPropertyName("id")]
 		[Column("ID", Visible = false)]

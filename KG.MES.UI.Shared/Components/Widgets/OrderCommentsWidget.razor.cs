@@ -71,11 +71,11 @@ public partial class OrderCommentsWidget : ComponentBase, ISavableWidget, IDispo
 			await LoadComments();
 
 			// Публикую событие
-			//EventAggregator.Publish(new OrderCommentUpdatedEvent
-			//{
-			//	OrderId = OrderId,
-			//	Source = "supply"
-			//});
+			EventAggregator.Publish(new OrderCommentUpdatedEvent
+			{
+				OrderId = OrderId,
+				Source = "supply"
+			});
 			//_ = Task.Run(() => EventAggregator.Publish(new OrderCommentUpdatedEvent
 			//{
 			//	OrderId = OrderId,
