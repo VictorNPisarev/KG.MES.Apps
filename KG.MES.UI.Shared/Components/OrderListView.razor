@@ -42,13 +42,6 @@
 				   @onkeyup="OnSearchKeyUp" />
 		</div>
 		<div class="col-md-2">
-			<select class="form-select" @bind="pageSize" @bind:after="OnPageSizeChanged">
-				<option value="20">20</option>
-				<option value="50">50</option>
-				<option value="100">100</option>
-			</select>
-		</div>
-		<div class="col-md-2">
 			<button class="btn btn-primary w-100" @onclick="ApplyFilters">
 				<i class="bi bi-search"></i> Найти
 			</button>
@@ -195,6 +188,21 @@
 
 		<!-- Пагинация -->
 		<div class="d-flex justify-content-between align-items-center mt-3">
+			<div class="d-flex align-items-center gap-2">
+				<select class="form-select form-select-sm" style="width: auto;" @bind="pageSize"
+					@bind:after="OnPageSizeChanged">
+					<option value="20">20</option>
+					<option value="50">50</option>
+					<option value="100">100</option>
+				</select>
+				<span class="text-muted">записей на странице</span>
+			</div>
+
+			<div class="text-muted">
+				Показано @((orders.Page - 1) * orders.Limit + 1)-@(Math.Min(orders.Page * orders.Limit, orders.Total)) из
+				@orders.Total
+			</div>
+
 			<nav>
 				<ul class="pagination mb-0">
 					<li class="page-item @(orders.HasPreviousPage ? "" : "disabled")">

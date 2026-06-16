@@ -7,13 +7,28 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+	options.Cookie.Name = "AuthCookie_Sales";
+	options.Cookie.Path = "/sales";
+});
+
+builder.Services.AddSession(options =>
+{
+	options.Cookie.Name = ".Session.Sales";
+	options.Cookie.Path = "/sales";
+});
+
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddHttpClient<ProductionApiService>();
 builder.Services.AddSingleton(LoadViewSettings());
-builder.Services.AddSingleton<IEventAggregator, EventAggregator>();
-builder.Services.AddScoped<ISocketService, SocketService>();
+builder.Services.AddScoped<IEventAggregator, EventAggregator>();
+//builder.Services.AddScoped<ISocketService, SocketService>();
+builder.Services.AddScoped<ISocketService, SignalRService>();
 
 var app = builder.Build();
+
+app.UsePathBase("/sales");
 
 if (!app.Environment.IsDevelopment())
 {
@@ -38,7 +53,8 @@ async Task LoadDataAsync(IServiceProvider services, IWebHostEnvironment env)
 
 	try
 	{
-		var baseConfig = Path.Combine(env.ContentRootPath, "..", "KG.MES.Shared", "Config", "BadgeStyles.Base.json");
+		//var baseConfig = Path.Combine(env.ContentRootPath, "..", "KG.MES.Shared", "Config", "BadgeStyles.Base.json");
+		var baseConfig = Path.Combine(env.ContentRootPath, "Config", "BadgeStyles.Base.json");
 		var appConfig = Path.Combine(env.ContentRootPath, "Config", "BadgeStyles.json");
 		BadgeHelper.LoadConfig(baseConfig, appConfig);
 		logger.LogInformation("Badges config loaded successfully");
