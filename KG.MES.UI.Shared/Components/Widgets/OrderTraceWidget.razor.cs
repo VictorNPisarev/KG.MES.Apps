@@ -18,7 +18,10 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 	private OrderTraceDto? backupTrace;
 	private bool isLoading = true;
 	private bool EditMode;
-	private Dictionary<string, bool> openDropdowns = new();
+	private Dictionary<string, bool> openDropdowns = [];
+	private bool isCompleting;
+	private bool isDeparturing;
+
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -55,7 +58,7 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 				WorkplaceId = w.WorkplaceId,
 				WorkplaceName = w.WorkplaceName,
 				Status = w.Status
-			}).ToList() ?? new()
+			}).ToList() ?? []
 		};
 		EditMode = true;
 	}
@@ -104,6 +107,38 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 	private void CloseDropdown(string key)
 	{
 		openDropdowns.Remove(key);
+	}
+
+	private async Task CompleteOrder()
+	{
+		isCompleting = true;
+		StateHasChanged();
+
+		var success = await ApiService.SetOrderCompleteAsync(OrderId);
+
+		if (success)
+		{
+			orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
+		}
+
+		isCompleting = false;
+		StateHasChanged();
+	}
+
+	private async Task DepartureOrder()
+	{
+		isDeparturing = true;
+		StateHasChanged();
+
+		var success = await ApiService.SetOrderDepartureAsync(OrderId);
+
+		if (success)
+		{
+			orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
+		}
+
+		isDeparturing = false;
+		StateHasChanged();
 	}
 
 	public bool HasUnsavedChanges() => EditMode;

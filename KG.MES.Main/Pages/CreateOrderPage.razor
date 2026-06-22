@@ -53,15 +53,15 @@
 					<div class="row g-3">
 						<div class="col-md-3">
 							<label class="form-label">Дата передачи в производство</label>
-							<input type="date" class="form-control" @bind="StartDate" @bind:format="yyyy-MM-dd" />
+							<input type="date" class="form-control" @bind="StartDate" @bind:format="yyyy-MM-dd" @onblur="OnParametersChanged" />
 						</div>
 						<div class="col-md-2">
 							<label class="form-label">Согласованный срок (дн.)</label>
-							<input type="number" class="form-control" @bind="ApprovedDays" min="0" />
+							<input type="number" class="form-control" @bind="ApprovedDays" min="0" @onblur="OnParametersChanged" />
 						</div>
 						<div class="col-md-2">
 							<label class="form-label">Несогласованный срок (дн.)</label>
-							<input type="number" class="form-control" @bind="UnapprovedDays" min="0" />
+							<input type="number" class="form-control" @bind="UnapprovedDays" min="0"/>
 						</div>
 						<div class="col-md-2">
 							<label class="form-label">Плановая готовность</label>
@@ -94,7 +94,7 @@
 								<div class="form-check">
 									<input type="checkbox" class="visually-hidden" id="isEconom" @bind="IsEconom" />
 									<label class="form-check-label d-flex align-items-center gap-2" for="isEconom" style="cursor: pointer;">
-										<i class="bi @(IsEconom ? "bi-piggy-bank-fill text-primary" : "bi-piggy-bank text-secondary")" 
+										<i class="bi @(IsEconom ? "bi-piggy-bank-fill text-primary" : "bi-piggy-bank text-secondary")"
 										   style="font-size: 1.2rem; transition: all 0.2s;"></i>
 										<span>Эконом</span>
 									</label>
@@ -102,7 +102,7 @@
 								<div class="form-check">
 									<input type="checkbox" class="visually-hidden" id="isClaim" @bind="IsClaim" />
 									<label class="form-check-label d-flex align-items-center gap-2" for="isClaim" style="cursor: pointer;">
-										<i class="bi @(IsClaim ? "bi-exclamation-triangle-fill text-danger" : "bi-triangle text-secondary")" 
+										<i class="bi @(IsClaim ? "bi-exclamation-triangle-fill text-danger" : "bi-triangle text-secondary")"
 										   style="font-size: 1.2rem; transition: all 0.2s;"></i>
 										<span>Рекламация</span>
 									</label>
@@ -110,7 +110,7 @@
 								<div class="form-check">
 									<input type="checkbox" class="visually-hidden" id="isOnlyPaid" @bind="IsOnlyPaid" />
 									<label class="form-check-label d-flex align-items-center gap-2" for="isOnlyPaid" style="cursor: pointer;">
-										<i class="bi @(IsOnlyPaid ? "bi-cash-stack text-success" : "bi-cash-coin text-secondary")" 
+										<i class="bi @(IsOnlyPaid ? "bi-cash-stack text-success" : "bi-cash-coin text-secondary")"
 										   style="font-size: 1.2rem; transition: all 0.2s;"></i>
 										<span>Оплачен, но не запущен</span>
 									</label>
@@ -118,7 +118,7 @@
 								<div class="form-check">
 									<input type="checkbox" class="visually-hidden" id="isTwoSidePaint" @bind="IsTwoSidePaint" />
 									<label class="form-check-label d-flex align-items-center gap-2" for="isTwoSidePaint" style="cursor: pointer;">
-										<i class="bi @(IsTwoSidePaint ? "bi-arrows-collapse-vertical icon-double-paint-classic" : "bi-arrows-collapse-vertical text-secondary opacity-50")" 
+										<i class="bi @(IsTwoSidePaint ? "bi-arrows-collapse-vertical icon-double-paint-classic" : "bi-arrows-collapse-vertical text-secondary opacity-50")"
 										style="font-size: 1.2rem;"></i>
 										<span>Двухстор. покраска</span>
 									</label>

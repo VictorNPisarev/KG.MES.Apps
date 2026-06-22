@@ -73,6 +73,27 @@ else if (orderTrace?.WorkplaceTraces != null && orderTrace.WorkplaceTraces.Any()
 					}
 				</tbody>
 			</table>
+			@if (EditMode)
+			{
+				<div class="d-flex gap-2 mt-3 pt-2 border-top">
+					<button class="btn btn-sm btn-outline-success" @onclick="CompleteOrder"
+						disabled="@(isCompleting || isDeparturing)">
+						@if (isCompleting)
+						{
+							<span class="spinner-border spinner-border-sm me-1"></span>
+						}
+						Готов
+					</button>
+					<button class="btn btn-sm btn-outline-dark" @onclick="DepartureOrder"
+						disabled="@(isCompleting || isDeparturing)">
+						@if (isDeparturing)
+						{
+							<span class="spinner-border spinner-border-sm me-1"></span>
+						}
+						Отгружен
+					</button>
+				</div>
+			}
 		</div>
 	</div>
 }
