@@ -14,8 +14,8 @@ public partial class CreateOrderPage
 	private double PlateArea { get; set; }
 	private string Machine { get; set; } = "";
 	private DateTime StartDate { get; set; } = DateTime.Now;
-	private int ApprovedDays { get; set; } = 55;
-	private int UnapprovedDays { get; set; } = 55;
+	private int ApprovedDays { get; set; }
+	private int UnapprovedDays { get; set; }
 	private DateTime? So8Date { get; set; }
 	private string Comment { get; set; } = "";
 	private bool IsEconom { get; set; }
@@ -87,6 +87,10 @@ public partial class CreateOrderPage
 				IsEconom = false;
 				IsClaim = false;
 				IsOnlyPaid = false;
+				ReadyDate = null;
+				ApprovedDays = 0;
+				UnapprovedDays = 0;
+				So8Date = null;
 			}
 			else
 			{

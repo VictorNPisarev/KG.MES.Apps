@@ -51,7 +51,7 @@ API: http://192.168.0.179:3000/api
 
 ```bash
 #в папке проекта
-dotnet publish -c Release -o C:\DEVelop\KG.MES.DeployTest\portal\main
+dotnet publish -c Release -o \\server\inetpub\wwwroot\Kg.Mes.Apps\main
 ```
 
 Файл app_offline.htm (Элегантный, без остановки пула)
