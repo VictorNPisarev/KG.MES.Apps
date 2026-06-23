@@ -6,228 +6,177 @@ using KG.MES.Shared.Models.Dto;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace KG.MES.Shared.Services
+namespace KG.MES.Shared.Services;
+
+public class ProductionApiService
 {
-	public class ProductionApiService
+	private readonly HttpClient _httpClient;
+	private readonly ILogger<ProductionApiService> _logger;
+	private readonly IConfiguration _configuration;
+
+	public ProductionApiService(
+		HttpClient httpClient,
+		ILogger<ProductionApiService> logger,
+		IConfiguration configuration)
 	{
-		private readonly HttpClient _httpClient;
-		private readonly ILogger<ProductionApiService> _logger;
-		private readonly IConfiguration _configuration;
+		_httpClient = httpClient;
+		_logger = logger;
+		_configuration = configuration;
+	}
 
-		public ProductionApiService(
-			HttpClient httpClient,
-			ILogger<ProductionApiService> logger,
-			IConfiguration configuration)
+	private string BaseUrl => _configuration["ProductionApi:BaseUrl"] ?? "http://localhost:5000/api";
+
+	private int TimeoutSeconds => _configuration.GetValue<int>("ProductionApi:TimeoutSeconds", 30);
+
+	private int RetryCount => _configuration.GetValue<int>("ProductionApi:RetryCount", 3);
+
+	/// <summary>
+	/// POST запись нового заказ в бд
+	/// </summary>
+	/// <param name="order"></param>
+	/// <param name="dto"></param>
+	/// <returns></returns>
+	public async Task<bool> ExportToProductionAsync(ProductionOrderExportDto dto)
+	{
+		var retries = 0;
+
+		while (retries < RetryCount)
 		{
-			_httpClient = httpClient;
-			_logger = logger;
-			_configuration = configuration;
-		}
-
-		private string BaseUrl => _configuration["ProductionApi:BaseUrl"] ?? "http://localhost:5000/api";
-
-		private int TimeoutSeconds => _configuration.GetValue<int>("ProductionApi:TimeoutSeconds", 30);
-
-		private int RetryCount => _configuration.GetValue<int>("ProductionApi:RetryCount", 3);
-
-		/// <summary>
-		/// POST запись нового заказ в бд
-		/// </summary>
-		/// <param name="order"></param>
-		/// <param name="dto"></param>
-		/// <returns></returns>
-		public async Task<bool> ExportToProductionAsync(ProductionOrderExportDto dto)
-		{
-			var retries = 0;
-
-			while (retries < RetryCount)
+			try
 			{
-				try
+				using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(TimeoutSeconds));
+
+				var json = JsonSerializer.Serialize(dto, new JsonSerializerOptions
 				{
-					using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(TimeoutSeconds));
+					PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+				});
 
-					var json = JsonSerializer.Serialize(dto, new JsonSerializerOptions
-					{
-						PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-					});
+				var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-					var content = new StringContent(json, Encoding.UTF8, "application/json");
+				var response = await _httpClient.PostAsync($"{BaseUrl}/orders/create", content, cts.Token);
 
-					var response = await _httpClient.PostAsync($"{BaseUrl}/orders/create", content, cts.Token);
-
-					if (response.IsSuccessStatusCode)
-					{
-						_logger.LogInformation("Order {OrderNumber} sent to production successfully", dto.OrderNumber);
-						return true;
-					}
-
-					var error = await response.Content.ReadAsStringAsync(cts.Token);
-					_logger.LogWarning("Attempt {Retry}/{RetryCount} failed: {StatusCode} - {Error}",
-						retries + 1, RetryCount, response.StatusCode, error);
-				}
-				catch (TaskCanceledException)
+				if (response.IsSuccessStatusCode)
 				{
-					_logger.LogWarning("Attempt {Retry}/{RetryCount} timeout after {Timeout} seconds",
-						retries + 1, RetryCount, TimeoutSeconds);
-				}
-				catch (Exception ex)
-				{
-					_logger.LogWarning(ex, "Attempt {Retry}/{RetryCount} failed", retries + 1, RetryCount);
+					_logger.LogInformation("Order {OrderNumber} sent to production successfully", dto.OrderNumber);
+					return true;
 				}
 
-				retries++;
-
-				if (retries < RetryCount)
-				{
-					await Task.Delay(1000 * retries); // экспоненциальная задержка
-				}
+				var error = await response.Content.ReadAsStringAsync(cts.Token);
+				_logger.LogWarning("Attempt {Retry}/{RetryCount} failed: {StatusCode} - {Error}",
+					retries + 1, RetryCount, response.StatusCode, error);
+			}
+			catch (TaskCanceledException)
+			{
+				_logger.LogWarning("Attempt {Retry}/{RetryCount} timeout after {Timeout} seconds",
+					retries + 1, RetryCount, TimeoutSeconds);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogWarning(ex, "Attempt {Retry}/{RetryCount} failed", retries + 1, RetryCount);
 			}
 
-			_logger.LogError("Failed to send order {OrderNumber} to production after {RetryCount} attempts",
-				dto.OrderNumber, RetryCount);
+			retries++;
 
+			if (retries < RetryCount)
+			{
+				await Task.Delay(1000 * retries); // экспоненциальная задержка
+			}
+		}
+
+		_logger.LogError("Failed to send order {OrderNumber} to production after {RetryCount} attempts",
+			dto.OrderNumber, RetryCount);
+
+		return false;
+	}
+
+	/// <summary>
+	/// GET заказов
+	/// </summary>
+	/// <param name="status"></param>
+	/// <param name="number"></param>
+	/// <param name="page"></param>
+	/// <param name="limit"></param>
+	/// <param name="sortBy"></param>
+	/// <param name="sortOrder"></param>
+	/// <returns></returns>
+	public async Task<PaginatedResponse<OrderDto>> GetOrdersAsync(
+		string? status = null,
+		string? number = null,
+		int page = 1,
+		int limit = 50,
+		string? sortBy = null,
+		string? sortOrder = null)
+	{
+		try
+		{
+			// Поиск по номеру
+			if (!string.IsNullOrEmpty(number))
+			{
+				var orderUrl = $"{BaseUrl}/orders/{Uri.EscapeDataString(number)}";
+				var order = await _httpClient.GetFromJsonAsync<OrderDto>(orderUrl);
+
+				return new PaginatedResponse<OrderDto>
+				{
+					Data = order != null ? [order] : [],
+					Pagination = new PaginationInfo { Page = 1, Limit = 1, Total = order != null ? 1 : 0, Pages = 1 }
+				};
+			}
+
+			// Список с пагинацией и сортировкой
+			/*var endpoint = status != null
+				? $"orders/{Uri.EscapeDataString(status.ToString() ?? string.Empty)}"
+				: "orders/all";*/
+			var endpoint = "orders/all";
+
+			var queryParams = new List<string>
+			{
+				$"page={page}",
+				$"limit={limit}"
+			};
+
+			if (!string.IsNullOrEmpty(sortBy))
+				queryParams.Add($"sortBy={Uri.EscapeDataString(sortBy)}");
+
+			if (!string.IsNullOrEmpty(sortOrder))
+				queryParams.Add($"sortOrder={Uri.EscapeDataString(sortOrder)}");
+
+			var listUrl = $"{BaseUrl}/{endpoint}?" + string.Join("&", queryParams);
+
+			_logger.LogInformation("Fetching orders: {Url}", listUrl);
+
+			var response = await _httpClient.GetFromJsonAsync<PaginatedResponse<OrderDto>>(listUrl);
+			return response ?? new PaginatedResponse<OrderDto>();
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching orders from API");
+			return new PaginatedResponse<OrderDto>();
+		}
+	}
+
+	public async Task<bool> TestConnectionAsync()
+	{
+		try
+		{
+			using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+			var response = await _httpClient.GetAsync($"{BaseUrl}/health", cts.Token);
+			return response.IsSuccessStatusCode;
+		}
+		catch
+		{
 			return false;
 		}
+	}
 
-		/// <summary>
-		/// GET заказов
-		/// </summary>
-		/// <param name="status"></param>
-		/// <param name="number"></param>
-		/// <param name="page"></param>
-		/// <param name="limit"></param>
-		/// <param name="sortBy"></param>
-		/// <param name="sortOrder"></param>
-		/// <returns></returns>
-		public async Task<PaginatedResponse<OrderDto>> GetOrdersAsync(
-			string? status = null,
-			string? number = null,
-			int page = 1,
-			int limit = 50,
-			string? sortBy = null,
-			string? sortOrder = null)
-		{
-			try
-			{
-				// Поиск по номеру
-				if (!string.IsNullOrEmpty(number))
-				{
-					var orderUrl = $"{BaseUrl}/orders/{Uri.EscapeDataString(number)}";
-					var order = await _httpClient.GetFromJsonAsync<OrderDto>(orderUrl);
-
-					return new PaginatedResponse<OrderDto>
-					{
-						Data = order != null ? [order] : [],
-						Pagination = new PaginationInfo { Page = 1, Limit = 1, Total = order != null ? 1 : 0, Pages = 1 }
-					};
-				}
-
-				// Список с пагинацией и сортировкой
-				/*var endpoint = status != null
-					? $"orders/{Uri.EscapeDataString(status.ToString() ?? string.Empty)}"
-					: "orders/all";*/
-				var endpoint = "orders/all";
-
-				var queryParams = new List<string>
-				{
-					$"page={page}",
-					$"limit={limit}"
-				};
-
-				if (!string.IsNullOrEmpty(sortBy))
-					queryParams.Add($"sortBy={Uri.EscapeDataString(sortBy)}");
-
-				if (!string.IsNullOrEmpty(sortOrder))
-					queryParams.Add($"sortOrder={Uri.EscapeDataString(sortOrder)}");
-
-				var listUrl = $"{BaseUrl}/{endpoint}?" + string.Join("&", queryParams);
-
-				_logger.LogInformation("Fetching orders: {Url}", listUrl);
-
-				var response = await _httpClient.GetFromJsonAsync<PaginatedResponse<OrderDto>>(listUrl);
-				return response ?? new PaginatedResponse<OrderDto>();
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching orders from API");
-				return new PaginatedResponse<OrderDto>();
-			}
-		}
-
-		public async Task<bool> TestConnectionAsync()
-		{
-			try
-			{
-				using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-				var response = await _httpClient.GetAsync($"{BaseUrl}/health", cts.Token);
-				return response.IsSuccessStatusCode;
-			}
-			catch
-			{
-				return false;
-			}
-		}
-
-		public async Task<PaginatedResponse<OrderDto>> GetOrdersAsync(
-			Guid? workplaceId = null,
-			string? orderNumber = null,
-			int page = 1,
-			int limit = 50,
-			string? sortBy = null,
-			string? sortOrder = null)
-		{
-			try
-			{
-				var queryParams = new Dictionary<string, string>
-				{
-					["page"] = page.ToString(),
-					["limit"] = limit.ToString()
-				};
-
-				var endpoint = "orders/all";
-
-				if (workplaceId.HasValue && workplaceId != Guid.Empty)
-				{
-					endpoint = "orders";
-					queryParams["workplaceId"] = workplaceId.Value.ToString();
-				}
-
-				if (!string.IsNullOrEmpty(orderNumber))
-				{
-					endpoint = "orders";
-					queryParams["number"] = Uri.EscapeDataString(orderNumber);
-				}
-
-				if (!string.IsNullOrEmpty(sortBy))
-					queryParams["sortBy"] = Uri.EscapeDataString(sortBy);
-
-				if (!string.IsNullOrEmpty(sortOrder))
-					queryParams["sortOrder"] = Uri.EscapeDataString(sortOrder);
-
-				var query = string.Join("&", queryParams.Select(kv => $"{kv.Key}={kv.Value}"));
-				var listUrl = $"{BaseUrl}/{endpoint}?" + query;//string.Join("&", queryParams);
-
-				_logger.LogInformation("Fetching orders: {Url}", listUrl);
-
-				var response = await _httpClient.GetFromJsonAsync<PaginatedResponse<OrderDto>>(listUrl);
-				return response ?? new PaginatedResponse<OrderDto>();
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching orders");
-				return new PaginatedResponse<OrderDto>();
-			}
-		}
-
-		public async Task<PaginatedResponse<T>> GetOrdersAsync<T>(
-			string endpoint,  // "orders/all" или "orders/masters" или "orders/supply"
-			//string? status = null,
-			Guid? workplaceId = null,
-			string? orderNumber = null,
-			int page = 1,
-			int limit = 50,
-			string? sortBy = null,
-			string? sortOrder = null)
+	public async Task<PaginatedResponse<OrderDto>> GetOrdersAsync(
+		Guid? workplaceId = null,
+		string? orderNumber = null,
+		int page = 1,
+		int limit = 50,
+		string? sortBy = null,
+		string? sortOrder = null)
+	{
+		try
 		{
 			var queryParams = new Dictionary<string, string>
 			{
@@ -235,466 +184,601 @@ namespace KG.MES.Shared.Services
 				["limit"] = limit.ToString()
 			};
 
-			//if (!string.IsNullOrEmpty(status))
-			//	queryParams["status"] = status;
+			var endpoint = "orders/all";
 
 			if (workplaceId.HasValue && workplaceId != Guid.Empty)
+			{
+				endpoint = "orders";
 				queryParams["workplaceId"] = workplaceId.Value.ToString();
+			}
 
 			if (!string.IsNullOrEmpty(orderNumber))
-				queryParams["orderNumber"] = orderNumber;
+			{
+				endpoint = "orders";
+				queryParams["number"] = Uri.EscapeDataString(orderNumber);
+			}
 
 			if (!string.IsNullOrEmpty(sortBy))
-				queryParams["sortBy"] = sortBy;
+				queryParams["sortBy"] = Uri.EscapeDataString(sortBy);
 
 			if (!string.IsNullOrEmpty(sortOrder))
-				queryParams["sortOrder"] = sortOrder;
+				queryParams["sortOrder"] = Uri.EscapeDataString(sortOrder);
 
 			var query = string.Join("&", queryParams.Select(kv => $"{kv.Key}={kv.Value}"));
-			var url = $"{BaseUrl}/{endpoint}?{query}";
+			var listUrl = $"{BaseUrl}/{endpoint}?" + query;//string.Join("&", queryParams);
 
-			return await _httpClient.GetFromJsonAsync<PaginatedResponse<T>>(url)
-				?? new PaginatedResponse<T>();
+			_logger.LogInformation("Fetching orders: {Url}", listUrl);
+
+			var response = await _httpClient.GetFromJsonAsync<PaginatedResponse<OrderDto>>(listUrl);
+			return response ?? new PaginatedResponse<OrderDto>();
 		}
-
-		public async Task<OrderDto?> GetOrderByIdAsync(Guid id)
+		catch (Exception ex)
 		{
-			try
-			{
-				return await _httpClient.GetFromJsonAsync<OrderDto>($"{BaseUrl}/orders/{id}");
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching order {Id}", id);
-				return null;
-			}
+			_logger.LogError(ex, "Error fetching orders");
+			return new PaginatedResponse<OrderDto>();
 		}
+	}
 
-		public async Task<List<WorkplaceDto>> GetActiveWorkplacesAsync()
+	public async Task<PaginatedResponse<T>> GetOrdersAsync<T>(
+		string endpoint,  // "orders/all" или "orders/masters" или "orders/supply"
+		//string? status = null,
+		Guid? workplaceId = null,
+		string? orderNumber = null,
+		int page = 1,
+		int limit = 50,
+		string? sortBy = null,
+		string? sortOrder = null)
+	{
+		var queryParams = new Dictionary<string, string>
 		{
-			try
-			{
-				var response = await _httpClient.GetFromJsonAsync<List<WorkplaceDto>>($"{BaseUrl}/workplaces/active");
-				return response ?? [];
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching active workplaces");
-				return [];
-			}
+			["page"] = page.ToString(),
+			["limit"] = limit.ToString()
+		};
+
+		//if (!string.IsNullOrEmpty(status))
+		//	queryParams["status"] = status;
+
+		if (workplaceId.HasValue && workplaceId != Guid.Empty)
+			queryParams["workplaceId"] = workplaceId.Value.ToString();
+
+		if (!string.IsNullOrEmpty(orderNumber))
+			queryParams["orderNumber"] = orderNumber;
+
+		if (!string.IsNullOrEmpty(sortBy))
+			queryParams["sortBy"] = sortBy;
+
+		if (!string.IsNullOrEmpty(sortOrder))
+			queryParams["sortOrder"] = sortOrder;
+
+		var query = string.Join("&", queryParams.Select(kv => $"{kv.Key}={kv.Value}"));
+		var url = $"{BaseUrl}/{endpoint}?{query}";
+
+		return await _httpClient.GetFromJsonAsync<PaginatedResponse<T>>(url)
+			?? new PaginatedResponse<T>();
+	}
+
+	public async Task<OrderDto?> GetOrderByIdAsync(Guid id)
+	{
+		try
+		{
+			return await _httpClient.GetFromJsonAsync<OrderDto>($"{BaseUrl}/orders/{id}");
 		}
-
-		// GET /api/workplaces/all
-		public async Task<List<WorkplaceDto>> GetAllWorkplacesAsync()
+		catch (Exception ex)
 		{
-			try
-			{
-				var response = await _httpClient.GetFromJsonAsync<List<WorkplaceDto>>($"{BaseUrl}/workplaces/all");
-				return response ?? [];
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching all workplaces");
-				return [];
-			}
+			_logger.LogError(ex, "Error fetching order {Id}", id);
+			return null;
 		}
+	}
 
-		// GET /api/workplaces/{id}
-		public async Task<WorkplaceDto?> GetWorkplaceByIdAsync(Guid id)
+	public async Task<List<WorkplaceDto>> GetActiveWorkplacesAsync()
+	{
+		try
 		{
-			try
-			{
-				return await _httpClient.GetFromJsonAsync<WorkplaceDto>($"{BaseUrl}/workplaces/{id}");
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching workplace {Id}", id);
-				return null;
-			}
+			var response = await _httpClient.GetFromJsonAsync<List<WorkplaceDto>>($"{BaseUrl}/workplaces/active");
+			return response ?? [];
 		}
-
-		public async Task<bool> UpdateOrderStatusAsync(Guid id, string status)
+		catch (Exception ex)
 		{
-			try
+			_logger.LogError(ex, "Error fetching active workplaces");
+			return [];
+		}
+	}
+
+	// GET /api/workplaces/all
+	public async Task<List<WorkplaceDto>> GetAllWorkplacesAsync()
+	{
+		try
+		{
+			var response = await _httpClient.GetFromJsonAsync<List<WorkplaceDto>>($"{BaseUrl}/workplaces/all");
+			return response ?? [];
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching all workplaces");
+			return [];
+		}
+	}
+
+	// GET /api/workplaces/{id}
+	public async Task<WorkplaceDto?> GetWorkplaceByIdAsync(Guid id)
+	{
+		try
+		{
+			return await _httpClient.GetFromJsonAsync<WorkplaceDto>($"{BaseUrl}/workplaces/{id}");
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching workplace {Id}", id);
+			return null;
+		}
+	}
+
+	public async Task<bool> UpdateOrderStatusAsync(Guid id, string status)
+	{
+		try
+		{
+			var response = await _httpClient.PutAsJsonAsync(
+				$"{BaseUrl}/orders/{id}/status",
+				new { status });
+			return response.IsSuccessStatusCode;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error updating status for order {Id}", id);
+			return false;
+		}
+	}
+
+	public async Task<bool> UpdateMasterNotesAsync(Guid id, string notes)
+	{
+		try
+		{
+			var response = await _httpClient.PutAsJsonAsync(
+				$"{BaseUrl}/orders/{id}/notes",
+				new { masterNotes = notes });
+			return response.IsSuccessStatusCode;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error updating notes for order {Id}", id);
+			return false;
+		}
+	}
+
+	/// <summary>
+	/// Запрос к API для получекния подробной информации для конкретного заказа
+	/// с указание Api endpoint
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="endpoint"></param>
+	/// <param name="id"></param>
+	/// <returns></returns>
+	public async Task<T?> GetOrderByIdAsync<T>(string endpoint, Guid id)
+	{
+		try
+		{
+			var url = $"{BaseUrl}/{endpoint}/{id}";
+			return await _httpClient.GetFromJsonAsync<T>(url);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching order {Id}", id);
+			return default;
+		}
+	}
+
+	/// <summary>
+	/// Получение трекинга заказа на производстве
+	/// </summary>
+	/// <param name="orderId"></param>
+	/// <returns></returns>
+	public async Task<OrderTraceDto?> GetOrderTraceAsync(Guid orderId)
+	{
+		try
+		{
+			var url = $"{BaseUrl}/orders/{orderId}/trace";
+			var response = await _httpClient.GetFromJsonAsync<OrderTraceResponse>(url);
+			return response?.OrderTraces?.FirstOrDefault();
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching trace for order {Id}", orderId);
+			return null;
+		}
+	}
+
+	/// <summary>
+	/// Получение данных снабжения заказа
+	/// </summary>
+	/// <param name="orderId"></param>
+	/// <returns></returns>
+	public async Task<List<OrderSupplyDto>> GetOrderSuppliesAsync(Guid orderId)
+	{
+		try
+		{
+			var url = $"{BaseUrl}/orders/{orderId}/supplies";
+			var supplies = await _httpClient.GetFromJsonAsync<List<OrderSupplyDto>>(url)
+							?? [];
+
+			return supplies;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching supplies for order {Id}", orderId);
+			return [];
+		}
+	}
+
+	public async Task<bool> UpdateOrderSuppliesAsync(Guid orderId, List<object> supplies)
+	{
+		try
+		{
+			var url = $"{BaseUrl}/orders/{orderId}/supplies";
+			Console.WriteLine($"UpdateOrderSuppliesAsync url: {url}");
+			var body = new { supplies };
+			
+			var response = await _httpClient.PutAsJsonAsync(url, body);
+			return response.IsSuccessStatusCode;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error updating supplies for order {Id}", orderId);
+			return false;
+		}
+	}
+
+	public async Task<List<SupplyConditionDto>> GetSupplyConditionsAsync()
+	{
+		try
+		{
+			var url = $"{BaseUrl}/supplies/conditions";
+			return await _httpClient.GetFromJsonAsync<List<SupplyConditionDto>>(url)
+					?? [];
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching supply conditions");
+			return [];
+		}
+	}
+
+	public async Task<List<SupplyTypeDto>> GetSupplyTypesAsync()
+	{
+		try
+		{
+			var url = $"{BaseUrl}/supplies/types";
+			return await _httpClient.GetFromJsonAsync<List<SupplyTypeDto>>(url)
+					?? [];
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching supply types");
+			return [];
+		}
+	}
+
+	public async Task<List<OrderCommentViewModel>> GetOrderCommentsAsync(Guid orderId)
+	{
+		try
+		{
+			var url = $"{BaseUrl}/orders/{orderId}/comments";
+			return await _httpClient.GetFromJsonAsync<List<OrderCommentViewModel>>(url)
+					?? new List<OrderCommentViewModel>();
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching comments for order {Id}", orderId);
+			return new List<OrderCommentViewModel>();
+		}
+	}
+
+	public async Task<bool> SaveSupplyCommentAsync(Guid orderId, OrderCommentViewModel comment)
+	{
+		try
+		{
+			Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
+			HttpResponseMessage response;
+			if (comment.IsNew)
 			{
-				var response = await _httpClient.PutAsJsonAsync(
-					$"{BaseUrl}/orders/{id}/status",
-					new { status });
+				// POST /api/orders/{orderId}/comments
+				response = await _httpClient.PostAsJsonAsync(
+					$"{BaseUrl}/orders/{orderId}/OrderSupplyComments",
+					new { content = comment.Content });
+
 				return response.IsSuccessStatusCode;
+
 			}
-			catch (Exception ex)
+			else
 			{
-				_logger.LogError(ex, "Error updating status for order {Id}", id);
-				return false;
+				return await UpdateCommentAsync(orderId, comment);
 			}
 		}
-
-		public async Task<bool> UpdateMasterNotesAsync(Guid id, string notes)
+		catch (Exception ex)
 		{
-			try
+			_logger.LogError(ex, "Error saving comment for order {OrderId}", orderId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveProductionOrderCommentAsync(Guid orderId, OrderCommentViewModel comment)
+	{
+		try
+		{
+			Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
+			HttpResponseMessage response;
+			if (comment.IsNew)
 			{
-				var response = await _httpClient.PutAsJsonAsync(
-					$"{BaseUrl}/orders/{id}/notes",
-					new { masterNotes = notes });
+				// POST /api/orders/{orderId}/comments
+				response = await _httpClient.PostAsJsonAsync(
+					$"{BaseUrl}/orders/{orderId}/productionOrderComments",
+					new { content = comment.Content });
+
 				return response.IsSuccessStatusCode;
+
 			}
-			catch (Exception ex)
+			else
 			{
-				_logger.LogError(ex, "Error updating notes for order {Id}", id);
-				return false;
+				return await UpdateCommentAsync(orderId, comment);
 			}
 		}
-
-		/// <summary>
-		/// Запрос к API для получекния подробной информации для конкретного заказа
-		/// с указание Api endpoint
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="endpoint"></param>
-		/// <param name="id"></param>
-		/// <returns></returns>
-		public async Task<T?> GetOrderByIdAsync<T>(string endpoint, Guid id)
+		catch (Exception ex)
 		{
-			try
-			{
-				var url = $"{BaseUrl}/{endpoint}/{id}";
-				return await _httpClient.GetFromJsonAsync<T>(url);
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching order {Id}", id);
-				return default;
-			}
+			_logger.LogError(ex, "Error saving comment for order {OrderId}", orderId);
+			return false;
 		}
+	}
 
-		/// <summary>
-		/// Получение трекинга заказа на производстве
-		/// </summary>
-		/// <param name="orderId"></param>
-		/// <returns></returns>
-		public async Task<OrderTraceDto?> GetOrderTraceAsync(Guid orderId)
+	public async Task<bool> SaveCommentAsync(Guid orderId, OrderCommentViewModel comment)
+	{
+		try
 		{
-			try
+			Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
+			HttpResponseMessage response;
+			if (comment.IsNew)
 			{
-				var url = $"{BaseUrl}/orders/{orderId}/trace";
-				var response = await _httpClient.GetFromJsonAsync<OrderTraceResponse>(url);
-				return response?.OrderTraces?.FirstOrDefault();
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching trace for order {Id}", orderId);
-				return null;
-			}
-		}
-
-		/// <summary>
-		/// Получение данных снабжения заказа
-		/// </summary>
-		/// <param name="orderId"></param>
-		/// <returns></returns>
-		public async Task<List<OrderSupplyDto>> GetOrderSuppliesAsync(Guid orderId)
-		{
-			try
-			{
-				var url = $"{BaseUrl}/orders/{orderId}/supplies";
-				var supplies = await _httpClient.GetFromJsonAsync<List<OrderSupplyDto>>(url)
-							   ?? [];
-
-				return supplies;
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching supplies for order {Id}", orderId);
-				return [];
-			}
-		}
-
-		public async Task<bool> UpdateOrderSuppliesAsync(Guid orderId, List<object> supplies)
-		{
-			try
-			{
-				var url = $"{BaseUrl}/orders/{orderId}/supplies";
-				Console.WriteLine($"UpdateOrderSuppliesAsync url: {url}");
-				var body = new { supplies };
-				
-				var response = await _httpClient.PutAsJsonAsync(url, body);
-				return response.IsSuccessStatusCode;
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error updating supplies for order {Id}", orderId);
-				return false;
-			}
-		}
-
-		public async Task<List<SupplyConditionDto>> GetSupplyConditionsAsync()
-		{
-			try
-			{
-				var url = $"{BaseUrl}/supplies/conditions";
-				return await _httpClient.GetFromJsonAsync<List<SupplyConditionDto>>(url)
-					   ?? [];
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching supply conditions");
-				return [];
-			}
-		}
-
-		public async Task<List<SupplyTypeDto>> GetSupplyTypesAsync()
-		{
-			try
-			{
-				var url = $"{BaseUrl}/supplies/types";
-				return await _httpClient.GetFromJsonAsync<List<SupplyTypeDto>>(url)
-					   ?? [];
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching supply types");
-				return [];
-			}
-		}
-
-		public async Task<List<OrderCommentViewModel>> GetOrderCommentsAsync(Guid orderId)
-		{
-			try
-			{
-				var url = $"{BaseUrl}/orders/{orderId}/comments";
-				return await _httpClient.GetFromJsonAsync<List<OrderCommentViewModel>>(url)
-					   ?? new List<OrderCommentViewModel>();
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching comments for order {Id}", orderId);
-				return new List<OrderCommentViewModel>();
-			}
-		}
-
-		public async Task<bool> SaveSupplyCommentAsync(Guid orderId, OrderCommentViewModel comment)
-		{
-			try
-			{
-				Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
-				HttpResponseMessage response;
-				if (comment.IsNew)
-				{
-					// POST /api/orders/{orderId}/comments
-					response = await _httpClient.PostAsJsonAsync(
-						$"{BaseUrl}/orders/{orderId}/OrderSupplyComments",
-						new { content = comment.Content });
-
-					return response.IsSuccessStatusCode;
-
-				}
-				else
-				{
-					return await UpdateCommentAsync(orderId, comment);
-				}
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error saving comment for order {OrderId}", orderId);
-				return false;
-			}
-		}
-
-		public async Task<bool> SaveProductionOrderCommentAsync(Guid orderId, OrderCommentViewModel comment)
-		{
-			try
-			{
-				Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
-				HttpResponseMessage response;
-				if (comment.IsNew)
-				{
-					// POST /api/orders/{orderId}/comments
-					response = await _httpClient.PostAsJsonAsync(
-						$"{BaseUrl}/orders/{orderId}/productionOrderComments",
-						new { content = comment.Content });
-
-					return response.IsSuccessStatusCode;
-
-				}
-				else
-				{
-					return await UpdateCommentAsync(orderId, comment);
-				}
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error saving comment for order {OrderId}", orderId);
-				return false;
-			}
-		}
-
-		public async Task<bool> SaveCommentAsync(Guid orderId, OrderCommentViewModel comment)
-		{
-			try
-			{
-				Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
-				HttpResponseMessage response;
-				if (comment.IsNew)
-				{
-					// POST /api/orders/{orderId}/comments
-					response = await _httpClient.PostAsJsonAsync(
-						$"{BaseUrl}/orders/{orderId}/comments",
-						new { content = comment.Content });
-
-					return response.IsSuccessStatusCode;
-				}
-				else
-				{
-					return await UpdateCommentAsync(orderId, comment);
-				}
-
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error saving comment for order {OrderId}", orderId);
-				return false;
-			}
-		}
-
-		public async Task<bool> UpdateCommentAsync(Guid orderId, OrderCommentViewModel comment)
-		{
-			try
-			{
-				Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
-				HttpResponseMessage response;
-
-				// PUT /api/orders/{orderId}/comments/{commentId}
-				response = await _httpClient.PutAsJsonAsync(
-					$"{BaseUrl}/orders/{orderId}/comments/{comment.Id}",
+				// POST /api/orders/{orderId}/comments
+				response = await _httpClient.PostAsJsonAsync(
+					$"{BaseUrl}/orders/{orderId}/comments",
 					new { content = comment.Content });
 
 				return response.IsSuccessStatusCode;
 			}
-			catch (Exception ex)
+			else
 			{
-				_logger.LogError(ex, "Error saving comment for order {OrderId}", orderId);
-				return false;
+				return await UpdateCommentAsync(orderId, comment);
 			}
+
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error saving comment for order {OrderId}", orderId);
+			return false;
+		}
+	}
+
+	public async Task<bool> UpdateCommentAsync(Guid orderId, OrderCommentViewModel comment)
+	{
+		try
+		{
+			Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
+			HttpResponseMessage response;
+
+			// PUT /api/orders/{orderId}/comments/{commentId}
+			response = await _httpClient.PutAsJsonAsync(
+				$"{BaseUrl}/orders/{orderId}/comments/{comment.Id}",
+				new { content = comment.Content });
+
+			return response.IsSuccessStatusCode;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error saving comment for order {OrderId}", orderId);
+			return false;
+		}
+	}
+
+	public async Task<bool> DeleteCommentAsync(Guid orderId, Guid commentId)
+	{
+		try
+		{
+			var response = await _httpClient.DeleteAsync(
+				$"{BaseUrl}/orders/{orderId}/comments/{commentId}");
+			return response.IsSuccessStatusCode;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error deleting comment {CommentId}", commentId);
+			return false;
+		}
+	}
+
+	public async Task<List<WorkplaceDto>> GetWorkplacesAsync(string? type = null)
+	{
+		try
+		{
+			var url = $"{BaseUrl}/workplaces";
+			if (!string.IsNullOrEmpty(type))
+				url += $"?type={type}";
+
+			_logger.LogInformation("GetWorkplacesAsync: {url}", url);
+
+			return await _httpClient.GetFromJsonAsync<List<WorkplaceDto>>(url) ?? [];
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching workplaces");
+			return [];
+		}
+	}
+
+	public async Task<WorkplaceStatsDto?> GetWorkplaceStatsAsync(Guid workplaceId)
+	{
+		try
+		{
+			var url = $"{BaseUrl}/workplaces/{workplaceId}/stats";
+
+			_logger.LogInformation("GetWorkplaceStatsAsync: {url}", url);
+
+			return await _httpClient.GetFromJsonAsync<WorkplaceStatsDto>(url);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching stats for workplace {Id}", workplaceId);
+			return null;
+		}
+	}
+
+	public async Task<List<BlockedOrderDto>> GetWorkplaceBlocksAsync(Guid workplaceId)
+	{
+		try
+		{
+			var url = $"{BaseUrl}/workplaces/{workplaceId}/blocks";
+
+			_logger.LogInformation("GetWorkplaceBlocksAsync: {url}", url);
+
+			return await _httpClient.GetFromJsonAsync<List<BlockedOrderDto>>(url) ?? [];
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching blocks for workplace {Id}", workplaceId);
+			return [];
+		}
+	}
+
+	public async Task<List<WorkplaceHistoryDto>> GetWorkplaceHistoryAsync(
+		Guid workplaceId, DateTime from, DateTime to, int limit = 1000)
+	{
+		try
+		{
+			var url = $"{BaseUrl}/workplaces/{workplaceId}/history?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}&limit={limit}";
+
+			_logger.LogInformation("GetWorkplaceHistoryAsync: {url}", url);
+
+			return await _httpClient.GetFromJsonAsync<List<WorkplaceHistoryDto>>(url) ?? [];
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching history for workplace {Id}", workplaceId);
+			return [];
+		}
+	}
+
+	public async Task<bool> UpdateOrderTraceAsync<T>(Guid orderId, List<T> updates)
+	{
+		try
+		{
+			var body = new { workplaces = updates };
+			var response = await _httpClient.PutAsJsonAsync(
+				$"{BaseUrl}/traces/{orderId}/workplace", body);
+			return response.IsSuccessStatusCode;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error updating trace for order {Id}", orderId);
+			return false;
+		}
+	}
+
+	public async Task<bool> UpdateOrderTraceAsync(Guid productionOrderId, Guid workplaceId, string status, string? notes = null)
+	{
+		try
+		{
+			var url = $"{BaseUrl}/traces/{productionOrderId}/workplace/{workplaceId}";
+			//var body = new { status, userId, notes };
+			var body = new {status};
+
+			var response = await _httpClient.PutAsJsonAsync(url, body);
+			return response.IsSuccessStatusCode;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error updating trace for order {OrderId}, workplace {WorkplaceId}", productionOrderId, workplaceId);
+			return false;
+		}
+	}
+
+	/// <summary>
+	/// Рассчитывает дату готовности заказа с учетом производственного календаря.
+	/// </summary>
+	public async Task<DateTime?> CalculateReadyDateAsync(DateTime startDate, int workingDays)
+	{
+		if (workingDays <= 0)
+		{
+			return null;
 		}
 
-		public async Task<bool> DeleteCommentAsync(Guid orderId, Guid commentId)
+		try
 		{
-			try
+			var url = $"{BaseUrl}/ProductionCalendar/calculate";
+
+			var body = new
 			{
-				var response = await _httpClient.DeleteAsync(
-					$"{BaseUrl}/orders/{orderId}/comments/{commentId}");
-				return response.IsSuccessStatusCode;
-			}
-			catch (Exception ex)
+				startDate = startDate.ToString("yyyy-MM-dd"),
+				workingDays = workingDays
+			};
+
+			Console.WriteLine();
+			Console.WriteLine();
+			Console.WriteLine("ДО _httpClient.PostAsJsonAsync(url, body);");
+
+			var response = await _httpClient.PostAsJsonAsync(url, body);
+
+			Console.WriteLine("ПОСЛЕ _httpClient.PostAsJsonAsync(url, body);");
+			Console.WriteLine();
+
+			Console.WriteLine(response);
+			Console.WriteLine();
+
+			Console.WriteLine(response);
+			Console.WriteLine();
+			Console.WriteLine();
+
+			if (!response.IsSuccessStatusCode)
 			{
-				_logger.LogError(ex, "Error deleting comment {CommentId}", commentId);
-				return false;
+				var error = await response.Content.ReadAsStringAsync();
+				throw new Exception($"Ошибка расчета даты: {error}");
 			}
+
+			Console.WriteLine("ПОСЛЕ_2 _httpClient.PostAsJsonAsync(url, body);");
+
+			var result = await response.Content.ReadFromJsonAsync<CalculateReadyDateDto>();
+
+			Console.WriteLine("ПОСЛЕ_3 _httpClient.PostAsJsonAsync(url, body);");
+
+			return result?.EndDate;
+
 		}
-
-		public async Task<List<WorkplaceDto>> GetWorkplacesAsync(string? type = null)
+		catch (Exception ex)
 		{
-			try
-			{
-				var url = $"{BaseUrl}/workplaces";
-				if (!string.IsNullOrEmpty(type))
-					url += $"?type={type}";
-
-				_logger.LogInformation("GetWorkplacesAsync: {url}", url);
-
-				return await _httpClient.GetFromJsonAsync<List<WorkplaceDto>>(url) ?? [];
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching workplaces");
-				return [];
-			}
+			throw new Exception($"Не удалось рассчитать дату готовности: {ex.Message}");
 		}
+	}
 
-		public async Task<WorkplaceStatsDto?> GetWorkplaceStatsAsync(Guid workplaceId)
+	public async Task<bool> SetOrderCompleteAsync(Guid orderId)
+	{
+		try
 		{
-			try
-			{
-				var url = $"{BaseUrl}/workplaces/{workplaceId}/stats";
-
-				_logger.LogInformation("GetWorkplaceStatsAsync: {url}", url);
-
-				return await _httpClient.GetFromJsonAsync<WorkplaceStatsDto>(url);
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching stats for workplace {Id}", workplaceId);
-				return null;
-			}
+			var response = await _httpClient.PostAsync($"{BaseUrl}/orders/{orderId}/complete", null);
+			return response.IsSuccessStatusCode;
 		}
-
-		public async Task<List<BlockedOrderDto>> GetWorkplaceBlocksAsync(Guid workplaceId)
+		catch (Exception ex)
 		{
-			try
-			{
-				var url = $"{BaseUrl}/workplaces/{workplaceId}/blocks";
-
-				_logger.LogInformation("GetWorkplaceBlocksAsync: {url}", url);
-
-				return await _httpClient.GetFromJsonAsync<List<BlockedOrderDto>>(url) ?? [];
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching blocks for workplace {Id}", workplaceId);
-				return [];
-			}
+			_logger.LogError(ex, "Error completing order {Id}", orderId);
+			return false;
 		}
+	}
 
-		public async Task<List<WorkplaceHistoryDto>> GetWorkplaceHistoryAsync(
-			Guid workplaceId, DateTime from, DateTime to, int limit = 1000)
+	public async Task<bool> SetOrderDepartureAsync(Guid orderId)
+	{
+		try
 		{
-			try
-			{
-				var url = $"{BaseUrl}/workplaces/{workplaceId}/history?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}&limit={limit}";
-
-				_logger.LogInformation("GetWorkplaceHistoryAsync: {url}", url);
-
-				return await _httpClient.GetFromJsonAsync<List<WorkplaceHistoryDto>>(url) ?? [];
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error fetching history for workplace {Id}", workplaceId);
-				return [];
-			}
+			var response = await _httpClient.PostAsync($"{BaseUrl}/orders/{orderId}/departure", null);
+			return response.IsSuccessStatusCode;
 		}
-
-		public async Task<bool> UpdateOrderTraceAsync<T>(Guid orderId, List<T> updates)
+		catch (Exception ex)
 		{
-			try
-			{
-				var body = new { workplaces = updates };
-				var response = await _httpClient.PutAsJsonAsync(
-					$"{BaseUrl}/traces/{orderId}/workplace", body);
-				return response.IsSuccessStatusCode;
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error updating trace for order {Id}", orderId);
-				return false;
-			}
-		}
-
-		public async Task<bool> UpdateOrderTraceAsync(Guid productionOrderId, Guid workplaceId, string status, string? notes = null)
-		{
-			try
-			{
-				var url = $"{BaseUrl}/traces/{productionOrderId}/workplace/{workplaceId}";
-				//var body = new { status, userId, notes };
-				var body = new {status};
-
-				var response = await _httpClient.PutAsJsonAsync(url, body);
-				return response.IsSuccessStatusCode;
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error updating trace for order {OrderId}, workplace {WorkplaceId}", productionOrderId, workplaceId);
-				return false;
-			}
+			_logger.LogError(ex, "Error departing order {Id}", orderId);
+			return false;
 		}
 	}
 }

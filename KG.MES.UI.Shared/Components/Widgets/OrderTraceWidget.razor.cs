@@ -1,3 +1,4 @@
+using KG.MES.Shared.Events;
 using KG.MES.Shared.Interfaces;
 using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Services;
@@ -13,12 +14,16 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 
 	[Inject] private ProductionApiService ApiService { get; set; } = null!;
 	[Inject] private ISocketService SocketService { get; set; } = null!;
+	[Inject] private IEventAggregator EventAggregator { get; set; } = null!;
 
 	private OrderTraceDto? orderTrace;
 	private OrderTraceDto? backupTrace;
 	private bool isLoading = true;
 	private bool EditMode;
-	private Dictionary<string, bool> openDropdowns = new();
+	private Dictionary<string, bool> openDropdowns = [];
+	private bool isCompleting;
+	private bool isDeparturing;
+
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -55,7 +60,7 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 				WorkplaceId = w.WorkplaceId,
 				WorkplaceName = w.WorkplaceName,
 				Status = w.Status
-			}).ToList() ?? new()
+			}).ToList() ?? []
 		};
 		EditMode = true;
 	}
@@ -106,6 +111,51 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 		openDropdowns.Remove(key);
 	}
 
-	public bool HasUnsavedChanges() => EditMode;
+	private async Task CompleteOrder()
+	{
+		isCompleting = true;
+		StateHasChanged();
+
+		var success = await ApiService.SetOrderCompleteAsync(OrderId);
+
+		if (success)
+		{
+			orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
+			EventAggregator.Publish(
+				new OrderUpdatedEvent 
+				{
+					OrderId = OrderId,
+					Source = "trace"
+				});
+		}
+
+		isCompleting = false;
+		StateHasChanged();
+	}
+
+	private async Task DepartureOrder()
+	{
+		isDeparturing = true;
+		StateHasChanged();
+
+		var success = await ApiService.SetOrderDepartureAsync(OrderId);
+
+		if (success)
+		{
+			orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
+			EditMode = !HasUnsavedChanges();
+			EventAggregator.Publish(
+				new OrderUpdatedEvent
+				{
+					OrderId = OrderId,
+					Source = "trace"
+				});
+		}
+
+		isDeparturing = false;
+		StateHasChanged();
+	}
+
+	public bool HasUnsavedChanges() => EditMode && orderTrace != null && !orderTrace.Equals(backupTrace);
 	public Task SaveAllAsync() => SaveChanges();
 }

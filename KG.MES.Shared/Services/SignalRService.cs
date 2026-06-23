@@ -17,7 +17,7 @@ public class SignalRService : ISocketService, IAsyncDisposable
 	{
 		_logger = logger;
 
-		var serverUrl = configuration["SignalR:Url"] ?? "http://192.168.0.179:3000/notificationHub";
+		var serverUrl = configuration["SignalR:Url"] ?? "http://192.168.0.179:3031/notificationHub";
 
 		_hubConnection = new HubConnectionBuilder()
 			.WithUrl(serverUrl)
@@ -107,7 +107,7 @@ public class SignalRService : ISocketService, IAsyncDisposable
 			case "order":
 				// Для простоты можно не передавать id, если хаб умеет отписывать по всем, 
 				// но лучше передать, если он есть в контексте. Пока оставим базовый вызов.
-				await _hubConnection.InvokeAsync("UnsubscribeFromSupply"); // Заглушка, адаптируй под свой хаб при необходимости
+				await _hubConnection.InvokeAsync("UnsubscribeFromOrder"); // Заглушка, адаптируй под свой хаб при необходимости
 				break;
 			case "supply":
 				await _hubConnection.InvokeAsync("UnsubscribeFromSupply");

@@ -61,7 +61,7 @@ namespace KG.MES.Main.Extensions
 				IsOnlyPaid = order.IsOnlyPaid,
 				Comment = order.Comment,
 				StartDate = order.InitializeDate,
-				ProductionDays = order.ApprovedLeadTimeDays,
+				ApprowedLeadDays = order.ApprovedLeadTimeDays,
 				ReadyDate = order.ReadyDate
 			};
 		}

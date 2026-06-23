@@ -1,5 +1,8 @@
 using System.Text.Json;
+using KG.MES.Shared.Events;
+using KG.MES.Shared.Interfaces;
 using KG.MES.Shared.Models.Config;
+using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Models.Enums;
 using KG.MES.Shared.Services;
 using KG.MES.UI.Shared.Components.Widgets;
@@ -18,16 +21,19 @@ public partial class OrderDashboard<TOrder> : ComponentBase
 
 	[Inject] private ProductionApiService ApiService { get; set; } = null!;
 	[Inject] private IJSRuntime JSRuntime { get; set; } = null!;
-
+	[Inject] private IEventAggregator EventAggregator { get; set; } = null!;
 
 	private TOrder? order;
+
+	private OrderDto? orderDto;
 	private DashboardSettings dashboardSettings = new();
 	private bool isLoading = true;
 	private bool showWidgetSettings;
 
 	private OrderSuppliesWidget? suppliesWidget;
 	private OrderTraceWidget? traceWidget;
-	private OrderFieldsWidget<TOrder>? fieldsWidget;
+	//private OrderFieldsWidget<TOrder>? fieldsWidget;
+	private OrderFieldsWidget<OrderDto>? fieldsWidget;
 	private OrderCommentsWidget? commentsWidget;
 
 	private List<WidgetSettings> visibleWidgets => dashboardSettings.Widgets
@@ -39,6 +45,7 @@ public partial class OrderDashboard<TOrder> : ComponentBase
 
 	protected override async Task OnInitializedAsync()
 	{
+		EventAggregator.Subscribe<OrderUpdatedEvent>(OnOrderUpdated);
 		await LoadDashboard();
 		await LoadOrder();
 	}
@@ -138,7 +145,8 @@ public partial class OrderDashboard<TOrder> : ComponentBase
 		StateHasChanged();
 		try
 		{
-			order = await ApiService.GetOrderByIdAsync<TOrder>(Settings.CardEndpoint, OrderId);
+			//order = await ApiService.GetOrderByIdAsync<TOrder>(Settings.CardEndpoint, OrderId);
+			orderDto = await ApiService.GetOrderByIdAsync<OrderDto>(Settings.CardEndpoint, OrderId);
 		}
 		finally
 		{
@@ -204,6 +212,7 @@ public partial class OrderDashboard<TOrder> : ComponentBase
 	}
 	public void Dispose()
 	{
+		EventAggregator.Unsubscribe<OrderUpdatedEvent>(OnOrderUpdated);
 		dotnetRef?.Dispose();
 	}
 	private string GetWidgetClass(WidgetSettings widget)
@@ -317,5 +326,14 @@ public partial class OrderDashboard<TOrder> : ComponentBase
 		}
 
 		await OnClose.InvokeAsync();
+	}
+
+	private async void OnOrderUpdated(OrderUpdatedEvent e)
+	{
+		if (e.OrderId == OrderId)
+		{
+			order = await ApiService.GetOrderByIdAsync<TOrder>(Settings.CardEndpoint, OrderId);
+			await InvokeAsync(StateHasChanged);
+		}
 	}
 }

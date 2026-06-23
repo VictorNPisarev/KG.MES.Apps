@@ -40,3 +40,43 @@
 .trace-status {
 	white-space: nowrap;
 }
+
+.btn-outline-complete {
+	--bs-btn-color: #198754;
+	--bs-btn-border-color: #198754;
+	--bs-btn-hover-color: #fff;
+	--bs-btn-hover-bg: #198754;
+	--bs-btn-hover-border-color: #198754;
+	--bs-btn-active-color: #fff;
+	--bs-btn-active-bg: #157347;
+	--bs-btn-active-border-color: #146c43;
+	color: #fff;
+	background-color: #198754;
+	border-color: #198754;
+}
+
+.btn-outline-complete:hover {
+	color: #fff;
+	background-color: #157347;
+	border-color: #146c43;
+}
+
+.btn-outline-departure {
+	--bs-btn-color: #212529;
+	--bs-btn-border-color: #212529;
+	--bs-btn-hover-color: #fff;
+	--bs-btn-hover-bg: #212529;
+	--bs-btn-hover-border-color: #212529;
+	--bs-btn-active-color: #fff;
+	--bs-btn-active-bg: #1a1e21;
+	--bs-btn-active-border-color: #191c1f;
+	color: #fff;
+	background-color: #212529;
+	border-color: #212529;
+}
+
+.btn-outline-departure:hover {
+	color: #fff;
+	background-color: #1a1e21;
+	border-color: #191c1f;
+}

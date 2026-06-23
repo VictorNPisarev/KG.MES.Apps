@@ -1,6 +1,7 @@
 {
 	"explorer.fileNesting.enabled": true,
 	"explorer.fileNesting.patterns": {
-		"*.razor": "${capture}.razor.cs, ${capture}.razor.css"
+		"*.razor": "${capture}.razor.cs, ${capture}.razor.css",
+		"*Dto.cs": "${capture}ViewModel.cs"
 	}
 }

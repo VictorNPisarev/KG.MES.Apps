@@ -18,7 +18,10 @@ namespace KG.MES.Shared.Models.Dto
 		public bool IsOnlyPaid { get; set; } = false;
 		public string? Comment { get; set; }
 		public DateTime StartDate { get; set; } = DateTime.Now;  // "2026-04-21"
-		public int ProductionDays { get; set; } = 60;          // срок изготовления в днях
+		public int ApprowedLeadDays { get; set; } = 60;          // срок изготовления в днях СОГЛАСОВАННЫй
+		public int UnapprowedLeadDays { get; set; } = 60;          // срок изготовления в днях НЕ СОГЛАСОВАННЫй
 		public DateTime? ReadyDate { get; set; }  // вычисляется на сервере или клиенте
+		public DateTime? So8Date { get; set; }  //дата запуска заказа в СО8
+		public string? Machine { get; set; }  //Станок профилирования
 	}
 }

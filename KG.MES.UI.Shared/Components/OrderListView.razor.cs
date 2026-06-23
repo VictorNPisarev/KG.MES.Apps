@@ -42,7 +42,7 @@ public partial class OrderListView<TOrder> : ComponentBase
 		columnInfos = ColumnHelper.GetColumns<TOrder>();
 
 		await LoadSettings();
-		workplaces = await ApiService.GetActiveWorkplacesAsync();
+		workplaces = await ApiService.GetAllWorkplacesAsync();//await ApiService.GetActiveWorkplacesAsync();
 		await LoadOrders();
 	}
 

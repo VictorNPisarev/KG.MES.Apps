@@ -13,6 +13,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 	options.Cookie.Path = "/masters";
 });
 
+builder.Services.AddDistributedMemoryCache();
+
 builder.Services.AddSession(options =>
 {
 	options.Cookie.Name = ".Session.Masters";

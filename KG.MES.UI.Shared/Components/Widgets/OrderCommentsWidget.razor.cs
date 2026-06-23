@@ -22,7 +22,7 @@ public partial class OrderCommentsWidget : ComponentBase, ISavableWidget, IDispo
 
 	protected override async Task OnInitializedAsync()
 	{
-		EventAggregator.Subscribe<OrderCommentUpdatedEvent>(OnOrderCommentUpdated);
+		EventAggregator.Subscribe<OrderUpdatedEvent>(OnOrderCommentUpdated);
 		await LoadComments();
 	}
 
@@ -71,7 +71,7 @@ public partial class OrderCommentsWidget : ComponentBase, ISavableWidget, IDispo
 			await LoadComments();
 
 			// Публикую событие
-			EventAggregator.Publish(new OrderCommentUpdatedEvent
+			EventAggregator.Publish(new OrderUpdatedEvent
 			{
 				OrderId = OrderId,
 				Source = "supply"
@@ -145,7 +145,7 @@ public partial class OrderCommentsWidget : ComponentBase, ISavableWidget, IDispo
 		}
 	}
 
-	private async void OnOrderCommentUpdated(OrderCommentUpdatedEvent eventData)
+	private async void OnOrderCommentUpdated(OrderUpdatedEvent eventData)
 	{
 		if (eventData.OrderId == OrderId)
 		{
@@ -156,6 +156,6 @@ public partial class OrderCommentsWidget : ComponentBase, ISavableWidget, IDispo
 
 	public void Dispose()
 	{
-		EventAggregator.Unsubscribe<OrderCommentUpdatedEvent>(OnOrderCommentUpdated);
+		EventAggregator.Unsubscribe<OrderUpdatedEvent>(OnOrderCommentUpdated);
 	}
 }

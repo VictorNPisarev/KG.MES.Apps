@@ -14,8 +14,8 @@ public partial class CreateOrderPage
 	private double PlateArea { get; set; }
 	private string Machine { get; set; } = "";
 	private DateTime StartDate { get; set; } = DateTime.Now;
-	private int ApprovedDays { get; set; } = 14;
-	private int UnapprovedDays { get; set; } = 21;
+	private int ApprovedDays { get; set; }
+	private int UnapprovedDays { get; set; }
 	private DateTime? So8Date { get; set; }
 	private string Comment { get; set; } = "";
 	private bool IsEconom { get; set; }
@@ -25,18 +25,20 @@ public partial class CreateOrderPage
 
 	[Inject] private ProductionApiService ApiService { get; set; } = null!;
 
-	private DateTime? ReadyDate
-	{
-		get
-		{
-			var days = ApprovedDays > 0 ? ApprovedDays : UnapprovedDays;
-			return days > 0 ? StartDate.AddDays(days) : null;
-		}
-	}
+	private DateTime? ReadyDate { get; set; }
 
+	private bool isCalculating;
 	private bool isSaving;
 	private string StatusMessage { get; set; } = "";
 	private bool isError;
+
+	/// <summary>
+	/// Вызывается при изменении даты начала или количества дней.
+	/// </summary>
+	private async Task OnParametersChanged()
+	{
+		await CalculateReadyDateAsync();
+	}
 
 	private async Task SaveOrder()
 	{
@@ -65,8 +67,11 @@ public partial class CreateOrderPage
 				IsOnlyPaid = IsOnlyPaid,
 				IsTwoSidePaint = IsTwoSidePaint,
 				StartDate = StartDate,
-				ProductionDays = ApprovedDays > 0 ? ApprovedDays : UnapprovedDays,
-				ReadyDate = ReadyDate
+				ApprowedLeadDays = ApprovedDays > 0 ? ApprovedDays : UnapprovedDays,
+				UnapprowedLeadDays = UnapprovedDays,
+				ReadyDate = ReadyDate,
+				So8Date = So8Date,
+				Machine = Machine
 			};
 
 			var success = await ApiService.ExportToProductionAsync(dto);
@@ -85,6 +90,10 @@ public partial class CreateOrderPage
 				IsEconom = false;
 				IsClaim = false;
 				IsOnlyPaid = false;
+				ReadyDate = null;
+				ApprovedDays = 0;
+				UnapprovedDays = 0;
+				So8Date = null;
 			}
 			else
 			{
@@ -100,6 +109,41 @@ public partial class CreateOrderPage
 		finally
 		{
 			isSaving = false;
+		}
+	}
+
+	/// <summary>
+	/// Рассчитывает дату готовности через API с учетом производственного календаря.
+	/// </summary>
+	private async Task CalculateReadyDateAsync()
+	{
+		var days = ApprovedDays > 0 ? ApprovedDays : UnapprovedDays;
+
+		if (days <= 0)
+		{
+			ReadyDate = null;
+			return;
+		}
+
+		isCalculating = true;
+		StateHasChanged(); // Обновляем UI, чтобы показать индикатор загрузки
+
+		try
+		{
+			ReadyDate = await ApiService.CalculateReadyDateAsync(StartDate, days);
+			StatusMessage = "";
+			isError = false;
+		}
+		catch (Exception ex)
+		{
+			StatusMessage = $"Ошибка расчета даты: {ex.Message}";
+			isError = true;
+			ReadyDate = null;
+		}
+		finally
+		{
+			isCalculating = false;
+			StateHasChanged();
 		}
 	}
 }
