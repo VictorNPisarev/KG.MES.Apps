@@ -7,7 +7,6 @@ namespace KG.MES.Shared.Models.Dto;
 public class OrderDto
 {
 	[JsonPropertyName("id")]
-	[Column("ID", Visible = false)]
 	public Guid Id { get; set; }
 
 	[JsonPropertyName("order_number")]
@@ -56,11 +55,9 @@ public class OrderDto
 	public bool IsOnlyPaid { get; set; }
 
 	[JsonPropertyName("production_order_id")]
-	[Column("production_order_id", Visible = false)]
 	public string? ProductionOrderId { get; set; }
 
 	[JsonPropertyName("current_workplace_id")]
-	[Column("current_workplace_id", Visible = false)]
 	public string? CurrentWorkplaceId { get; set; }
 
 	[JsonPropertyName("customer_name")]
@@ -72,7 +69,7 @@ public class OrderDto
 	public string? CurrentWorkplaceName { get; set; }
 
 	[JsonPropertyName("machine")]
-	[Column("Станок", Order = 12, Visible = true)]
+	[Column("Станок", Order = 12, Visible = true, IsBadge = true)]
 	public string? Machine { get; set; }
 }
 

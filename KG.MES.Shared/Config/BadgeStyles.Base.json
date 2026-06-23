@@ -4,6 +4,7 @@
 		"workplaces":
 		{
 			"none": "bg-secondary",
+			"не определен": "bg-secondary",
 			"торцовка": "bg-primary bg-opacity-25 text-primary",
 			"столярка": "bg-primary bg-opacity-25 text-primary",
 			"профилирование": "bg-primary bg-opacity-25 text-primary",
@@ -40,6 +41,11 @@
 		{
 			"True": "bg-success",
 			"False": "bg-light text-dark"
+		},
+		"machines":
+		{
+			"Conturex": "bg-primary",
+			"Угловой центр": "bg-success"
 		}
 	},
 	"defaults":

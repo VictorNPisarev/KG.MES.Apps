@@ -67,8 +67,11 @@ public partial class CreateOrderPage
 				IsOnlyPaid = IsOnlyPaid,
 				IsTwoSidePaint = IsTwoSidePaint,
 				StartDate = StartDate,
-				ProductionDays = ApprovedDays > 0 ? ApprovedDays : UnapprovedDays,
-				ReadyDate = ReadyDate
+				ApprowedLeadDays = ApprovedDays > 0 ? ApprovedDays : UnapprovedDays,
+				UnapprowedLeadDays = UnapprovedDays,
+				ReadyDate = ReadyDate,
+				So8Date = So8Date,
+				Machine = Machine
 			};
 
 			var success = await ApiService.ExportToProductionAsync(dto);

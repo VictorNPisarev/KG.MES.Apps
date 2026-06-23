@@ -1,3 +1,4 @@
+using KG.MES.Shared.Events;
 using KG.MES.Shared.Interfaces;
 using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Services;
@@ -13,6 +14,7 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 
 	[Inject] private ProductionApiService ApiService { get; set; } = null!;
 	[Inject] private ISocketService SocketService { get; set; } = null!;
+	[Inject] private IEventAggregator EventAggregator { get; set; } = null!;
 
 	private OrderTraceDto? orderTrace;
 	private OrderTraceDto? backupTrace;
@@ -119,6 +121,12 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 		if (success)
 		{
 			orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
+			EventAggregator.Publish(
+				new OrderUpdatedEvent 
+				{
+					OrderId = OrderId,
+					Source = "trace"
+				});
 		}
 
 		isCompleting = false;
@@ -135,12 +143,19 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 		if (success)
 		{
 			orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
+			EditMode = !HasUnsavedChanges();
+			EventAggregator.Publish(
+				new OrderUpdatedEvent
+				{
+					OrderId = OrderId,
+					Source = "trace"
+				});
 		}
 
 		isDeparturing = false;
 		StateHasChanged();
 	}
 
-	public bool HasUnsavedChanges() => EditMode;
+	public bool HasUnsavedChanges() => EditMode && orderTrace != null && !orderTrace.Equals(backupTrace);
 	public Task SaveAllAsync() => SaveChanges();
 }

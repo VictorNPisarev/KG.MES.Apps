@@ -50,7 +50,8 @@ else if (order != null)
 						case WidgetType.Main:
 							<div class="card">
 								<div class="card-body">
-									<OrderFieldsWidget @ref="fieldsWidget" TOrder="TOrder" Order="@order" Settings="@Settings" />
+									@*<OrderFieldsWidget @ref="fieldsWidget" TOrder="TOrder" Order="@order" Settings="@Settings" />*@
+									<OrderFieldsWidget @ref="fieldsWidget" TOrder="OrderDto" Order="@orderDto" Settings="@Settings" />
 								</div>
 							</div>
 							break;
@@ -90,7 +91,8 @@ else if (order != null)
 					@switch (activeWidget.WidgetId)
 					{
 						case WidgetType.Main:
-							<OrderFieldsWidget @ref="fieldsWidget" TOrder="TOrder" Order="@order" Settings="@Settings" />
+							@*<OrderFieldsWidget @ref="fieldsWidget" TOrder="TOrder" Order="@order" Settings="@Settings" />*@
+							<OrderFieldsWidget @ref="fieldsWidget" TOrder="OrderDto" Order="@orderDto" Settings="@Settings" />
 							break;
 						case WidgetType.Trace:
 							<OrderTraceWidget @ref="traceWidget" OrderId="@OrderId"  CanEdit="@Settings.EditTrace" />

@@ -36,7 +36,7 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 		SocketService.OnMessage += OnSocketMessage;
 
 		//Подписываюсь на изменение комментария
-		EventAggregator.Subscribe<OrderCommentUpdatedEvent>(OnOrderCommentUpdated);
+		EventAggregator.Subscribe<OrderUpdatedEvent>(OnOrderCommentUpdated);
 
 		conditions = await SupplyService.GetConditionsAsync();
 		types = await SupplyService.GetTypesAsync();
@@ -168,7 +168,7 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 
 
 			// Публикую событие
-			EventAggregator.Publish(new OrderCommentUpdatedEvent
+			EventAggregator.Publish(new OrderUpdatedEvent
 			{
 				OrderId = OrderId,
 				Source = "supply"
@@ -225,7 +225,7 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 			original?.Comment = supply.Comment;
 
 			// Публикую событие
-			EventAggregator.Publish(new OrderCommentUpdatedEvent
+			EventAggregator.Publish(new OrderUpdatedEvent
 			{
 				OrderId = OrderId,
 				Source = "supply"
@@ -263,7 +263,7 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 		backup.Clear();
 	}
 
-	private async void OnOrderCommentUpdated(OrderCommentUpdatedEvent eventData)
+	private async void OnOrderCommentUpdated(OrderUpdatedEvent eventData)
 	{
 		if (eventData.OrderId == OrderId)
 		{
@@ -286,7 +286,7 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 
 	public void Dispose()
 	{
-		EventAggregator.Unsubscribe<OrderCommentUpdatedEvent>(OnOrderCommentUpdated);
+		EventAggregator.Unsubscribe<OrderUpdatedEvent>(OnOrderCommentUpdated);
 	}
 
 }
