@@ -65,7 +65,6 @@ public class OrderDto
 	public string CustomerName { get; set; } = string.Empty;
 
 	[JsonPropertyName("current_workplace_name")]
-	[Column("current_workplace_name", Visible = false)]
 	public string? CurrentWorkplaceName { get; set; }
 
 	[JsonPropertyName("machine")]

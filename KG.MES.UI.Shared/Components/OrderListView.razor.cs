@@ -36,6 +36,11 @@ public partial class OrderListView<TOrder> : ComponentBase
 	private Guid? selectedWorkplaceId;
 	private string tableKey => $"{Endpoint}_{typeof(TOrder).Name}";
 	private bool isColumnsOpen = false;
+	private bool useSplitView;
+	private string savedPanelWidth = "66%";
+	private DotNetObjectReference<OrderListView<TOrder>>? panelResizeRef;
+	private string? lastReportedWidth;
+	private bool _panelResizeInitialized = false;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -50,6 +55,13 @@ public partial class OrderListView<TOrder> : ComponentBase
 	{
 		try
 		{
+			var splitViewSetting = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "useSplitView");
+			useSplitView = splitViewSetting != null && splitViewSetting.ToLower() == "true";
+
+			var splitPanelWidth = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "splitPanelWidth");
+			//if (!string.IsNullOrEmpty(splitPanelWidth))
+			//	savedPanelWidth = splitPanelWidth;
+
 			var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"table_settings_{tableKey}");
 			columnSettings = TableSettingsManager.GetSettings<TOrder>(json);
 		}
@@ -189,19 +201,37 @@ public partial class OrderListView<TOrder> : ComponentBase
 
 	private bool isModalOpen;
 
-	private void OpenOrder(TOrder order)
+	private async Task OpenOrder(TOrder order)
 	{
 		selectedOrder = order;
-		isModalOpen = true;
-		StateHasChanged();
+		if (useSplitView)
+		{
+			// Просто обновляем панель — Dashboard сам переинициализируется
+			StateHasChanged();
+		}
+		else
+		{
+			isModalOpen = true;
+			StateHasChanged();
+		}
 	}
 
 	private async Task CloseOrder()
 	{
-		isModalOpen = false;
 		selectedOrder = default;
-		await LoadOrders(); // ← перезагружаем список заказов
-		StateHasChanged();
+		isModalOpen = false;
+
+		if (useSplitView)
+		{
+			// Без перезагрузки списка — просто скрываем панель
+			dashboardRef = null;
+			StateHasChanged();
+		}
+		else
+		{
+			await LoadOrders();
+			StateHasChanged();
+		}
 	}
 
 	private Guid GetOrderId(TOrder order)
@@ -214,5 +244,74 @@ public partial class OrderListView<TOrder> : ComponentBase
 	{
 		var prop = typeof(TOrder).GetProperty("OrderNumber");
 		return prop?.GetValue(order)?.ToString() ?? "—";
+	}
+
+	private async Task ToggleViewMode()
+	{
+		useSplitView = !useSplitView;
+		await JSRuntime.InvokeVoidAsync("localStorage.setItem", "useSplitView", useSplitView.ToString());
+
+		StateHasChanged();
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (useSplitView && !_panelResizeInitialized)
+		{
+			//await InitializePanelResize(); //TODO доработать сохранение измененной ширины таблицы (панель в этом месте еще не существует)
+		}
+	}
+
+	[JSInvokable]
+	public async Task OnPanelResized(double width)
+	{
+		var newWidth = $"{width}px";
+
+		// Защита от спама одинаковых значений (ResizeObserver может вызывать callback очень часто)
+		if (newWidth == lastReportedWidth) return;
+		lastReportedWidth = newWidth;
+
+		await InvokeAsync(async () =>
+		{
+			savedPanelWidth = newWidth;
+			try
+			{
+				await JSRuntime.InvokeVoidAsync("localStorage.setItem", "splitPanelWidth", savedPanelWidth);
+			}
+			catch {}
+
+			StateHasChanged();
+		});
+	}
+
+	private async Task InitializePanelResize()
+	{
+		if (_panelResizeInitialized) return;
+
+		try
+		{
+			panelResizeRef = DotNetObjectReference.Create(this);
+			await JSRuntime.InvokeVoidAsync("panelResize.init", panelResizeRef, "split-panel");
+			_panelResizeInitialized = true;
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Failed to initialize panel resize: {ex.Message}");
+			_panelResizeInitialized = false;
+		}
+	}
+
+	public void Dispose()
+	{
+		try
+		{
+			if (_panelResizeInitialized)
+			{
+				_ = JSRuntime.InvokeVoidAsync("panelResize.dispose", "split-panel");
+			}
+		}
+		catch { }
+
+		panelResizeRef?.Dispose();
 	}
 }
