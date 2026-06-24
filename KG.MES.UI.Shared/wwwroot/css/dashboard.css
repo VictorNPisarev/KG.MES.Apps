@@ -86,3 +86,20 @@
 	background: rgba(13, 110, 253, 0.2);
 	border-left: 1px solid #0d6efd;
 }
+
+.resizable-panel {
+	resize: horizontal;
+	overflow: auto;
+	min-width: 300px;
+	max-width: 80vw;
+	border-left: 1px solid #dee2e6;
+}
+
+.sticky-panel {
+	position: sticky;
+	top: 89.2px;
+	z-index: 1000;
+	display: flex;
+	padding: 5px 0;
+	transition: all 0.3s ease;
+}

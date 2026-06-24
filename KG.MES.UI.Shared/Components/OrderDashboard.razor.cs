@@ -6,6 +6,7 @@ using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Models.Enums;
 using KG.MES.Shared.Services;
 using KG.MES.UI.Shared.Components.Widgets;
+using KG.MES.UI.Shared.Enums;
 using KG.MES.UI.Shared.Interfaces;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -18,6 +19,7 @@ public partial class OrderDashboard<TOrder> : ComponentBase
 	[Parameter] public Guid OrderId { get; set; }
 	[Parameter] public OrderViewSettings Settings { get; set; } = new();
 	[Parameter] public EventCallback OnClose { get; set; }
+	[Parameter] public DashboardViewMode ViewMode { get; set; } = DashboardViewMode.Grid;
 
 	[Inject] private ProductionApiService ApiService { get; set; } = null!;
 	[Inject] private IJSRuntime JSRuntime { get; set; } = null!;
@@ -32,8 +34,8 @@ public partial class OrderDashboard<TOrder> : ComponentBase
 
 	private OrderSuppliesWidget? suppliesWidget;
 	private OrderTraceWidget? traceWidget;
-	//private OrderFieldsWidget<TOrder>? fieldsWidget;
-	private OrderFieldsWidget<OrderDto>? fieldsWidget;
+	private OrderFieldsWidget<TOrder>? fieldsWidget;
+	//private OrderFieldsWidget<OrderDto>? fieldsWidget;
 	private OrderCommentsWidget? commentsWidget;
 
 	private List<WidgetSettings> visibleWidgets => dashboardSettings.Widgets
@@ -145,8 +147,8 @@ public partial class OrderDashboard<TOrder> : ComponentBase
 		StateHasChanged();
 		try
 		{
-			//order = await ApiService.GetOrderByIdAsync<TOrder>(Settings.CardEndpoint, OrderId);
-			orderDto = await ApiService.GetOrderByIdAsync<OrderDto>(Settings.CardEndpoint, OrderId);
+			order = await ApiService.GetOrderByIdAsync<TOrder>(Settings.CardEndpoint, OrderId);
+			//orderDto = await ApiService.GetOrderByIdAsync<OrderDto>(Settings.CardEndpoint, OrderId);
 		}
 		finally
 		{
@@ -336,4 +338,40 @@ public partial class OrderDashboard<TOrder> : ComponentBase
 			await InvokeAsync(StateHasChanged);
 		}
 	}
+
+	private RenderFragment RenderWidgetContent(WidgetSettings widget) => widget.WidgetId switch
+	{
+		WidgetType.Main => builder =>
+		{
+			builder.OpenComponent<OrderFieldsWidget<TOrder>>(0);
+			builder.AddComponentParameter(1, "Order", order);
+			builder.AddComponentParameter(2, "Settings", Settings);
+			builder.CloseComponent();
+		}
+		,
+		WidgetType.Trace => builder =>
+		{
+			builder.OpenComponent<OrderTraceWidget>(0);
+			builder.AddComponentParameter(1, "OrderId", OrderId);
+			builder.AddComponentParameter(2, "CanEdit", Settings.EditTrace);
+			builder.CloseComponent();
+		}
+		,
+		WidgetType.Supplies => builder =>
+		{
+			builder.OpenComponent<OrderSuppliesWidget>(0);
+			builder.AddComponentParameter(1, "OrderId", OrderId);
+			builder.AddComponentParameter(2, "CanEdit", Settings.EditSupply);
+			builder.CloseComponent();
+		}
+		,
+		WidgetType.Comments => builder =>
+		{
+			builder.OpenComponent<OrderCommentsWidget>(0);
+			builder.AddComponentParameter(1, "OrderId", OrderId);
+			builder.CloseComponent();
+		}
+		,
+		_ => builder => { }
+	};
 }

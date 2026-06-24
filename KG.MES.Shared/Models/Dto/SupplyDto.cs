@@ -26,34 +26,39 @@ public class SupplyDto
 	public string? Lumber { get; set; }
 
 	[JsonPropertyName("lumber_comment")]
+	[Column("Брус прим.", Order = 4, Visible = false, DisplayGroup = "supply_status")]
 	public string? LumberComment { get; set; }
 
 	[JsonPropertyName("paint")]
-	[Column("ЛКМ", Order = 4, IsBadge = true, DisplayGroup = "supply_status", CommentField = "PaintComment")]
+	[Column("ЛКМ", Order = 5, IsBadge = true, DisplayGroup = "supply_status", CommentField = "PaintComment")]
 	public string? Paint { get; set; }
 
 	[JsonPropertyName("paint_comment")]
+	[Column("ЛКМ прим.", Order = 6, Visible = false, DisplayGroup = "supply_status")]
 	public string? PaintComment { get; set; }
 
 	[JsonPropertyName("glass")]
-	[Column("Стекло", Order = 5, IsBadge = true, DisplayGroup = "supply_status", CommentField = "GlassComment")]
+	[Column("Стекло", Order = 7, IsBadge = true, DisplayGroup = "supply_status", CommentField = "GlassComment")]
 	public string? Glass { get; set; }
 
 	[JsonPropertyName("glass_comment")]
+	[Column("Стекло прим.", Order = 8, Visible = false, DisplayGroup = "supply_status")]
 	public string? GlassComment { get; set; }
 
 	[JsonPropertyName("furniture")]
-	[Column("Фурнитура", Order = 6, IsBadge = true, DisplayGroup = "supply_status", CommentField = "FurnitureComment")]
+	[Column("Фурнитура", Order = 9, IsBadge = true, DisplayGroup = "supply_status", CommentField = "FurnitureComment")]
 	public string? Furniture { get; set; }
 
 	[JsonPropertyName("furniture_comment")]
+	[Column("Фурнитура прим.", Order = 10, Visible = false, DisplayGroup = "supply_status")]
 	public string? FurnitureComment { get; set; }
 
 	[JsonPropertyName("alumwatershield")]
-	[Column("ППС, В/О", Order = 7, IsBadge = true, DisplayGroup = "supply_status", CommentField = "AlumWaterShieldComment")]
+	[Column("ППС, В/О", Order = 11, IsBadge = true, DisplayGroup = "supply_status", CommentField = "AlumWaterShieldComment")]
 	public string? AlumWaterShield { get; set; }
 
 	[JsonPropertyName("alumWaterShield_comment")]
+	[Column("ППС, В/О прим.", Order = 12, Visible = false, DisplayGroup = "supply_status")]
 	public string? AlumWaterShieldComment { get; set; }
 }
 
