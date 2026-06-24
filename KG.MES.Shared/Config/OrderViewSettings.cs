@@ -70,6 +70,8 @@ namespace KG.MES.Shared.Models.Config
 		[JsonPropertyName("editSupply")]
 		public bool EditSupply { get; set; }
 
+		//public bool UseSplitView { get; set; } = false;  // false = модалка, true = split-view
+
 		/// <summary>
 		/// ???
 		/// </summary>
