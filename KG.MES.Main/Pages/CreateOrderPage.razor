@@ -65,7 +65,9 @@
 						</div>
 						<div class="col-md-2">
 							<label class="form-label">Несогласованный срок (дн.)</label>
-							<input type="number" class="form-control" @bind="UnapprovedDays" min="0"/>
+							<input id="unapprovedDays" type="number" class="form-control" @bind="UnapprovedDays" min="0"
+								@onkeyup='(e) => OnDaysChanged("unapprovedDays", e)'
+								@onblur='() => OnDaysChanged("unapprovedDays")' />
 						</div>
 						<div class="col-md-2">
 							<label class="form-label">Плановая готовность</label>

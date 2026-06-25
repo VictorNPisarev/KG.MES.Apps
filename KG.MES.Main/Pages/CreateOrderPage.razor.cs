@@ -20,6 +20,7 @@ public partial class CreateOrderPage
 	private int ApprovedDays { get; set; }
 	private int ApprovedDaysCash { get; set; }
 	private int UnapprovedDays { get; set; }
+	private int UnapprovedDaysCash { get; set; }
 	private DateTime? So8Date { get; set; }
 	private string Comment { get; set; } = string.Empty;
 	private bool IsEconom { get; set; }
@@ -45,9 +46,9 @@ public partial class CreateOrderPage
 	{
 		if (e != null && e.Key != "Enter") return;
 
-		if (StartDate != StartDateCash || ApprovedDays != ApprovedDaysCash)
+		if (StartDate != StartDateCash || ApprovedDays != ApprovedDaysCash || UnapprovedDays != UnapprovedDaysCash)
 		{
-			_ = JSRuntime.InvokeVoidAsync("fieldArrow.draw", elementId, "readyDate");
+			//_ = JSRuntime.InvokeVoidAsync("fieldArrow.draw", elementId, "readyDate");
 			await CalculateReadyDateAsync();
 			StartDateCash = StartDate;
 			ApprovedDaysCash = ApprovedDays;
