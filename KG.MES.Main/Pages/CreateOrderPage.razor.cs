@@ -2,42 +2,56 @@ using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Services;
 using KG.MES.Shared.Models.Enums;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 
 namespace KG.MES.Main.Pages;
 
 public partial class CreateOrderPage
 {
-	private string OrderNumber { get; set; } = "";
+	private string OrderNumber { get; set; } = string.Empty;
 	private int WindowCount { get; set; }
 	private double WindowArea { get; set; }
 	private int PlateCount { get; set; }
 	private double PlateArea { get; set; }
-	private string Machine { get; set; } = "";
+	private string Machine { get; set; } = string.Empty;
 	private DateTime StartDate { get; set; } = DateTime.Now;
+	private DateTime StartDateCash { get; set; } = DateTime.Now;
 	private int ApprovedDays { get; set; }
+	private int ApprovedDaysCash { get; set; }
 	private int UnapprovedDays { get; set; }
 	private DateTime? So8Date { get; set; }
-	private string Comment { get; set; } = "";
+	private string Comment { get; set; } = string.Empty;
 	private bool IsEconom { get; set; }
 	private bool IsClaim { get; set; }
 	private bool IsOnlyPaid { get; set; }
 	private bool IsTwoSidePaint { get; set; }
 
 	[Inject] private ProductionApiService ApiService { get; set; } = null!;
+	[Inject] private IJSRuntime JSRuntime { get; set; } = null!;
+
 
 	private DateTime? ReadyDate { get; set; }
-
-	private bool isCalculating;
 	private bool isSaving;
-	private string StatusMessage { get; set; } = "";
+	private string StatusMessage { get; set; } = string.Empty;
 	private bool isError;
+	private bool isCalculatingReadyDate;
+
 
 	/// <summary>
 	/// Вызывается при изменении даты начала или количества дней.
 	/// </summary>
-	private async Task OnParametersChanged()
+	private async Task OnDaysChanged(string elementId, KeyboardEventArgs? e = null)
 	{
-		await CalculateReadyDateAsync();
+		if (e != null && e.Key != "Enter") return;
+
+		if (StartDate != StartDateCash || ApprovedDays != ApprovedDaysCash)
+		{
+			_ = JSRuntime.InvokeVoidAsync("fieldArrow.draw", elementId, "readyDate");
+			await CalculateReadyDateAsync();
+			StartDateCash = StartDate;
+			ApprovedDaysCash = ApprovedDays;
+		}
 	}
 
 	private async Task SaveOrder()
@@ -78,26 +92,32 @@ public partial class CreateOrderPage
 
 			if (success)
 			{
-				StatusMessage = $"Заказ №{OrderNumber} создан";
+				//StatusMessage = $"Заказ №{OrderNumber} создан";
+				_ = ShowStatusMessage($"Заказ №{OrderNumber} создан", secs:3);
+
 				isError = false;
 				// Очистка формы
-				OrderNumber = "";
+				OrderNumber = string.Empty;
 				WindowCount = 0;
 				WindowArea = 0;
 				PlateCount = 0;
 				PlateArea = 0;
-				Comment = "";
+				Comment = string.Empty;
 				IsEconom = false;
 				IsClaim = false;
 				IsOnlyPaid = false;
+				IsTwoSidePaint = false;
 				ReadyDate = null;
 				ApprovedDays = 0;
 				UnapprovedDays = 0;
 				So8Date = null;
+				Machine = string.Empty;
+				StartDate = DateTime.Now;
 			}
 			else
 			{
 				StatusMessage = "Ошибка при создании заказа";
+				_ = ShowStatusMessage($"Ошибка при создании заказа", true, 7);
 				isError = true;
 			}
 		}
@@ -125,7 +145,7 @@ public partial class CreateOrderPage
 			return;
 		}
 
-		isCalculating = true;
+		isCalculatingReadyDate = true;
 		StateHasChanged(); // Обновляем UI, чтобы показать индикатор загрузки
 
 		try
@@ -142,8 +162,19 @@ public partial class CreateOrderPage
 		}
 		finally
 		{
-			isCalculating = false;
+			isCalculatingReadyDate = false;
 			StateHasChanged();
 		}
+	}
+
+	private async Task ShowStatusMessage(string message, bool error = false, int secs = 4)
+	{
+		StatusMessage = message;
+		isError = error;
+		StateHasChanged();
+
+		await Task.Delay(secs * 1000);
+		StatusMessage = "";
+		StateHasChanged();
 	}
 }
