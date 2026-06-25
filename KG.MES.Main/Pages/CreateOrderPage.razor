@@ -53,19 +53,34 @@
 					<div class="row g-3">
 						<div class="col-md-3">
 							<label class="form-label">Дата передачи в производство</label>
-							<input type="date" class="form-control" @bind="StartDate" @bind:format="yyyy-MM-dd" @onblur="OnParametersChanged" />
+							<input id="startDate" type="date" class="form-control" @bind="StartDate"
+								@bind:format="yyyy-MM-dd" @bind:after='() => OnDaysChanged("startDate")'
+								@onblur='() => OnDaysChanged("startDate")' />
 						</div>
 						<div class="col-md-2">
 							<label class="form-label">Согласованный срок (дн.)</label>
-							<input type="number" class="form-control" @bind="ApprovedDays" min="0" @onblur="OnParametersChanged" />
+							<input id="approvedDays" type="number" class="form-control" @bind="ApprovedDays" min="0"
+								@onkeyup='(e) => OnDaysChanged("approvedDays", e)'
+								@onblur='() => OnDaysChanged("approvedDays")' />
 						</div>
 						<div class="col-md-2">
 							<label class="form-label">Несогласованный срок (дн.)</label>
-							<input type="number" class="form-control" @bind="UnapprovedDays" min="0"/>
+							<input id="unapprovedDays" type="number" class="form-control" @bind="UnapprovedDays" min="0"
+								@onkeyup='(e) => OnDaysChanged("unapprovedDays", e)'
+								@onblur='() => OnDaysChanged("unapprovedDays")' />
 						</div>
 						<div class="col-md-2">
 							<label class="form-label">Плановая готовность</label>
-							<input type="text" class="form-control" value="@ReadyDate?.ToString("dd.MM.yyyy")" readonly />
+							<div class="input-group">
+								<input id="readyDate" type="text" class="form-control"
+									value="@ReadyDate?.ToString("dd.MM.yyyy")" readonly />
+								@if (isCalculatingReadyDate)
+								{
+									<span class="input-group-text">
+										<span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+									</span>
+								}
+							</div>
 						</div>
 						<div class="col-md-3">
 							<label class="form-label">Дата готовности в СО8</label>

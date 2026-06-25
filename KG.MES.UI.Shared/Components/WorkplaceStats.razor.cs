@@ -19,7 +19,7 @@ public partial class WorkplaceStats
 	protected override async Task OnInitializedAsync()
 	{
 		Console.WriteLine("WorkplaceStats OnInitializedAsync");
-		workplaces = await ApiService.GetWorkplacesAsync("active");
+		workplaces = await ApiService.GetWorkplacesAsync();//("active");
 	}
 
 	private async Task SelectWorkplace(Guid id)
@@ -28,6 +28,15 @@ public partial class WorkplaceStats
 		stats = await ApiService.GetWorkplaceStatsAsync(id);
 		blocks = await ApiService.GetWorkplaceBlocksAsync(id);
 		history = await ApiService.GetWorkplaceHistoryAsync(id, dateFrom, dateTo, 1000);
+		StateHasChanged();
+	}
+
+	private void ClearSelection()
+	{
+		selectedWorkplaceId = null;
+		stats = null;
+		blocks.Clear();
+		history.Clear();
 		StateHasChanged();
 	}
 
