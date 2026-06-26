@@ -223,6 +223,7 @@ public class ProductionApiService
 		string endpoint,  // "orders/all" или "orders/masters" или "orders/supply"
 		//string? status = null,
 		Guid? workplaceId = null,
+		Guid[]? workplaceIds = null,
 		string? orderNumber = null,
 		int page = 1,
 		int limit = 50,
@@ -251,7 +252,14 @@ public class ProductionApiService
 			queryParams["sortOrder"] = sortOrder;
 
 		var query = string.Join("&", queryParams.Select(kv => $"{kv.Key}={kv.Value}"));
-		var url = $"{BaseUrl}/{endpoint}?{query}";
+
+		if (workplaceIds?.Length > 0)
+		{
+			foreach (var id in workplaceIds)
+				query += $"&workplaceIds={id}";
+		}
+
+		var url = $"{BaseUrl}/{endpoint}?{query.TrimStart('&')}";
 
 		return await _httpClient.GetFromJsonAsync<PaginatedResponse<T>>(url)
 			?? new PaginatedResponse<T>();

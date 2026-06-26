@@ -3,6 +3,7 @@
 @import 'dashboard.css';
 @import 'comments.css';
 @import 'stats.css';
+@import 'orderList.css';
 
 .sticky-header {
 	position: sticky;

@@ -6,6 +6,8 @@ using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Services;
 using KG.MES.Shared.Helpers;
 using KG.MES.UI.Shared.Components;
+using System.Text.Json;
+using KG.MES.Shared.Models;
 
 namespace KG.MES.UI.Shared.Components;
 public partial class OrderListView<TOrder> : ComponentBase
@@ -41,6 +43,10 @@ public partial class OrderListView<TOrder> : ComponentBase
 	private DotNetObjectReference<OrderListView<TOrder>>? panelResizeRef;
 	private string? lastReportedWidth;
 	private bool _panelResizeInitialized = false;
+	//private List<Guid> selectedWorkplaceIds = [];
+	private bool dropdownOpen;
+	private Guid[] selectedWorkplaceIds = [];
+	private SavedFilter? savedFilter;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -62,8 +68,20 @@ public partial class OrderListView<TOrder> : ComponentBase
 			//if (!string.IsNullOrEmpty(splitPanelWidth))
 			//	savedPanelWidth = splitPanelWidth;
 
-			var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"table_settings_{tableKey}");
-			columnSettings = TableSettingsManager.GetSettings<TOrder>(json);
+			var orderFilter = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"orderFilter_{Endpoint}");
+			if (!string.IsNullOrEmpty(orderFilter))
+			{
+				savedFilter = JsonSerializer.Deserialize<SavedFilter>(orderFilter,
+					new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+				if (savedFilter != null)
+				{
+					selectedWorkplaceIds = savedFilter.WorkplaceIds ?? [];
+					searchNumber = savedFilter.OrderNumber ?? "";
+				}
+			}
+
+			var tableSettings = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"table_settings_{tableKey}");
+			columnSettings = TableSettingsManager.GetSettings<TOrder>(tableSettings);
 		}
 		catch
 		{
@@ -143,6 +161,7 @@ public partial class OrderListView<TOrder> : ComponentBase
 			orders = await ApiService.GetOrdersAsync<TOrder>(
 				endpoint: Endpoint,
 				workplaceId: selectedWorkplaceId,
+				workplaceIds: selectedWorkplaceIds,
 				orderNumber: string.IsNullOrEmpty(searchNumber) ? null : searchNumber,
 				page: currentPage,
 				limit: pageSize,
@@ -298,6 +317,77 @@ public partial class OrderListView<TOrder> : ComponentBase
 		{
 			Console.WriteLine($"Failed to initialize panel resize: {ex.Message}");
 			_panelResizeInitialized = false;
+		}
+	}
+
+	private void ToggleDropdown()
+	{
+		dropdownOpen = !dropdownOpen;
+	}
+
+	private void CloseDropdown()
+	{
+		dropdownOpen = false;
+	}
+
+	private async Task ToggleWorkplace(Guid id, bool isChecked)
+	{
+		if (isChecked)
+		{
+			if (!selectedWorkplaceIds.Contains(id))
+				selectedWorkplaceIds = selectedWorkplaceIds.Append(id).ToArray();
+		}
+		else
+		{
+			selectedWorkplaceIds = selectedWorkplaceIds.Where(x => x != id).ToArray();
+		}
+
+		//await ApplyFilters();
+	}
+
+	private async Task SaveFilter()
+	{
+		var filter = new SavedFilter
+		{
+			WorkplaceIds = selectedWorkplaceIds,
+			OrderNumber = searchNumber
+		};
+
+		if (filter == savedFilter) return;
+
+		savedFilter = filter;
+
+		var json = JsonSerializer.Serialize(filter);
+		await JSRuntime.InvokeVoidAsync("localStorage.setItem", $"orderFilter_{Endpoint}", json);
+	}
+
+	private bool IsFilterSaved()
+	{
+		if (savedFilter == null) return false;
+
+		if(selectedWorkplaceIds.Length == 0 && searchNumber == string.Empty)
+			return false;
+
+		return selectedWorkplaceIds.SequenceEqual(savedFilter.WorkplaceIds ?? [])
+			&& searchNumber == (savedFilter.OrderNumber ?? string.Empty);
+	}
+
+	private async Task ClearFilter()
+	{
+		selectedWorkplaceIds = [];
+		searchNumber = "";
+		await ApplyFilters();
+		StateHasChanged();
+	}
+
+	private async Task RestoreFilter()
+	{
+		if (savedFilter != null)
+		{
+			selectedWorkplaceIds = savedFilter.WorkplaceIds ?? [];
+			searchNumber = savedFilter.OrderNumber ?? "";
+			await ApplyFilters();
+			StateHasChanged();
 		}
 	}
 

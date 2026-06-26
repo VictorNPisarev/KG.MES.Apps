@@ -36,7 +36,7 @@ builder.Services.AddSingleton<MaterialTypeConfigService>();
 builder.Services.AddSingleton<HolidayCalendarService>();
 builder.Services.AddSingleton<IMaterialFactory, MaterialFactory>();
 builder.Services.AddScoped<IDocumentItemFactory, DocumentItemFactory>();
-builder.Services.AddSingleton(LoadViewSettings());
+builder.Services.AddSingleton(LoadViewSettings(builder.Environment));
 builder.Services.AddSingleton<SupplyService>();
 builder.Services.AddScoped<IEventAggregator, EventAggregator>();
 builder.Services.AddScoped<ISocketService, SocketService>();
@@ -104,9 +104,9 @@ async Task LoadDataAsync(IServiceProvider services, IWebHostEnvironment env)
 }
 
 /// Загрузка настроек отображения списка заказов и карточки
-OrderViewSettings LoadViewSettings()
+OrderViewSettings LoadViewSettings(IWebHostEnvironment env)
 {
-	var settingsPath = Path.Combine(builder.Environment.ContentRootPath, "Config", "orderViewSettings.json");
+	var settingsPath = Path.Combine(env.ContentRootPath, "Config", "orderViewSettings.json");
 	if (File.Exists(settingsPath))
 	{
 		var json = File.ReadAllText(settingsPath);
