@@ -36,6 +36,44 @@
 			</select>
 		</div>
 		<div class="col-md-2">
+			<div style="position: relative;">
+				<button class="btn form-control text-start d-flex justify-content-between align-items-center"
+					@onclick="ToggleDropdown" type="button">
+					@if (selectedWorkplaceIds.Length == 0)
+					{
+						<span class="text-muted">Все участки</span>
+					}
+					else
+					{
+						<span class="text-truncate">@string.Join(", ", workplaces.Where(w =>
+														selectedWorkplaceIds.Contains(w.Id)).Select(w => w.Name))</span>
+											}
+					<i class="bi @(dropdownOpen ? "bi-chevron-up" : "bi-chevron-down") ms-2"></i>
+				</button>
+
+				@if (dropdownOpen)
+				{
+					<div class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 999; background: transparent;"
+						@onclick="CloseDropdown"></div>
+
+					<div class="position-absolute top-100 start-0 w-100 bg-white border rounded shadow-sm p-2"
+						style="max-height: 250px; overflow-y: auto; z-index: 1000;">
+						@foreach (var workplace in workplaces)
+						{
+							<div class="form-check d-flex align-items-center gap-2 py-1">
+								<input type="checkbox" class="form-check-input m-0" id="wp-@workplace.Id"
+									checked="@selectedWorkplaceIds.Contains(workplace.Id)"
+									@onchange="(e) => ToggleWorkplace(workplace.Id, (bool)(e.Value ?? false))" />
+								<label class="form-check-label w-100 m-0" style="cursor: pointer;" for="wp-@workplace.Id">
+									@workplace.Name
+								</label>
+							</div>
+						}
+					</div>
+				}
+			</div>
+		</div>
+		<div class="col-md-2">
 			<input class="form-control"
 				   type="text"
 				   placeholder="Номер заказа"
@@ -57,12 +95,6 @@
 				<span>Показано @((orders.Page - 1) * orders.Limit + 1)-@(Math.Min(orders.Page * orders.Limit, orders.Total)) из @orders.Total</span>
 			}
 		</div>
-		@*<div class="d-flex gap-2 mb-2">
-			<button class="btn btn-sm btn-outline-secondary @(useSplitView ? "active" : "")" @onclick="ToggleViewMode"
-				title="@(useSplitView ? "Модальное окно" : "Разделённый вид")">
-				<i class="bi @(useSplitView ? "bi-window" : "bi-layout-split")"></i>
-			</button>
-		</div>*@
 		<div class="d-flex gap-2">
 			<button class="btn btn-sm btn-outline-secondary" @onclick="ToggleViewMode"
 				title="@(useSplitView ? "Модальное окно" : "Разделённый вид")">
@@ -136,7 +168,6 @@
 	{
 		var visibleData = BuildVisibleColumns();
 		<div class="row g-0 d-flex w-100" style="flex-wrap: nowrap;">
-			@*<div class="@(useSplitView && selectedOrder != null ? "col-md-8 resizable-panel" : "table-responsive mt-3")">*@
 			<div class="@(useSplitView && selectedOrder != null ? "resizable-panel" : "table-responsive mt-3")"
 				id="split-panel" style="@(useSplitView && selectedOrder != null ? "width: " + savedPanelWidth : "width: 100%")">
 				<table class="table table-hover">

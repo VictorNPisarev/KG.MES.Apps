@@ -41,6 +41,9 @@ public partial class OrderListView<TOrder> : ComponentBase
 	private DotNetObjectReference<OrderListView<TOrder>>? panelResizeRef;
 	private string? lastReportedWidth;
 	private bool _panelResizeInitialized = false;
+	//private List<Guid> selectedWorkplaceIds = [];
+	private bool dropdownOpen;
+	private Guid[] selectedWorkplaceIds = [];
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -299,6 +302,31 @@ public partial class OrderListView<TOrder> : ComponentBase
 			Console.WriteLine($"Failed to initialize panel resize: {ex.Message}");
 			_panelResizeInitialized = false;
 		}
+	}
+
+	private void ToggleDropdown()
+	{
+		dropdownOpen = !dropdownOpen;
+	}
+
+	private void CloseDropdown()
+	{
+		dropdownOpen = false;
+	}
+
+	private async Task ToggleWorkplace(Guid id, bool isChecked)
+	{
+		if (isChecked)
+		{
+			if (!selectedWorkplaceIds.Contains(id))
+				selectedWorkplaceIds = selectedWorkplaceIds.Append(id).ToArray();
+		}
+		else
+		{
+			selectedWorkplaceIds = selectedWorkplaceIds.Where(x => x != id).ToArray();
+		}
+
+		await ApplyFilters();
 	}
 
 	public void Dispose()
