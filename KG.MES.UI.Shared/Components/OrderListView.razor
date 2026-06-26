@@ -26,7 +26,7 @@
 
 	<!-- Фильтры -->
 	<div class="row mt-4 g-2">
-		<div class="col-md-2">
+		@*<div class="col-md-2">
 			<select class="form-select" @bind="selectedWorkplaceId">
 				<option value="">Все участки</option>
 				@foreach (var workplace in workplaces)
@@ -34,10 +34,10 @@
 					<option value="@workplace.Id">@workplace.Name</option>
 				}
 			</select>
-		</div>
+		</div>*@
 		<div class="col-md-2">
 			<div style="position: relative;">
-				<button class="btn form-control text-start d-flex justify-content-between align-items-center"
+				<button class="form-control text-start d-flex justify-content-between align-items-center"
 					@onclick="ToggleDropdown" type="button">
 					@if (selectedWorkplaceIds.Length == 0)
 					{

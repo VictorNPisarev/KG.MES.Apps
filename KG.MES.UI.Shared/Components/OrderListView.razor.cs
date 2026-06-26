@@ -146,6 +146,7 @@ public partial class OrderListView<TOrder> : ComponentBase
 			orders = await ApiService.GetOrdersAsync<TOrder>(
 				endpoint: Endpoint,
 				workplaceId: selectedWorkplaceId,
+				workplaceIds: selectedWorkplaceIds,
 				orderNumber: string.IsNullOrEmpty(searchNumber) ? null : searchNumber,
 				page: currentPage,
 				limit: pageSize,
@@ -326,7 +327,7 @@ public partial class OrderListView<TOrder> : ComponentBase
 			selectedWorkplaceIds = selectedWorkplaceIds.Where(x => x != id).ToArray();
 		}
 
-		await ApplyFilters();
+		//await ApplyFilters();
 	}
 
 	public void Dispose()
