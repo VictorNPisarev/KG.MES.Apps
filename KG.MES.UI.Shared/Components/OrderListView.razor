@@ -80,9 +80,27 @@
 				   @bind="searchNumber"
 				   @onkeyup="OnSearchKeyUp" />
 		</div>
-		<div class="col-md-2">
+		<div class="col-md-2 d-flex gap-2">
 			<button class="btn btn-primary w-100" @onclick="ApplyFilters">
 				<i class="bi bi-search"></i> Найти
+			</button>
+			@* Кнопка Сброс/Восстановить *@
+			@if (savedFilter != null && !IsFilterSaved())
+			{
+				<button class="btn btn-outline-secondary" @onclick="RestoreFilter" title="Восстановить фильтр">
+					<i class="bi bi-arrow-counterclockwise"></i>
+				</button>
+			}
+			else
+			{
+				<button class="btn btn-outline-secondary" @onclick="ClearFilter" title="Сбросить фильтр">
+					<i class="bi bi-x-lg"></i>
+				</button>
+			}
+			@* Кнопка Сохранить: активна если фильтр изменён *@
+			<button class="btn btn-outline-secondary @(IsFilterSaved() ? "disabled" : "")" @onclick="SaveFilter"
+				title="Сохранить фильтр" disabled="@IsFilterSaved()">
+				<i class="bi bi-floppy"></i>
 			</button>
 		</div>
 	</div>
