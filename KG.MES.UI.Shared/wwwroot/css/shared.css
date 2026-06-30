@@ -4,6 +4,7 @@
 @import 'comments.css';
 @import 'stats.css';
 @import 'orderList.css';
+@import 'workplaces.css';
 
 .sticky-header {
 	position: sticky;

@@ -97,6 +97,8 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 		orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
 		EditMode = false;
 		openDropdowns.Clear();
+
+		EventAggregator.Publish(new OrderUpdatedEvent { OrderId = OrderId });
 	}
 
 	private void ToggleDropdown(string key)

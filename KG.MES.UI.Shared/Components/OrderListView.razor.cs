@@ -8,6 +8,8 @@ using KG.MES.Shared.Helpers;
 using KG.MES.UI.Shared.Components;
 using System.Text.Json;
 using KG.MES.Shared.Models;
+using KG.MES.Shared.Events;
+using KG.MES.Shared.Interfaces;
 
 namespace KG.MES.UI.Shared.Components;
 public partial class OrderListView<TOrder> : ComponentBase
@@ -18,6 +20,8 @@ public partial class OrderListView<TOrder> : ComponentBase
 
 	[Inject] private ProductionApiService ApiService { get; set; } = null!;
 	[Inject] private IJSRuntime JSRuntime { get; set; } = null!;
+	[Inject] private IEventAggregator EventAggregator { get; set; } = null!;
+
 
 	private TOrder? order;
 	private OrderDashboard<TOrder>? dashboardRef;
@@ -55,6 +59,14 @@ public partial class OrderListView<TOrder> : ComponentBase
 		await LoadSettings();
 		workplaces = await ApiService.GetAllWorkplacesAsync();//await ApiService.GetActiveWorkplacesAsync();
 		await LoadOrders();
+
+		EventAggregator.Subscribe<OrderUpdatedEvent>(OnOrderUpdated);
+	}
+
+	private async void OnOrderUpdated(OrderUpdatedEvent e)
+	{
+		await LoadOrders();
+		StateHasChanged();
 	}
 
 	private async Task LoadSettings()
@@ -403,5 +415,7 @@ public partial class OrderListView<TOrder> : ComponentBase
 		catch { }
 
 		panelResizeRef?.Dispose();
+
+		EventAggregator.Unsubscribe<OrderUpdatedEvent>(OnOrderUpdated);
 	}
 }
