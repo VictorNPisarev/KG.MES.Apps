@@ -3,19 +3,25 @@
 	{
 		"workplaces":
 		{
-			"none": "bg-secondary",
-			"не определен": "bg-secondary",
-			"торцовка": "bg-primary bg-opacity-25 text-primary",
-			"столярка": "bg-primary bg-opacity-25 text-primary",
-			"профилирование": "bg-primary bg-opacity-25 text-primary",
-			"сборка": "bg-primary bg-opacity-25 text-primary",
-			"шлифовка": "bg-primary bg-opacity-25 text-primary",
-			"покраска": "bg-primary bg-opacity-25 text-primary",
-			"фурнитура": "bg-primary bg-opacity-25 text-primary",
-			"остекление": "bg-primary bg-opacity-25 text-primary",
-			"упаковка": "bg-primary bg-opacity-25 text-primary",
-			"готово": "bg-success bg-opacity-25 text-success",
-			"отгружен": "bg-success"
+			"none": "badge-workplace-none",
+			"не определен": "badge-workplace-undefined",
+			"торцовка": "badge-workplace-торцовка",
+			"столярка": "badge-workplace-столярка",
+			"профилирование": "badge-workplace-профилирование",
+			"сборка": "badge-workplace-сборка",
+			"шлифовка": "badge-workplace-шлифовка",
+			"покраска": "badge-workplace-покраска",
+			"фурнитура": "badge-workplace-фурнитура",
+			"остекление": "badge-workplace-остекление",
+			"упаковка": "badge-workplace-упаковка",
+			"готово": "badge-workplace-готово",
+			"отгружен": "badge-workplace-отгружен"
+		},
+		"features":
+		{
+			"рекламация": "badge-рекламация",
+			"эконом": "badge-эконом",
+			"оплачен, не запущен": "badge-оплачен-не-запущен"
 		},
 		"workplace_statuses":
 		{
