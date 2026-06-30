@@ -4,11 +4,6 @@
 	{
 		"workplaces":
 		{
-			"торцовка": "bg-primary bg-opacity-25 text-primary",
-			"столярка": "bg-primary bg-opacity-25 text-primary",
-			"профилирование": "bg-primary bg-opacity-25 text-primary",
-			"сборка": "bg-primary bg-opacity-25 text-primary",
-			"покраска": "bg-primary bg-opacity-25 text-primary"
 		}
 	}
 }
