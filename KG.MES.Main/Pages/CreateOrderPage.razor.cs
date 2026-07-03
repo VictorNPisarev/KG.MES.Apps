@@ -15,8 +15,8 @@ public partial class CreateOrderPage
 	private int PlateCount { get; set; }
 	private double PlateArea { get; set; }
 	private string Machine { get; set; } = string.Empty;
-	private DateTime StartDate { get; set; } = DateTime.Now;
-	private DateTime StartDateCash { get; set; } = DateTime.Now;
+	private DateTime? StartDate { get; set; } = DateTime.Now;
+	private DateTime? StartDateCash { get; set; } = DateTime.Now;
 	private int ApprovedDays { get; set; }
 	private int ApprovedDaysCash { get; set; }
 	private int UnapprovedDays { get; set; }
@@ -81,7 +81,7 @@ public partial class CreateOrderPage
 				IsClaim = IsClaim,
 				IsOnlyPaid = IsOnlyPaid,
 				IsTwoSidePaint = IsTwoSidePaint,
-				StartDate = StartDate,
+				StartDate = StartDate ?? DateTime.Now,
 				ApprowedLeadDays = ApprovedDays > 0 ? ApprovedDays : UnapprovedDays,
 				UnapprowedLeadDays = UnapprovedDays,
 				ReadyDate = ReadyDate,
@@ -151,7 +151,7 @@ public partial class CreateOrderPage
 
 		try
 		{
-			ReadyDate = await ApiService.CalculateReadyDateAsync(StartDate, days);
+			ReadyDate = await ApiService.CalculateReadyDateAsync(StartDate ?? DateTime.Now, days);
 			StatusMessage = "";
 			isError = false;
 		}
@@ -177,5 +177,14 @@ public partial class CreateOrderPage
 		await Task.Delay(secs * 1000);
 		StatusMessage = "";
 		StateHasChanged();
+	}
+
+	private void HandleDateChange(ChangeEventArgs e, string elementId)
+	{
+		if (DateTime.TryParse(e.Value?.ToString(), out var date))
+		{
+			StartDate = date;
+			_ = OnDaysChanged(elementId);
+		}
 	}
 }
