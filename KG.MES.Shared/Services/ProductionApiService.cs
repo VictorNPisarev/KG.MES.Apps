@@ -789,4 +789,18 @@ public class ProductionApiService
 			return false;
 		}
 	}
+
+	//public async Task<OrderCommerceDto?> GetCommerceAsync(Guid orderId)
+	//{
+	//	try
+	//	{
+	//		var url = $"{BaseUrl}/orders/{orderId}/commerce";
+	//		return await _httpClient.GetFromJsonAsync<OrderCommerceDto>(url);
+	//	}
+	//	catch (Exception ex)
+	//	{
+	//		_logger.LogError(ex, "Error fetching commerce data for order {Id}", orderId);
+	//		return null;
+	//	}
+	//}
 }
