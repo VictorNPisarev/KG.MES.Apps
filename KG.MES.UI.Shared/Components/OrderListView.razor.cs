@@ -58,6 +58,13 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 	private Guid[] selectedWorkplaceIds = [];
 	private SavedFilter? savedFilter;
 
+	private IconInfo testIcon = new IconInfo
+	{
+						Class = "bi bi-piggy-bank-fill",
+						Css = "order-icon-econom",
+						Title = "Эконом"
+	};
+
 	protected override async Task OnInitializedAsync()
 	{
 		columnInfos = ColumnHelper.GetColumns<TListItem>();

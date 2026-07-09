@@ -10,7 +10,7 @@ public class OrderDto
 	public Guid Id { get; set; }
 
 	[JsonPropertyName("order_number")]
-	[Column("№ заказа", Order = 1)]
+	[Column("№ заказа", Order = 1, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" })]
 	public string OrderNumber { get; set; } = string.Empty;
 
 	[JsonPropertyName("current_status")]

@@ -222,9 +222,16 @@
 											}
 											else
 											{
+												@if (col.Info.IconConditions?.Length > 0)
+												{
+													var icons = ColumnHelper.GetIcons(order, col.Info.IconConditions);
+													foreach (var icon in icons)
+													{
+														<i class="@icon.Class @icon.Css fs-6 me-1" title="@icon.Title"></i>
+													}
+												}
 												@ColumnHelper.GetFormattedValue(order, col.Info)
 											}
-											
 											@if (!string.IsNullOrEmpty(col.Info.CommentField))
 											{
 													// Находим колонку комментария
@@ -276,7 +283,16 @@
 				<div class="sticky-panel" style="flex: 1; min-width: 0; max-height: calc(100vh - 200px); overflow-y: auto;">
 					<div class="p-3">
 						<div class="d-flex justify-content-between align-items-center mb-3">
-							<h5>Заказ №@GetOrderNumber(selectedOrder!)</h5>
+							<h5>
+								Заказ №@GetOrderNumber(selectedOrder!)
+								@{
+									var icons = ColumnHelper.GetIcons(selectedOrder, typeof(TListItem));
+									foreach (var icon in icons)
+									{
+										<i class="@icon.Class @icon.Css fs-4 ms-2" title="@icon.Title"></i>
+									}
+								}
+							</h5>
 							<button class="btn-close" @onclick="CloseOrder"></button>
 						</div>
 						<OrderDashboard @ref="dashboardRef" TOrder="TCardItem" OrderId="@GetOrderId(selectedOrder!)"
@@ -350,13 +366,22 @@
 	}
 </div>
 <!-- Модальное окно с карточкой заказа -->
-@if (!useSplitView && isModalOpen)
+@if (!useSplitView && isModalOpen && selectedOrder != null)
 {
 	<div class="modal fade show" style="display: block;" tabindex="-1">
 		<div class="modal-dialog modal-xl">
 			<div class="modal-content">
 				<div class="modal-header">
-					<h5 class="modal-title">Заказ №@GetOrderNumber(selectedOrder!)</h5>
+					<h5 class="modal-title">
+						Заказ №@GetOrderNumber(selectedOrder!)
+						@{
+							var icons = ColumnHelper.GetIcons(selectedOrder, typeof(TListItem));
+							foreach (var icon in icons)
+							{
+								<i class="@icon.Class @icon.Css fs-4 ms-2" title="@icon.Title"></i>
+							}
+						}
+					</h5>
 					<button type="button" class="btn-close" @onclick="() => dashboardRef!.CloseOrder()"></button>
 				</div>
 				<div class="modal-body">

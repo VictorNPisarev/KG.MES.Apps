@@ -1,80 +1,131 @@
 using System.Reflection;
 using KG.MES.Shared.Attributes;
 
-namespace KG.MES.Shared.Helpers
+namespace KG.MES.Shared.Helpers;
+
+public static class ColumnHelper
 {
-	public static class ColumnHelper
+	public static List<ColumnInfo> GetColumns<T>()
 	{
-		public static List<ColumnInfo> GetColumns<T>()
-		{
-			return typeof(T).GetProperties()
-				.Select(p => new
-				{
-					Property = p,
-					Attr = p.GetCustomAttribute<ColumnAttribute>()
-				})
-				.Where(x => x.Attr != null)
-				.OrderBy(x => x.Attr!.Order)
-				.Select(x => new ColumnInfo
-				{
-					PropertyName = x.Property.Name,
-					Title = x.Attr!.Title,
-					Format = x.Attr.DisplayFormat,
-					IsBadge = x.Attr.IsBadge,
-					BadgeGroup = x.Attr.BadgeGroup,
-					CommentField = x.Attr.CommentField,
-					DisplayGroup = x.Attr.DisplayGroup
-				})
-				.ToList();
-		}
-
-		public static string? GetFormattedValue(object obj, ColumnInfo column)
-		{
-			var property = obj.GetType().GetProperty(column.PropertyName);
-			var value = property?.GetValue(obj);
-
-			if (value == null) return null;
-
-			if (!string.IsNullOrEmpty(column.Format))
+		return typeof(T).GetProperties()
+			.Select(p => new
 			{
-				if (value is DateTime dt)
-					return dt.ToString(column.Format);
-				if (value is double d)
-					return d.ToString(column.Format);
-				if (value is decimal m)
-					return m.ToString(column.Format);
-			}
+				Property = p,
+				Attr = p.GetCustomAttribute<ColumnAttribute>()
+			})
+			.Where(x => x.Attr != null)
+			.OrderBy(x => x.Attr!.Order)
+			.Select(x => new ColumnInfo
+			{
+				PropertyName = x.Property.Name,
+				Title = x.Attr!.Title,
+				Format = x.Attr.DisplayFormat,
+				IsBadge = x.Attr.IsBadge,
+				BadgeGroup = x.Attr.BadgeGroup,
+				CommentField = x.Attr.CommentField,
+				DisplayGroup = x.Attr.DisplayGroup,
+				IconConditions = x.Attr.IconConditions
+			})
+			.ToList();
+	}
 
-			if (value is string s && !string.IsNullOrEmpty(column.DisplayGroup))
-				return BadgeHelper.GetDisplayValue(s, column.DisplayGroup);
+	public static string? GetFormattedValue(object obj, ColumnInfo column)
+	{
+		var property = obj.GetType().GetProperty(column.PropertyName);
+		var value = property?.GetValue(obj);
 
-			return value.ToString();
-		}
+		if (value == null) return null;
 
-		public static List<ColumnSetting> GetDefaultSettings<T>()
+		if (!string.IsNullOrEmpty(column.Format))
 		{
-			var settings = typeof(T).GetProperties()
-				.Select(p => new
-				{
-					Property = p,
-					Attr = p.GetCustomAttribute<ColumnAttribute>()
-				})
-				.Where(x => x.Attr != null)
-				.Select(x => new ColumnSetting
-				{
-					PropertyName = x.Property.Name,
-					Visible = x.Attr!.Visible,
-					Order = x.Attr.Order,
-					Width = 0
-				})
-				.ToList();
-
-			// Перенумеровываем подряд, начиная с 0
-			var ordered = settings.OrderBy(s => s.Order).ToList();
-			for (int i = 0; i < ordered.Count; i++)
-				ordered[i].Order = i;
-
-			return settings;
+			if (value is DateTime dt)
+				return dt.ToString(column.Format);
+			if (value is double d)
+				return d.ToString(column.Format);
+			if (value is decimal m)
+				return m.ToString(column.Format);
 		}
+
+		if (value is string s && !string.IsNullOrEmpty(column.DisplayGroup))
+			return BadgeHelper.GetDisplayValue(s, column.DisplayGroup);
+
+		return value.ToString();
+	}
+
+	public static List<ColumnSetting> GetDefaultSettings<T>()
+	{
+		var settings = typeof(T).GetProperties()
+			.Select(p => new
+			{
+				Property = p,
+				Attr = p.GetCustomAttribute<ColumnAttribute>()
+			})
+			.Where(x => x.Attr != null)
+			.Select(x => new ColumnSetting
+			{
+				PropertyName = x.Property.Name,
+				Visible = x.Attr!.Visible,
+				Order = x.Attr.Order,
+				Width = 0
+			})
+			.ToList();
+
+		// Перенумеровываем подряд, начиная с 0
+		var ordered = settings.OrderBy(s => s.Order).ToList();
+		for (int i = 0; i < ordered.Count; i++)
+			ordered[i].Order = i;
+
+		return settings;
+	}
+
+	public static List<IconInfo> GetIcons(object obj, string[]? iconConditions)
+	{
+		var result = new List<IconInfo>();
+		if (iconConditions == null) return result;
+
+		foreach (var condition in iconConditions)
+		{
+			var parts = condition.Split(':');
+			if (parts.Length != 2) continue;
+
+			var propertyName = parts[0].Trim();
+			var iconName = parts[1].Trim();
+
+			var prop = obj.GetType().GetProperty(propertyName);
+			if (prop == null) continue;
+
+			var value = prop.GetValue(obj);
+			if (value is bool b && b && Enum.TryParse<OrderIcon>(iconName, out var icon))
+			{
+				var attr = icon.GetType().GetField(icon.ToString())!
+					.GetCustomAttribute<IconClassAttribute>();
+
+				if (attr != null)
+				{
+					result.Add(new IconInfo
+					{
+						Class = attr.IconClass,
+						Css = attr.CssClass,
+						Title = attr.Title
+					});
+				}
+			}
+		}
+
+		return result;
+	}
+
+	public static List<IconInfo> GetIcons(object obj, Type type)
+	{
+		var result = new List<IconInfo>();
+
+		foreach (var prop in type.GetProperties())
+		{
+			var attr = prop.GetCustomAttribute<ColumnAttribute>();
+			if (attr?.IconConditions == null) continue;
+			result.AddRange(ColumnHelper.GetIcons(obj, attr.IconConditions));
+		}
+
+		return result;
 	}
 }

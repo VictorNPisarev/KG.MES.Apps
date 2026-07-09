@@ -5,6 +5,7 @@
 @import 'stats.css';
 @import 'orderList.css';
 @import 'workplaces.css';
+@import 'orderIcons.css';
 
 .sticky-header {
 	position: sticky;
