@@ -37,12 +37,13 @@ public class MastersOrderDto
 	[Column("Щитовые, м2", Order = 7, DisplayFormat = "F2")]
 	public double? PlateArea { get; set; }
 
+	[JsonPropertyName("machine")]
 	[Column("Станок", Order = 8, Visible = true, IsBadge = true)]
 	public string? Machine { get; set; }
 
-	[JsonPropertyName("created_at")]
+	[JsonPropertyName("rtm_date")]
 	[Column("Дата запуска", Visible = false)]
-	public DateTime StartDate { get; set; }
+	public DateTime RtmDate { get; set; }
 
 	[JsonPropertyName("is_econom")]
 	[Column("Эконом", Visible = false, IsBadge = true)]
@@ -80,7 +81,7 @@ public static class MastersOrderDtoExtension
 		{
 			OrderNumber = orderDto.OrderNumber,
 			Status = orderDto.Status,
-			StartDate = orderDto.StartDate,
+			RtmDate = orderDto.RtmDate,
 			ReadyDate = orderDto.ReadyDate,
 			WindowCount = orderDto.WindowCount,
 			WindowArea = orderDto.WindowArea,

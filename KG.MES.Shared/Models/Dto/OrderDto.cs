@@ -18,9 +18,9 @@ public class OrderDto
 	public string? Status { get; set; }
 
 
-	[JsonPropertyName("created_at")]
+	[JsonPropertyName("rtm_date")]
 	[Column("Дата запуска", Order = 4, DisplayFormat = "dd.MM.yyyy")]
-	public DateTime StartDate { get; set; }
+	public DateTime? RtmDate { get; set; }
 
 	[JsonPropertyName("ready_date")]
 	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy")]
@@ -80,7 +80,7 @@ public static class OrderDtoExtension
 		{
 			OrderNumber = orderDto.OrderNumber,
 			Status = orderDto.Status,
-			StartDate = orderDto.StartDate,
+			RtmDate = orderDto.RtmDate,
 			ReadyDate = orderDto.ReadyDate,
 			WindowCount = orderDto.WindowCount,
 			WindowArea = orderDto.WindowArea,

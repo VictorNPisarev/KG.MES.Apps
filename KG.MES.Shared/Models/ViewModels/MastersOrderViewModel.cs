@@ -30,7 +30,7 @@ public class MastersOrderViewModel : IListItemViewModel
 	public string? Machine { get; set; }
 
 	[Column("Дата запуска", Visible = false)]
-	public DateTime StartDate { get; set; }
+	public DateTime RtmDate { get; set; }
 
 	[Column("Эконом", Visible = false, IsBadge = true)]
 	public bool IsEconom { get; set; }

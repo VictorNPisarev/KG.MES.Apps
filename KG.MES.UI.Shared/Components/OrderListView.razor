@@ -1,6 +1,8 @@
 @using KG.MES.Shared.Helpers
 @using KG.MES.UI.Shared.Enums
-@typeparam TOrder
+@typeparam TListItem
+@typeparam TCardItem
+
 
 <PageTitle>@Title</PageTitle>
 
@@ -243,10 +245,26 @@
 									</td>
 								}
 								<td>
-									<button class="btn btn-sm btn-outline-primary"
-											@onclick="() => OpenOrder(order)">
-										<i class="bi bi-eye"></i>
-									</button>
+									<div class="d-flex flex-row gap-2">
+										<button class="btn btn-sm btn-outline-primary"
+												@onclick="() => OpenOrder(order!)">
+											<i class="bi bi-eye"></i>
+										</button>
+										@if (Settings.CanEdit)
+										{
+											<button class="btn btn-sm btn-outline-success"
+												@onclick="() => EditOrder(order!)" title="Редактировать">
+												<i class="bi bi-pencil"></i>
+											</button>
+										}
+										@if (Settings.CanDelete)
+										{
+											<button class="btn btn-sm btn-outline-danger"
+												@onclick="() => DeleteOrder(order!)" title="Удалить">
+												<i class="bi bi-trash"></i>
+											</button>
+										}
+									</div>
 								</td>
 							</tr>
 						}
@@ -261,7 +279,7 @@
 							<h5>Заказ №@GetOrderNumber(selectedOrder!)</h5>
 							<button class="btn-close" @onclick="CloseOrder"></button>
 						</div>
-						<OrderDashboard @ref="dashboardRef" TOrder="TOrder" OrderId="@GetOrderId(selectedOrder!)"
+						<OrderDashboard @ref="dashboardRef" TOrder="TCardItem" OrderId="@GetOrderId(selectedOrder!)"
 							Settings="@Settings" OnClose="CloseOrder" ViewMode="DashboardViewMode.Tabs"
 							@key="@GetOrderId(selectedOrder)" />
 					</div>
@@ -342,9 +360,7 @@
 					<button type="button" class="btn-close" @onclick="() => dashboardRef!.CloseOrder()"></button>
 				</div>
 				<div class="modal-body">
-					<OrderDashboard @ref="dashboardRef"
-									TOrder="TOrder" 
-									OrderId="@GetOrderId(selectedOrder!)" 
+					<OrderDashboard @ref="dashboardRef" TOrder="TCardItem" OrderId="@GetOrderId(selectedOrder!)" 
 									Settings="@Settings"
 									OnClose="CloseOrder" />
 				</div>

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace KG.MES.UI.Shared.Components.Widgets;
 
-public partial class OrderCommerceWidget<TOrder> : ComponentBase, ISavableWidget
+public partial class OrderCommerceWidget : ComponentBase, ISavableWidget
 {
 	[Parameter] public Guid OrderId { get; set; }
 

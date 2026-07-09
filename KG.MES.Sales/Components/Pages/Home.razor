@@ -6,4 +6,5 @@
 
 <PageTitle>@AppSettings.Title</PageTitle>
 
-<OrderListView TOrder="SalesOrderDto" Settings="@AppSettings" />
+@*<OrderListView TOrder="SalesOrderDto" Settings="@AppSettings" />*@
+<OrderListView TListItem="SalesOrderDto" TCardItem="OrderDto" Settings="@AppSettings" />

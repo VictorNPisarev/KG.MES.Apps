@@ -82,8 +82,8 @@ public partial class CreateOrderPage
 				IsOnlyPaid = IsOnlyPaid,
 				IsTwoSidePaint = IsTwoSidePaint,
 				StartDate = StartDate ?? DateTime.Now,
-				ApprowedLeadDays = ApprovedDays > 0 ? ApprovedDays : UnapprovedDays,
-				UnapprowedLeadDays = UnapprovedDays,
+				ApprovedLeadDays = ApprovedDays > 0 ? ApprovedDays : UnapprovedDays,
+				UnapprovedLeadDays = UnapprovedDays,
 				ReadyDate = ReadyDate,
 				So8Date = So8Date,
 				Machine = Machine

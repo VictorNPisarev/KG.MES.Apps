@@ -4,5 +4,5 @@
 @inject OrderViewSettings AppSettings
 
 
-<OrderListView TOrder="MastersOrderDto" Settings="@AppSettings">
-</OrderListView>
+@*<OrderListView TOrder="MastersOrderDto" Settings="@AppSettings"></OrderListView>*@
+<OrderListView TListItem="OrderDto" TCardItem="OrderDto" Settings="@AppSettings" />

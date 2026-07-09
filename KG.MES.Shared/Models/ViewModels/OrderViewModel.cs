@@ -13,7 +13,7 @@ public class OrderViewModel : IListItemViewModel
 	public string? Status { get; set; }
 
 	[Column("Дата запуска", Order = 4, DisplayFormat = "dd.MM.yyyy")]
-	public DateTime StartDate { get; set; }
+	public DateTime? RtmDate { get; set; }
 
 	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy")]
 	public DateTime? ReadyDate { get; set; }

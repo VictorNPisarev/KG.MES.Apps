@@ -12,24 +12,30 @@ using KG.MES.Shared.Events;
 using KG.MES.Shared.Interfaces;
 
 namespace KG.MES.UI.Shared.Components;
-public partial class OrderListView<TOrder> : ComponentBase
+public partial class OrderListView<TListItem, TCardItem> : ComponentBase
+	where TListItem : class
+	where TCardItem : class
+
 {
 	[Parameter] public OrderViewSettings Settings { get; set; } = new();
-	[Parameter] public EventCallback<TOrder> OnOrderClick { get; set; }
+	[Parameter] public EventCallback<TListItem> OnOrderClick { get; set; }
+	[Parameter] public EventCallback<TListItem> OnEditOrder { get; set; }
+	[Parameter] public EventCallback<TListItem> OnDeleteOrder { get; set; }
 	[Parameter] public RenderFragment? HeaderActions { get; set; }
 
 	[Inject] private ProductionApiService ApiService { get; set; } = null!;
 	[Inject] private IJSRuntime JSRuntime { get; set; } = null!;
 	[Inject] private IEventAggregator EventAggregator { get; set; } = null!;
+	[Inject] private NavigationManager NavManager { get; set; } = null!;
 
 
-	private TOrder? order;
-	private OrderDashboard<TOrder>? dashboardRef;
+	private TListItem? order;
+	private OrderDashboard<TCardItem>? dashboardRef;
 	private string Endpoint => Settings.ListEndpoint;
 	private string CardEndpoint => Settings.CardEndpoint;
 	private string Title => Settings.Title;
 	private bool ShowActions => Settings.ShowActions;
-	private PaginatedResponse<TOrder> orders = new();
+	private PaginatedResponse<TListItem> orders = new();
 	private List<WorkplaceDto> workplaces = [];
 	private List<ColumnInfo> columnInfos = [];
 	private List<ColumnSetting> columnSettings = [];
@@ -40,11 +46,11 @@ public partial class OrderListView<TOrder> : ComponentBase
 	private string sortBy = "ready_date";
 	private string sortOrder = "asc";
 	private Guid? selectedWorkplaceId;
-	private string tableKey => $"{Endpoint}_{typeof(TOrder).Name}";
+	private string tableKey => $"{Endpoint}_{typeof(TListItem).Name}";
 	private bool isColumnsOpen = false;
 	private bool useSplitView;
 	private string savedPanelWidth = "66%";
-	private DotNetObjectReference<OrderListView<TOrder>>? panelResizeRef;
+	private DotNetObjectReference<OrderListView<TListItem, TCardItem>>? panelResizeRef;
 	private string? lastReportedWidth;
 	private bool _panelResizeInitialized = false;
 	//private List<Guid> selectedWorkplaceIds = [];
@@ -54,7 +60,7 @@ public partial class OrderListView<TOrder> : ComponentBase
 
 	protected override async Task OnInitializedAsync()
 	{
-		columnInfos = ColumnHelper.GetColumns<TOrder>();
+		columnInfos = ColumnHelper.GetColumns<TListItem>();
 
 		await LoadSettings();
 		workplaces = await ApiService.GetAllWorkplacesAsync();//await ApiService.GetActiveWorkplacesAsync();
@@ -93,11 +99,11 @@ public partial class OrderListView<TOrder> : ComponentBase
 			}
 
 			var tableSettings = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"table_settings_{tableKey}");
-			columnSettings = TableSettingsManager.GetSettings<TOrder>(tableSettings);
+			columnSettings = TableSettingsManager.GetSettings<TListItem>(tableSettings);
 		}
 		catch
 		{
-			columnSettings = TableSettingsManager.GetDefaultSettings<TOrder>();
+			columnSettings = TableSettingsManager.GetDefaultSettings<TListItem>();
 		}
 	}
 
@@ -158,7 +164,7 @@ public partial class OrderListView<TOrder> : ComponentBase
 
 	private async Task ResetColumns()
 	{
-		columnSettings = TableSettingsManager.GetDefaultSettings<TOrder>();
+		columnSettings = TableSettingsManager.GetDefaultSettings<TListItem>();
 		await SaveSettings();
 		StateHasChanged();
 	}
@@ -170,7 +176,7 @@ public partial class OrderListView<TOrder> : ComponentBase
 
 		try
 		{
-			orders = await ApiService.GetOrdersAsync<TOrder>(
+			orders = await ApiService.GetOrdersAsync<TListItem>(
 				endpoint: Endpoint,
 				workplaceId: selectedWorkplaceId,
 				workplaceIds: selectedWorkplaceIds,
@@ -228,11 +234,11 @@ public partial class OrderListView<TOrder> : ComponentBase
 		return pages;
 	}
 
-	private TOrder? selectedOrder;
+	private TListItem? selectedOrder;
 
 	private bool isModalOpen;
 
-	private async Task OpenOrder(TOrder order)
+	private async Task OpenOrder(TListItem order)
 	{
 		selectedOrder = order;
 		if (useSplitView)
@@ -244,6 +250,33 @@ public partial class OrderListView<TOrder> : ComponentBase
 		{
 			isModalOpen = true;
 			StateHasChanged();
+		}
+	}
+
+	private async Task EditOrder(TListItem order)
+	{
+		Guid orderId = GetOrderId(order);
+
+		if (orderId == Guid.Empty)
+			return;
+
+		NavManager.NavigateTo($"create-order?edit={orderId}");
+		await OnEditOrder.InvokeAsync(order);
+	}
+
+	private async Task DeleteOrder(TListItem order)
+	{
+		Guid orderId = GetOrderId(order);
+
+		if (orderId == Guid.Empty)
+			return;
+
+		var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Удалить заказ {GetOrderNumber(order)}?");
+		if (confirmed)
+		{
+
+			//var success = await ApiService.DeleteOrderAsync(orderId);
+			//if (success) await LoadOrders();
 		}
 	}
 
@@ -265,15 +298,15 @@ public partial class OrderListView<TOrder> : ComponentBase
 		}
 	}
 
-	private Guid GetOrderId(TOrder order)
+	private Guid GetOrderId(TListItem order)
 	{
-		var prop = typeof(TOrder).GetProperty("Id");
+		var prop = typeof(TListItem).GetProperty("Id");
 		return (Guid)(prop?.GetValue(order) ?? Guid.Empty);
 	}
 
-	private string GetOrderNumber(TOrder order)
+	private string GetOrderNumber(TListItem order)
 	{
-		var prop = typeof(TOrder).GetProperty("OrderNumber");
+		var prop = typeof(TListItem).GetProperty("OrderNumber");
 		return prop?.GetValue(order)?.ToString() ?? "—";
 	}
 

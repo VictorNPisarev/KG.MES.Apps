@@ -5,5 +5,12 @@
 		"workplaces":
 		{
 		}
+	},
+	"displays": 
+	{
+		"workplace_name": 
+		{
+			"Не определен": "Ожидает"
+		}
 	}
 }
