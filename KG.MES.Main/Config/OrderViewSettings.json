@@ -5,7 +5,7 @@
 	"showActions": true,
 	"canExport": true,
 	"canEdit": true,
-	"canDelete": true,
+	"canDelete": false,
 	"showTrace": true,
 	"editTrace": false,
 	"showSupply": true,

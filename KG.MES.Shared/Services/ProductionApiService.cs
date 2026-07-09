@@ -814,4 +814,10 @@ public class ProductionApiService
 	{
 		return await _httpClient.GetFromJsonAsync<ProductionOrderExportDto>($"{BaseUrl}/orders/{orderId}/edit");
 	}
+
+	public async Task<bool> UpdateOrderAsync(Guid orderId, ProductionOrderExportDto dto)
+	{
+		var response = await _httpClient.PutAsJsonAsync($"{BaseUrl}/orders/{orderId}", dto);
+		return response.IsSuccessStatusCode;
+	}
 }

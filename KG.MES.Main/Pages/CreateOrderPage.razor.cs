@@ -1,6 +1,6 @@
+// CreateOrderPage.razor.cs
 using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Services;
-using KG.MES.Shared.Models.Enums;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
@@ -9,14 +9,19 @@ namespace KG.MES.Main.Pages;
 
 public partial class CreateOrderPage
 {
+	[SupplyParameterFromQuery(Name = "edit")]
+	public string? EditOrderId { get; set; }
+
+	private bool isEditing => !string.IsNullOrEmpty(EditOrderId);
+
 	private string OrderNumber { get; set; } = string.Empty;
 	private int WindowCount { get; set; }
 	private double WindowArea { get; set; }
 	private int PlateCount { get; set; }
 	private double PlateArea { get; set; }
 	private string Machine { get; set; } = string.Empty;
-	private DateTime? StartDate { get; set; } = DateTime.Now;
-	private DateTime? StartDateCash { get; set; } = DateTime.Now;
+	private DateTime? RtmDate { get; set; } = DateTime.Now;
+	private DateTime? RtmDateCash { get; set; } = DateTime.Now;
 	private int ApprovedDays { get; set; }
 	private int ApprovedDaysCash { get; set; }
 	private int UnapprovedDays { get; set; }
@@ -30,7 +35,7 @@ public partial class CreateOrderPage
 
 	[Inject] private ProductionApiService ApiService { get; set; } = null!;
 	[Inject] private IJSRuntime JSRuntime { get; set; } = null!;
-
+	[Inject] private NavigationManager NavManager { get; set; } = null!;
 
 	private DateTime? ReadyDate { get; set; }
 	private bool isSaving;
@@ -38,6 +43,41 @@ public partial class CreateOrderPage
 	private bool isError;
 	private bool isCalculatingReadyDate;
 
+	protected override async Task OnInitializedAsync()
+	{
+		if (isEditing && Guid.TryParse(EditOrderId, out var id))
+		{
+			await LoadOrderForEdit(id);
+		}
+	}
+
+	private async Task LoadOrderForEdit(Guid orderId)
+	{
+		var order = await ApiService.GetOrderForEditAsync(orderId);
+
+		if (order != null)
+		{
+			OrderNumber = order.OrderNumber;
+			WindowCount = order.WindowCount;
+			WindowArea = order.WindowArea;
+			PlateCount = order.PlateCount;
+			PlateArea = order.PlateArea;
+			Machine = order.Machine ?? "";
+			RtmDate = order.RtmDate;
+			RtmDateCash = order.RtmDate;
+			ApprovedDays = order.ApprovedLeadDays;
+			UnapprovedDays = order.UnapprovedLeadDays;
+			So8Date = order.So8Date;
+			Comment = order.Comment ?? "";
+			IsEconom = order.IsEconom;
+			IsClaim = order.IsClaim;
+			IsOnlyPaid = order.IsOnlyPaid;
+			IsTwoSidePaint = order.IsTwoSidePaint;
+			ReadyDate = order.ReadyDate;
+		}
+
+		StateHasChanged();
+	}
 
 	/// <summary>
 	/// Вызывается при изменении даты начала или количества дней.
@@ -46,11 +86,10 @@ public partial class CreateOrderPage
 	{
 		if (e != null && e.Key != "Enter") return;
 
-		if (StartDate != StartDateCash || ApprovedDays != ApprovedDaysCash || UnapprovedDays != UnapprovedDaysCash)
+		if (RtmDate != RtmDateCash || ApprovedDays != ApprovedDaysCash || UnapprovedDays != UnapprovedDaysCash)
 		{
-			//_ = JSRuntime.InvokeVoidAsync("fieldArrow.draw", elementId, "readyDate");
 			await CalculateReadyDateAsync();
-			StartDateCash = StartDate;
+			RtmDateCash = RtmDate;
 			ApprovedDaysCash = ApprovedDays;
 		}
 	}
@@ -59,8 +98,7 @@ public partial class CreateOrderPage
 	{
 		if (string.IsNullOrWhiteSpace(OrderNumber))
 		{
-			StatusMessage = "Введите номер заказа";
-			isError = true;
+			await ShowStatusMessage("Введите номер заказа", true);
 			return;
 		}
 
@@ -81,7 +119,7 @@ public partial class CreateOrderPage
 				IsClaim = IsClaim,
 				IsOnlyPaid = IsOnlyPaid,
 				IsTwoSidePaint = IsTwoSidePaint,
-				StartDate = StartDate ?? DateTime.Now,
+				RtmDate = RtmDate ?? DateTime.Now,
 				ApprovedLeadDays = ApprovedDays > 0 ? ApprovedDays : UnapprovedDays,
 				UnapprovedLeadDays = UnapprovedDays,
 				ReadyDate = ReadyDate,
@@ -89,48 +127,57 @@ public partial class CreateOrderPage
 				Machine = Machine
 			};
 
-			var success = await ApiService.ExportToProductionAsync(dto);
-
-			if (success)
+			bool success;
+			if (isEditing)
 			{
-				//StatusMessage = $"Заказ №{OrderNumber} создан";
-				_ = ShowStatusMessage($"Заказ №{OrderNumber} создан", secs:3);
-
-				isError = false;
-				// Очистка формы
-				OrderNumber = string.Empty;
-				WindowCount = 0;
-				WindowArea = 0;
-				PlateCount = 0;
-				PlateArea = 0;
-				Comment = string.Empty;
-				IsEconom = false;
-				IsClaim = false;
-				IsOnlyPaid = false;
-				IsTwoSidePaint = false;
-				ReadyDate = null;
-				ApprovedDays = 0;
-				UnapprovedDays = 0;
-				So8Date = null;
-				Machine = string.Empty;
-				StartDate = DateTime.Now;
+				success = await ApiService.UpdateOrderAsync(Guid.Parse(EditOrderId!), dto);
+				if (success) await ShowStatusMessage($"Заказ №{OrderNumber} обновлён");
 			}
 			else
 			{
-				StatusMessage = "Ошибка при создании заказа";
-				_ = ShowStatusMessage($"Ошибка при создании заказа", true, 7);
+				success = await ApiService.ExportToProductionAsync(dto);
+				if (success)
+				{
+					await ShowStatusMessage($"Заказ №{OrderNumber} создан", secs: 3);
+					ClearForm();
+				}
+			}
+
+			if (!success)
+			{
+				await ShowStatusMessage("Ошибка при сохранении", true, 7);
 				isError = true;
 			}
 		}
 		catch (Exception ex)
 		{
-			StatusMessage = $"Ошибка: {ex.Message}";
-			isError = true;
+			await ShowStatusMessage($"Ошибка: {ex.Message}", true, 7);
 		}
 		finally
 		{
 			isSaving = false;
 		}
+	}
+
+	private void ClearForm()
+	{
+		OrderNumber = string.Empty;
+		WindowCount = 0;
+		WindowArea = 0;
+		PlateCount = 0;
+		PlateArea = 0;
+		Comment = string.Empty;
+		IsEconom = false;
+		IsClaim = false;
+		IsOnlyPaid = false;
+		IsTwoSidePaint = false;
+		ReadyDate = null;
+		ApprovedDays = 0;
+		UnapprovedDays = 0;
+		So8Date = null;
+		Machine = string.Empty;
+		RtmDate = DateTime.Now;
+		isError = false;
 	}
 
 	/// <summary>
@@ -147,11 +194,11 @@ public partial class CreateOrderPage
 		}
 
 		isCalculatingReadyDate = true;
-		StateHasChanged(); // Обновляем UI, чтобы показать индикатор загрузки
+		StateHasChanged();
 
 		try
 		{
-			ReadyDate = await ApiService.CalculateReadyDateAsync(StartDate ?? DateTime.Now, days);
+			ReadyDate = await ApiService.CalculateReadyDateAsync(RtmDate ?? DateTime.Now, days);
 			StatusMessage = "";
 			isError = false;
 		}
@@ -183,7 +230,7 @@ public partial class CreateOrderPage
 	{
 		if (DateTime.TryParse(e.Value?.ToString(), out var date))
 		{
-			StartDate = date;
+			RtmDate = date;
 			_ = OnDaysChanged(elementId);
 		}
 	}

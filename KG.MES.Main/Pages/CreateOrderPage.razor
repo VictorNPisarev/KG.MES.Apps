@@ -1,10 +1,13 @@
 @page "/create-order"
+@using KG.MES.Shared.Models.Dto
+@using KG.MES.Shared.Services
 
-<PageTitle>Новый заказ</PageTitle>
+<PageTitle>@(isEditing ? "Редактирование заказа" : "Новый заказ")</PageTitle>
 
 <div class="container-fluid py-4">
 	<h1 class="display-6 mb-4">
-		<i class="bi bi-plus-square"></i> Новый заказ
+		<i class="bi @(isEditing ? "bi-pencil-square" : "bi-plus-square")"></i>
+		@(isEditing ? "Редактирование заказа" : "Новый заказ")
 	</h1>
 
 	<div class="card shadow-sm">
@@ -13,7 +16,8 @@
 			<div class="row g-3 mb-4">
 				<div class="col-md-4">
 					<label class="form-label">№ заказа</label>
-					<input type="text" class="form-control" @bind="OrderNumber" />
+					<input type="text" class="form-control" @bind="OrderNumber"
+						   disabled="@isEditing" />
 				</div>
 				<div class="col-md-8">
 					<label class="form-label">Примечание</label>
@@ -53,27 +57,27 @@
 					<div class="row g-3">
 						<div class="col-md-3">
 							<label class="form-label">Дата передачи в производство</label>
-							<input id="startDate" type="date" class="form-control" value="@StartDate?.ToString("yyyy-MM-dd")"
-       							@onchange='(ChangeEventArgs e) => HandleDateChange(e, "startDate")'
-								@onblur='() => OnDaysChanged("startDate")' />
+							<input id="startDate" type="date" class="form-control" value="@RtmDate?.ToString("yyyy-MM-dd")"
+								   @onchange='(ChangeEventArgs e) => HandleDateChange(e, "startDate")'
+								   @onblur='() => OnDaysChanged("startDate")' />
 						</div>
 						<div class="col-md-2">
 							<label class="form-label">Согласованный срок (дн.)</label>
 							<input id="approvedDays" type="number" class="form-control" @bind="ApprovedDays" min="0"
-								@onkeyup='(e) => OnDaysChanged("approvedDays", e)'
-								@onblur='() => OnDaysChanged("approvedDays")' />
+								   @onkeyup='(e) => OnDaysChanged("approvedDays", e)'
+								   @onblur='() => OnDaysChanged("approvedDays")' />
 						</div>
 						<div class="col-md-2">
 							<label class="form-label">Несогласованный срок (дн.)</label>
 							<input id="unapprovedDays" type="number" class="form-control" @bind="UnapprovedDays" min="0"
-								@onkeyup='(e) => OnDaysChanged("unapprovedDays", e)'
-								@onblur='() => OnDaysChanged("unapprovedDays")' />
+								   @onkeyup='(e) => OnDaysChanged("unapprovedDays", e)'
+								   @onblur='() => OnDaysChanged("unapprovedDays")' />
 						</div>
 						<div class="col-md-2">
 							<label class="form-label">Плановая готовность</label>
 							<div class="input-group">
 								<input id="readyDate" type="text" class="form-control"
-									value="@ReadyDate?.ToString("dd.MM.yyyy")" readonly />
+									   value="@ReadyDate?.ToString("dd.MM.yyyy")" readonly />
 								@if (isCalculatingReadyDate)
 								{
 									<span class="input-group-text">
@@ -147,9 +151,9 @@
 			<div class="d-flex gap-2">
 				<button class="btn btn-primary" @onclick="SaveOrder" disabled="@isSaving">
 					@if (isSaving) { <span class="spinner-border spinner-border-sm me-2"></span> }
-					Создать заказ
+					@(isEditing ? "Сохранить" : "Создать заказ")
 				</button>
-				<NavLink href="/" class="btn btn-outline-secondary">Отмена</NavLink>
+				<NavLink href="" class="btn btn-outline-secondary">Отмена</NavLink>
 			</div>
 
 			@if (!string.IsNullOrEmpty(StatusMessage))

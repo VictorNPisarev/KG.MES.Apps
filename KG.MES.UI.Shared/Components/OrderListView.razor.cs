@@ -275,8 +275,8 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		if (confirmed)
 		{
 
-			//var success = await ApiService.DeleteOrderAsync(orderId);
-			//if (success) await LoadOrders();
+			var success = await ApiService.DeleteOrderAsync(orderId);
+			if (success) await LoadOrders();
 		}
 	}
 

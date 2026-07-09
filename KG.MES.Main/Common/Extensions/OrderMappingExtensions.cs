@@ -60,7 +60,7 @@ namespace KG.MES.Main.Extensions
 				IsClaim = order.IsClaim,
 				IsOnlyPaid = order.IsOnlyPaid,
 				Comment = order.Comment,
-				StartDate = order.InitializeDate,
+				RtmDate = order.InitializeDate,
 				ApprovedLeadDays = order.ApprovedLeadTimeDays,
 				ReadyDate = order.ReadyDate
 			};
