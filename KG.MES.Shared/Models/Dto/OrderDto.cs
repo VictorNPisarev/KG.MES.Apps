@@ -54,6 +54,10 @@ public class OrderDto
 	[Column("Оплачен, не запущен", Order = 12, IsBadge = true)]
 	public bool IsOnlyPaid { get; set; }
 
+	[JsonPropertyName("is_two_side_paint")]
+	[Column("2-стор. покраска", Order = 13, IsBadge = true)]
+	public bool IsTwoSidePaint { get; set; }
+
 	[JsonPropertyName("production_order_id")]
 	public string? ProductionOrderId { get; set; }
 
@@ -70,6 +74,21 @@ public class OrderDto
 	[JsonPropertyName("machine")]
 	[Column("Станок", Order = 12, Visible = true, IsBadge = true)]
 	public string? Machine { get; set; }
+
+	[Column("***", Order = 2, Visible = false, IconConditions = new[] { "IsClaim:Claim", 
+																		"IsEconom:Econom", 
+																		"IsOnlyPaid:Paid", 
+																		"IsTwoSidePaint:TwoSidePaint", 
+																		"IsOnlyPlate:Plate" })]
+	public string OrderFlags { get; } = string.Empty;
+
+	public bool IsOnlyPlate
+	{
+		get
+		{
+			return WindowCount == 0 && PlateCount > 0;
+		}
+	}
 }
 
 public static class OrderDtoExtension

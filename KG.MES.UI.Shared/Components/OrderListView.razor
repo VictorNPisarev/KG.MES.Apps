@@ -286,7 +286,7 @@
 							<h5>
 								Заказ №@GetOrderNumber(selectedOrder!)
 								@{
-									var icons = ColumnHelper.GetIcons(selectedOrder, typeof(TListItem));
+									var icons = ColumnHelper.GetIcons(selectedOrder, typeof(TListItem), "OrderFlags");
 									foreach (var icon in icons)
 									{
 										<i class="@icon.Class @icon.Css fs-4 ms-2" title="@icon.Title"></i>
@@ -375,7 +375,7 @@
 					<h5 class="modal-title">
 						Заказ №@GetOrderNumber(selectedOrder!)
 						@{
-							var icons = ColumnHelper.GetIcons(selectedOrder, typeof(TListItem));
+							var icons = ColumnHelper.GetIcons(selectedOrder, typeof(TListItem), "OrderFlags");
 							foreach (var icon in icons)
 							{
 								<i class="@icon.Class @icon.Css fs-4 ms-2" title="@icon.Title"></i>

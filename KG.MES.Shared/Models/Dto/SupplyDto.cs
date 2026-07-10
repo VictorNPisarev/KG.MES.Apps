@@ -10,7 +10,7 @@ public class SupplyDto
 	public Guid Id { get; set; }
 
 	[JsonPropertyName("order_number")]
-	[Column("№ заказа", Order = 0)]
+	[Column("№ заказа", Order = 0, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" })]
 	public string OrderNumber { get; set; } = string.Empty;
 
 	[JsonPropertyName("rtm_date")]
@@ -34,6 +34,18 @@ public class SupplyDto
 	[JsonPropertyName("current_status")]
 	[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name")]
 	public string? Status { get; set; }
+
+	[JsonPropertyName("is_econom")]
+	public bool IsEconom { get; set; }
+
+	[JsonPropertyName("is_claim")]
+	public bool IsClaim { get; set; }
+
+	[JsonPropertyName("is_only_paid")]
+	public bool IsOnlyPaid { get; set; }
+
+	[JsonPropertyName("is_two_side_paint")]
+	public bool IsTwoSidePaint { get; set; }
 
 	[JsonPropertyName("lumber")]
 	[Column("Пиломатериалы", Order = 4, IsBadge = true, DisplayGroup = "supply_status", CommentField = "LumberComment")]
@@ -82,6 +94,21 @@ public class SupplyDto
 	[JsonPropertyName("windowsill_comment")]
 	[Column("Отлив прим.", Order = 15, Visible = false, DisplayGroup = "supply_status")]
 	public string? WindowsillComment { get; set; }
+
+	[Column("***", Order = 2, Visible = false, IconConditions = new[] { "IsClaim:Claim",
+																		"IsEconom:Econom",
+																		"IsOnlyPaid:Paid",
+																		"IsTwoSidePaint:TwoSidePaint",
+																		"IsOnlyPlate:Plate" })]
+	public string OrderFlags { get; } = string.Empty;
+
+	//public bool IsOnlyPlate
+	//{
+	//	get
+	//	{
+	//		return WindowCount == 0 && PlateCount > 0;
+	//	}
+	//}
 }
 
 public static class SupplyDtoExtension

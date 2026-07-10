@@ -9,7 +9,7 @@ public class SalesOrderDto
 	public Guid Id { get; set; }
 
 	[JsonPropertyName("order_number")]
-	[Column("№ заказа", Order = 1)] 
+	[Column("№ заказа", Order = 1, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" })]
 	public string OrderNumber { get; set; } = string.Empty;
 
 	[JsonPropertyName("ready_date")]
@@ -78,4 +78,19 @@ public class SalesOrderDto
 
 	[JsonPropertyName("currency")]
 	public string? Currency { get; set; }
+
+	[Column("***", Order = 2, Visible = false, IconConditions = new[] { "IsClaim:Claim",
+																		"IsEconom:Econom",
+																		"IsOnlyPaid:Paid",
+																		"IsTwoSidePaint:TwoSidePaint",
+																		"IsOnlyPlate:Plate" })]
+	public string OrderFlags { get; } = string.Empty;
+
+	public bool IsOnlyPlate
+	{
+		get
+		{
+			return WindowCount == 0 && PlateCount > 0;
+		}
+	}
 }

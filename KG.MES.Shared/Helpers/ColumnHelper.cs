@@ -115,15 +115,19 @@ public static class ColumnHelper
 		return result;
 	}
 
-	public static List<IconInfo> GetIcons(object obj, Type type)
+	public static List<IconInfo> GetIcons(object obj, Type type, string? propertyNameFilter = null)
 	{
 		var result = new List<IconInfo>();
 
 		foreach (var prop in type.GetProperties())
 		{
+			if (propertyNameFilter != null && prop.Name != propertyNameFilter) continue;
+
 			var attr = prop.GetCustomAttribute<ColumnAttribute>();
+			
 			if (attr?.IconConditions == null) continue;
-			result.AddRange(ColumnHelper.GetIcons(obj, attr.IconConditions));
+			
+			result.AddRange(GetIcons(obj, attr.IconConditions));
 		}
 
 		return result;

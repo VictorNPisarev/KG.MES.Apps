@@ -7,5 +7,11 @@ public enum OrderIcon
 	Econom,
 
 	[IconClass("bi bi-cash-stack", "order-icon-paid", "Оплачен, не запущен")]
-	Paid
+	Paid,
+
+	[IconClass("bi-arrows-collapse-vertical", "icon-double-paint-classic", "Двухсторонняя покраска")]
+	TwoSidePaint,
+
+	[IconClass("bi-stack", "order-icon-plate", "Только щитовые")]
+	Plate
 }
