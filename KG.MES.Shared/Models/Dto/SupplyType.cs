@@ -20,6 +20,7 @@ namespace KG.MES.Shared.Models.Dto
 			"glass" => "Стекло",
 			"paint" => "ЛКМ",
 			"alumWaterShield" => "ППС, В/О",
+			"windowsill" => "Отлив",
 			_ => supplyType.Name
 		};
 	}

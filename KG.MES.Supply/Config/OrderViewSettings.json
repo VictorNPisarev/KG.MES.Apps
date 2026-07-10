@@ -3,7 +3,7 @@
 	"cardEndpoint": "orders",
 	"title": "Снабжение",
 	"showActions": false,
-	"canEdit": true,
+	"canEdit": false,
 	"showTrace": false,
 	"editTrace": false,
 	"editSupply": true,

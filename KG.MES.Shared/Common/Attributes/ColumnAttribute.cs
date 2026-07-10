@@ -13,6 +13,11 @@ namespace KG.MES.Shared.Attributes
 		public int Width { get; set; }
 		public string? CommentField { get; set; }
 		public string? DisplayGroup { get; set; }  // группа для поиска отображаемого текста в конфиге
+		
+		/// <summary>
+		/// Аттрибут добавляющий иконку в полю по условному bool полю.
+		/// </summary>
+		public string[]? IconConditions { get; set; } // ["IsClaim:Claim", "IsEconom:Econom"]
 
 		public ColumnAttribute(string title)
 		{

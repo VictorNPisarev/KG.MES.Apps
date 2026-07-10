@@ -1,6 +1,8 @@
 @using KG.MES.Shared.Helpers
 @using KG.MES.UI.Shared.Enums
-@typeparam TOrder
+@typeparam TListItem
+@typeparam TCardItem
+
 
 <PageTitle>@Title</PageTitle>
 
@@ -220,9 +222,16 @@
 											}
 											else
 											{
+												@if (col.Info.IconConditions?.Length > 0)
+												{
+													var icons = ColumnHelper.GetIcons(order, col.Info.IconConditions);
+													foreach (var icon in icons)
+													{
+														<i class="@icon.Class @icon.Css fs-6 me-1" title="@icon.Title"></i>
+													}
+												}
 												@ColumnHelper.GetFormattedValue(order, col.Info)
 											}
-											
 											@if (!string.IsNullOrEmpty(col.Info.CommentField))
 											{
 													// Находим колонку комментария
@@ -243,10 +252,26 @@
 									</td>
 								}
 								<td>
-									<button class="btn btn-sm btn-outline-primary"
-											@onclick="() => OpenOrder(order)">
-										<i class="bi bi-eye"></i>
-									</button>
+									<div class="d-flex flex-row gap-2">
+										<button class="btn btn-sm btn-outline-primary"
+												@onclick="() => OpenOrder(order!)">
+											<i class="bi bi-eye"></i>
+										</button>
+										@if (Settings.CanEdit)
+										{
+											<button class="btn btn-sm btn-outline-success"
+												@onclick="() => EditOrder(order!)" title="Редактировать">
+												<i class="bi bi-pencil"></i>
+											</button>
+										}
+										@if (Settings.CanDelete)
+										{
+											<button class="btn btn-sm btn-outline-danger"
+												@onclick="() => DeleteOrder(order!)" title="Удалить">
+												<i class="bi bi-trash"></i>
+											</button>
+										}
+									</div>
 								</td>
 							</tr>
 						}
@@ -258,10 +283,19 @@
 				<div class="sticky-panel" style="flex: 1; min-width: 0; max-height: calc(100vh - 200px); overflow-y: auto;">
 					<div class="p-3">
 						<div class="d-flex justify-content-between align-items-center mb-3">
-							<h5>Заказ №@GetOrderNumber(selectedOrder!)</h5>
+							<h5>
+								Заказ №@GetOrderNumber(selectedOrder!)
+								@{
+									var icons = ColumnHelper.GetIcons(selectedOrder, typeof(TListItem), "OrderFlags");
+									foreach (var icon in icons)
+									{
+										<i class="@icon.Class @icon.Css fs-4 ms-2" title="@icon.Title"></i>
+									}
+								}
+							</h5>
 							<button class="btn-close" @onclick="CloseOrder"></button>
 						</div>
-						<OrderDashboard @ref="dashboardRef" TOrder="TOrder" OrderId="@GetOrderId(selectedOrder!)"
+						<OrderDashboard @ref="dashboardRef" TOrder="TCardItem" OrderId="@GetOrderId(selectedOrder!)"
 							Settings="@Settings" OnClose="CloseOrder" ViewMode="DashboardViewMode.Tabs"
 							@key="@GetOrderId(selectedOrder)" />
 					</div>
@@ -332,19 +366,26 @@
 	}
 </div>
 <!-- Модальное окно с карточкой заказа -->
-@if (!useSplitView && isModalOpen)
+@if (!useSplitView && isModalOpen && selectedOrder != null)
 {
 	<div class="modal fade show" style="display: block;" tabindex="-1">
 		<div class="modal-dialog modal-xl">
 			<div class="modal-content">
 				<div class="modal-header">
-					<h5 class="modal-title">Заказ №@GetOrderNumber(selectedOrder!)</h5>
+					<h5 class="modal-title">
+						Заказ №@GetOrderNumber(selectedOrder!)
+						@{
+							var icons = ColumnHelper.GetIcons(selectedOrder, typeof(TListItem), "OrderFlags");
+							foreach (var icon in icons)
+							{
+								<i class="@icon.Class @icon.Css fs-4 ms-2" title="@icon.Title"></i>
+							}
+						}
+					</h5>
 					<button type="button" class="btn-close" @onclick="() => dashboardRef!.CloseOrder()"></button>
 				</div>
 				<div class="modal-body">
-					<OrderDashboard @ref="dashboardRef"
-									TOrder="TOrder" 
-									OrderId="@GetOrderId(selectedOrder!)" 
+					<OrderDashboard @ref="dashboardRef" TOrder="TCardItem" OrderId="@GetOrderId(selectedOrder!)" 
 									Settings="@Settings"
 									OnClose="CloseOrder" />
 				</div>

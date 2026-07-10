@@ -790,17 +790,34 @@ public class ProductionApiService
 		}
 	}
 
-	//public async Task<OrderCommerceDto?> GetCommerceAsync(Guid orderId)
-	//{
-	//	try
-	//	{
-	//		var url = $"{BaseUrl}/orders/{orderId}/commerce";
-	//		return await _httpClient.GetFromJsonAsync<OrderCommerceDto>(url);
-	//	}
-	//	catch (Exception ex)
-	//	{
-	//		_logger.LogError(ex, "Error fetching commerce data for order {Id}", orderId);
-	//		return null;
-	//	}
-	//}
+	public async Task<OrderCommerceDto?> GetCommerceAsync(Guid orderId)
+	{
+		try
+		{
+			var url = $"{BaseUrl}/orders/{orderId}/commerce";
+			return await _httpClient.GetFromJsonAsync<OrderCommerceDto>(url);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching commerce data for order {Id}", orderId);
+			return null;
+		}
+	}
+
+	public async Task<bool> DeleteOrderAsync(Guid orderId)
+	{
+		var response = await _httpClient.DeleteAsync($"{BaseUrl}/orders/{orderId}");
+		return response.IsSuccessStatusCode;
+	}
+
+	public async Task<ProductionOrderExportDto?> GetOrderForEditAsync(Guid orderId)
+	{
+		return await _httpClient.GetFromJsonAsync<ProductionOrderExportDto>($"{BaseUrl}/orders/{orderId}/edit");
+	}
+
+	public async Task<bool> UpdateOrderAsync(Guid orderId, ProductionOrderExportDto dto)
+	{
+		var response = await _httpClient.PutAsJsonAsync($"{BaseUrl}/orders/{orderId}", dto);
+		return response.IsSuccessStatusCode;
+	}
 }

@@ -10,51 +10,53 @@ public class MastersOrderDto
 	public Guid Id { get; set; }
 
 	[JsonPropertyName("order_number")]
-	[Column("№ заказа", Order = 1)]
+	[Column("№ заказа", Order = 1, IconConditions = new[] { "IsClaim:Claim", "IsOnlyPlate:Plate", "IsEconom:Econom", "IsTwoSidePaint:TwoSidePaint" })]
 	public string OrderNumber { get; set; } = string.Empty;
-
-	[JsonPropertyName("ready_date")]
-	[Column("Готовность", Order = 2, DisplayFormat = "dd.MM.yyyy")]
-	public DateTime? ReadyDate { get; set; }
 
 	[JsonPropertyName("current_status")]
 	[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name")]
 	public string? Status { get; set; }
 
+
+	[JsonPropertyName("rtm_date")]
+	[Column("Дата запуска", Order = 4, DisplayFormat = "dd.MM.yyyy")]
+	public DateTime? RtmDate { get; set; }
+
+	[JsonPropertyName("ready_date")]
+	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy")]
+	public DateTime? ReadyDate { get; set; }
+
 	[JsonPropertyName("window_count")]
-	[Column("Окна, шт", Order = 4)]
+	[Column("Окна, шт", Order = 6)]
 	public int WindowCount { get; set; }
 
 	[JsonPropertyName("window_area")]
-	[Column("Окна, м2", Order = 5, DisplayFormat = "F2")]
+	[Column("Окна, м2", Order = 7, DisplayFormat = "F2")]
 	public double? WindowArea { get; set; }
 
 	[JsonPropertyName("plate_count")]
-	[Column("Щитовые, шт", Order = 6)]
+	[Column("Щитовые, шт", Order = 8)]
 	public int PlateCount { get; set; }
 
 	[JsonPropertyName("plate_area")]
-	[Column("Щитовые, м2", Order = 7, DisplayFormat = "F2")]
+	[Column("Щитовые, м2", Order = 9, DisplayFormat = "F2")]
 	public double? PlateArea { get; set; }
 
-	[Column("Станок", Order = 8, Visible = true, IsBadge = true)]
-	public string? Machine { get; set; }
-
-	[JsonPropertyName("created_at")]
-	[Column("Дата запуска", Visible = false)]
-	public DateTime StartDate { get; set; }
-
 	[JsonPropertyName("is_econom")]
-	[Column("Эконом", Visible = false, IsBadge = true)]
+	[Column("Эконом", Order = 10, IsBadge = true)]
 	public bool IsEconom { get; set; }
 
 	[JsonPropertyName("is_claim")]
-	[Column("Рекламация", Visible = false, IsBadge = true)]
+	[Column("Рекламация", Order = 11, IsBadge = true)]
 	public bool IsClaim { get; set; }
 
 	[JsonPropertyName("is_only_paid")]
-	[Column("Оплачен, не запущен", Visible = false, IsBadge = true)]
+	[Column("Оплачен, не запущен", Order = 12, IsBadge = true)]
 	public bool IsOnlyPaid { get; set; }
+
+	[JsonPropertyName("is_two_side_paint")]
+	[Column("2-стор. покраска", Order = 13, IsBadge = true)]
+	public bool IsTwoSidePaint { get; set; }
 
 	[JsonPropertyName("production_order_id")]
 	public string? ProductionOrderId { get; set; }
@@ -69,18 +71,36 @@ public class MastersOrderDto
 	[JsonPropertyName("current_workplace_name")]
 	public string? CurrentWorkplaceName { get; set; }
 
-}
+	[JsonPropertyName("machine")]
+	[Column("Станок", Order = 12, Visible = true, IsBadge = true)]
+	public string? Machine { get; set; }
 
+
+	[Column("***", Order = 2, Visible = false, IconConditions = new[] { "IsClaim:Claim", 
+																		"IsEconom:Econom", 
+																		"IsOnlyPaid:Paid", 
+																		"IsTwoSidePaint:TwoSidePaint", 
+																		"IsOnlyPlate:Plate" })]
+	public string OrderFlags { get; } = string.Empty;
+
+	public bool IsOnlyPlate 
+	{ 
+		get
+		{
+			return WindowCount == 0 && PlateCount > 0;
+		} 
+	}
+}
 
 public static class MastersOrderDtoExtension
 {
-	public static MastersOrderViewModel ToViewModel(this MastersOrderDto orderDto)
+	public static OrderViewModel ToViewModel(this MastersOrderDto orderDto)
 	{
-		return new MastersOrderViewModel
+		return new OrderViewModel
 		{
 			OrderNumber = orderDto.OrderNumber,
 			Status = orderDto.Status,
-			StartDate = orderDto.StartDate,
+			RtmDate = orderDto.RtmDate,
 			ReadyDate = orderDto.ReadyDate,
 			WindowCount = orderDto.WindowCount,
 			WindowArea = orderDto.WindowArea,
@@ -94,6 +114,6 @@ public static class MastersOrderDtoExtension
 		};
 	}
 
-	public static List<MastersOrderViewModel> ToViewModels(this IEnumerable<MastersOrderDto> dtos)
+	public static List<OrderViewModel> ToViewModels(this IEnumerable<MastersOrderDto> dtos)
 		=> [.. dtos.Select(ToViewModel)];
 }

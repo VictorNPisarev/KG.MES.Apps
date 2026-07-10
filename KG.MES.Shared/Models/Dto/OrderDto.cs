@@ -10,7 +10,7 @@ public class OrderDto
 	public Guid Id { get; set; }
 
 	[JsonPropertyName("order_number")]
-	[Column("№ заказа", Order = 1)]
+	[Column("№ заказа", Order = 1, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" })]
 	public string OrderNumber { get; set; } = string.Empty;
 
 	[JsonPropertyName("current_status")]
@@ -18,9 +18,9 @@ public class OrderDto
 	public string? Status { get; set; }
 
 
-	[JsonPropertyName("created_at")]
+	[JsonPropertyName("rtm_date")]
 	[Column("Дата запуска", Order = 4, DisplayFormat = "dd.MM.yyyy")]
-	public DateTime StartDate { get; set; }
+	public DateTime? RtmDate { get; set; }
 
 	[JsonPropertyName("ready_date")]
 	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy")]
@@ -54,6 +54,10 @@ public class OrderDto
 	[Column("Оплачен, не запущен", Order = 12, IsBadge = true)]
 	public bool IsOnlyPaid { get; set; }
 
+	[JsonPropertyName("is_two_side_paint")]
+	[Column("2-стор. покраска", Order = 13, IsBadge = true)]
+	public bool IsTwoSidePaint { get; set; }
+
 	[JsonPropertyName("production_order_id")]
 	public string? ProductionOrderId { get; set; }
 
@@ -70,6 +74,21 @@ public class OrderDto
 	[JsonPropertyName("machine")]
 	[Column("Станок", Order = 12, Visible = true, IsBadge = true)]
 	public string? Machine { get; set; }
+
+	[Column("***", Order = 2, Visible = false, IconConditions = new[] { "IsClaim:Claim", 
+																		"IsEconom:Econom", 
+																		"IsOnlyPaid:Paid", 
+																		"IsTwoSidePaint:TwoSidePaint", 
+																		"IsOnlyPlate:Plate" })]
+	public string OrderFlags { get; } = string.Empty;
+
+	public bool IsOnlyPlate
+	{
+		get
+		{
+			return WindowCount == 0 && PlateCount > 0;
+		}
+	}
 }
 
 public static class OrderDtoExtension
@@ -80,7 +99,7 @@ public static class OrderDtoExtension
 		{
 			OrderNumber = orderDto.OrderNumber,
 			Status = orderDto.Status,
-			StartDate = orderDto.StartDate,
+			RtmDate = orderDto.RtmDate,
 			ReadyDate = orderDto.ReadyDate,
 			WindowCount = orderDto.WindowCount,
 			WindowArea = orderDto.WindowArea,

@@ -3,7 +3,7 @@
 	"cardEndpoint": "orders",
 	"title": "Заказы (Отдел продаж)",
 	"showActions": false,
-	"canEdit": true,
+	"canEdit": false,
 	"showTrace": true,
 	"editTrace": false,
 	"showSupply": false,
