@@ -35,6 +35,8 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 			await SocketService.SubscribeAsync("order", orderTrace?.ProductionOrderId.ToString());
 		}
 
+		CanEdit = CanEdit && !(orderTrace?.Departed ?? false); 
+
 		isLoading = false;
 	}
 
@@ -145,7 +147,6 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 		if (success)
 		{
 			orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
-			EditMode = !HasUnsavedChanges();
 			EventAggregator.Publish(
 				new OrderUpdatedEvent
 				{

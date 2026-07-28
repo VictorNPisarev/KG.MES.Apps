@@ -26,6 +26,9 @@ namespace KG.MES.Shared.Models.Dto
 		[JsonPropertyName("readyDate")]
 		public DateTime? ReadyDate { get; set; }
 
+		[JsonPropertyName("departed")]
+		public bool? Departed { get; set; }
+
 		[JsonPropertyName("workplaces")]
 		public List<WorkplaceTraceDto> WorkplaceTraces { get; set; } = new();
 	}
