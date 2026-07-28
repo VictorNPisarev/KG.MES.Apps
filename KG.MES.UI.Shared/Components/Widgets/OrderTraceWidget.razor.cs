@@ -145,7 +145,6 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 		if (success)
 		{
 			orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
-			EditMode = !HasUnsavedChanges();
 			EventAggregator.Publish(
 				new OrderUpdatedEvent
 				{
