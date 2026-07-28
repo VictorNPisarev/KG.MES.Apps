@@ -35,6 +35,8 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 			await SocketService.SubscribeAsync("order", orderTrace?.ProductionOrderId.ToString());
 		}
 
+		CanEdit = CanEdit && !(orderTrace?.Departed ?? false); 
+
 		isLoading = false;
 	}
 
