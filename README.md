@@ -50,8 +50,16 @@ API: http://192.168.0.179:3000/api
 ## Публикация
 
 ```bash
-#в папке проекта
+#вручную в папке проекта
 dotnet publish -c Release -o \\server\inetpub\wwwroot\Kg.Mes.Apps\main
+
+#через скрипт локально (режим разработки и тестирования)
+.\publish.ps1 -Project main -Configuration debug -Environment development
+#debug и development - значения по умолчанию: можно запустить, указав только проект
+.\publish.ps1 -Project main
+
+#через скрипт на сервер (продакшн)
+.\publish.ps1 -Project main -Configuration release -Environment production
 ```
 
 Файл app_offline.htm (Элегантный, без остановки пула)
@@ -62,6 +70,7 @@ ASP.NET Core имеет встроенный механизм: если в ко�
 Перед копированием создайте в папке сайта файл app_offline.htm (любого содержания, например <h1>Обновление...</h1>).
 Скопируйте новые файлы.
 Удалите app_offline.htm — приложение автоматически перезапустится.
+**при публикации скриптом - выполняется автоматически
 
 ## ⚙️ Конфигурация
 Каждое приложение имеет свой appsettings.json и Config/orderViewSettings.json. Общие настройки стилей в Config/BadgeStyles.json.
