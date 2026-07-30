@@ -15,7 +15,9 @@ public partial class WorkplaceStats
 	private DateTime dateFrom = DateTime.Now.AddDays(-7);
 	private DateTime dateTo = DateTime.Now;
 	private bool showDateFilter;
-
+	private string activeTab = "orders";
+	private List<OrderWorkplaceDto> workplaceOrders = [];
+	private string orderFilter = "all";
 	protected override async Task OnInitializedAsync()
 	{
 		Console.WriteLine("WorkplaceStats OnInitializedAsync");
@@ -28,6 +30,7 @@ public partial class WorkplaceStats
 		stats = await ApiService.GetWorkplaceStatsAsync(id);
 		blocks = await ApiService.GetWorkplaceBlocksAsync(id);
 		history = await ApiService.GetWorkplaceHistoryAsync(id, dateFrom, dateTo, 1000);
+		workplaceOrders = await ApiService.GetActiveAndPendingOrdersAsync(id);
 		StateHasChanged();
 	}
 
@@ -37,6 +40,7 @@ public partial class WorkplaceStats
 		stats = null;
 		blocks.Clear();
 		history.Clear();
+		workplaceOrders.Clear();
 		StateHasChanged();
 	}
 
