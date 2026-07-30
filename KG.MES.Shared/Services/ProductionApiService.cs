@@ -820,4 +820,18 @@ public class ProductionApiService
 		var response = await _httpClient.PutAsJsonAsync($"{BaseUrl}/orders/{orderId}", dto);
 		return response.IsSuccessStatusCode;
 	}
+
+	public async Task<List<OrderWorkplaceDto>> GetActiveAndPendingOrdersAsync(Guid workplaceId)
+	{
+		try
+		{
+			var url = $"{BaseUrl}/orders/workplaces/{workplaceId}/in-work";
+			return await _httpClient.GetFromJsonAsync<List<OrderWorkplaceDto>>(url) ?? [];
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching orders for workplace {Id}", workplaceId);
+			return [];
+		}
+	}
 }
