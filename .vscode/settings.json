@@ -2,6 +2,8 @@
 	"explorer.fileNesting.enabled": true,
 	"explorer.fileNesting.patterns": {
 		"*.razor": "${capture}.razor.cs, ${capture}.razor.css",
-		"*Dto.cs": "${capture}ViewModel.cs"
+		"*Dto.cs": "${capture}ViewModel.cs",
+		"appsettings.json": "appsettings.*.json",
+		"appsettings.Development.json": "appsettings.Development.*.json"
 	}
 }
