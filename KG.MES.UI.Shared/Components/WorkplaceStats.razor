@@ -1,4 +1,5 @@
 @using KG.MES.Shared.Helpers
+@using KG.MES.Shared.Models.Dto
 <PageTitle>Статистика рабочих мест</PageTitle>
 
 <div class="container-fluid py-4">
@@ -225,7 +226,8 @@
 						: workplaceOrders.Where(o => o.Status.ToLower() == orderFilter)
 							.OrderBy(w => w.ReadyDate).ToList();
 
-					@if (filteredOrders.Any())
+					<OrderListView TListItem="OrderWorkplaceDto" TCardItem="OrderDto" Settings="@GetWorkplaceOrderSettings()" />
+					@*@if (filteredOrders.Any())
 					{
 						<div class="table-responsive">
 							<table class="table table-sm table-hover">
@@ -282,7 +284,7 @@
 					else
 					{
 						<p class="text-muted">Нет заказов в работе</p>
-					}
+					}*@
 				}
 			</div>
 		</div>
