@@ -201,7 +201,7 @@
 				{
 					
 					@* Список заказов в работе/ожидании *@
-					<div class="d-flex gap-2 mb-3">
+					@*<div class="d-flex gap-2 mb-3">
 						<button class="btn btn-sm @(orderFilter == "all" ? "btn-dark" : "btn-outline-dark")"
 								@onclick='() => orderFilter = "all"'>
 							Все
@@ -214,11 +214,7 @@
 								@onclick='() => orderFilter = "active"'>
 							В работе
 						</button>
-						@*<button class="btn btn-sm @(orderFilter == "completed" ? "btn-success" : "btn-outline-success")"
-								@onclick='() => orderFilter = "completed"'>
-							Завершены
-						</button>*@
-					</div>
+					</div>*@
 
 					@* Список заказов с фильтром *@
 					var filteredOrders = orderFilter == "all" 
@@ -226,7 +222,34 @@
 						: workplaceOrders.Where(o => o.Status.ToLower() == orderFilter)
 							.OrderBy(w => w.ReadyDate).ToList();
 
-					<OrderListView TListItem="OrderWorkplaceDto" TCardItem="OrderDto" Settings="@GetWorkplaceOrderSettings()" />
+							@*<div class="row g-0 d-flex w-100" style="flex-wrap: nowrap;">*@
+							<div>
+								@*<div class="@(useSplitView && selectedOrder != null ? "resizable-panel" : "table-responsive mt-3")"
+										id="split-panel" style="@(useSplitView && selectedOrder != null ? "width: " + savedPanelWidth : "width: 100%")">*@
+								<DynamicTable TListItem="OrderWorkplaceDto" Items="filteredOrders "ShowActions="true">
+										<RowActions>
+											<div class="d-flex me-auto gap-2">
+												<button class="btn btn-sm @(orderFilter == "all" ? "btn-dark" : "btn-outline-dark")"
+													@onclick='() => orderFilter = "all"'>
+													Все
+												</button>
+												<button
+													class="btn btn-sm @(orderFilter == "pending" ? "btn-warning" : "btn-outline-warning")"
+													@onclick='() => orderFilter = "pending"'>
+													Ожидают
+												</button>
+												<button
+													class="btn btn-sm @(orderFilter == "active" ? "btn-primary" : "btn-outline-primary")"
+													@onclick='() => orderFilter = "active"'>
+													В работе
+												</button>
+											</div>
+										</RowActions>
+										<RowTemplate>
+										</RowTemplate>
+									</DynamicTable>
+								@*</div>*@
+							</div>
 					@*@if (filteredOrders.Any())
 					{
 						<div class="table-responsive">
