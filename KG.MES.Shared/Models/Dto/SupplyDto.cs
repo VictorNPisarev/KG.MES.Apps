@@ -95,6 +95,15 @@ public class SupplyDto
 	[Column("Отлив прим.", Order = 15, Visible = false, DisplayGroup = "supply_status")]
 	public string? WindowsillComment { get; set; }
 
+	[JsonPropertyName("woodAlum")]
+	[Column("Д/А", Order = 16, IsBadge = true, DisplayGroup = "supply_status", CommentField = "WoodAlumComment")]
+	public string? WoodAlum { get; set; }
+
+	[JsonPropertyName("woodAlum_comment")]
+	[Column("Д/А прим.", Order = 17, Visible = false, DisplayGroup = "supply_status")]
+	public string? WoodAlumComment { get; set; }
+
+
 	[Column("***", Order = 2, Visible = false, IconConditions = new[] { "IsClaim:Claim",
 																		"IsEconom:Econom",
 																		"IsOnlyPaid:Paid",
