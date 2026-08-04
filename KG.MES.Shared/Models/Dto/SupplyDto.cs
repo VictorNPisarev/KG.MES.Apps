@@ -138,6 +138,10 @@ public static class SupplyDtoExtension
 			FurnitureComment = supplyDto.FurnitureComment,
 			AlumWaterShield = supplyDto.AlumWaterShield,
 			AlumWaterShieldComment = supplyDto.AlumWaterShieldComment,
+			Windowsill = supplyDto.Windowsill,
+			WindowsillComment = supplyDto.WindowsillComment,
+			WoodAlum = supplyDto.WoodAlum,
+			WoodAlumComment = supplyDto.WoodAlumComment,
 			Machine = supplyDto.Machine
 		};
 	}
