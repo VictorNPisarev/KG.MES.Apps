@@ -24,11 +24,13 @@ builder.Services.AddSession(options =>
 // Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddHttpClient<ProductionApiService>();
+builder.Services.AddHttpClient<AuthService>();
 builder.Services.AddSingleton(LoadViewSettings());
 builder.Services.AddSingleton<SupplyService>();
 builder.Services.AddScoped<IEventAggregator, EventAggregator>();
-//builder.Services.AddScoped<ISocketService, SocketService>();
 builder.Services.AddScoped<ISocketService, SignalRService>();
+builder.Services.AddSingleton<UserSessionService>();
+builder.Services.AddScoped<LicenseService>();
 
 var app = builder.Build();
 

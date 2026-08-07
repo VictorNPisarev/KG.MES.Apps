@@ -1,0 +1,17 @@
+@inject NavigationManager NavManager
+
+@if (_isAuthorized == null)
+{
+	<div class="text-center py-5">
+		<div class="spinner-border text-primary"></div>
+	</div>
+}
+else if (_isAuthorized == true)
+{
+	@ChildContent
+}
+else
+{
+	NavManager.NavigateTo("login");
+}
+

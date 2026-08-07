@@ -24,7 +24,7 @@ public class ProductionApiService
 		_configuration = configuration;
 	}
 
-	private string BaseUrl => _configuration["ProductionApi:BaseUrl"] ?? "http://localhost:5000/api";
+	private string BaseUrl => _configuration["ProductionApi:BaseUrl"] ?? "http://192.168.0.179:3031/api";
 
 	private int TimeoutSeconds => _configuration.GetValue<int>("ProductionApi:TimeoutSeconds", 30);
 

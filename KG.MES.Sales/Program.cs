@@ -27,6 +27,7 @@ builder.Services.AddSingleton(LoadViewSettings());
 builder.Services.AddScoped<IEventAggregator, EventAggregator>();
 //builder.Services.AddScoped<ISocketService, SocketService>();
 builder.Services.AddScoped<ISocketService, SignalRService>();
+builder.Services.AddHttpClient<AuthService>();
 
 var app = builder.Build();
 
