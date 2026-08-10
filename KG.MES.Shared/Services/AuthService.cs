@@ -58,15 +58,11 @@ public class AuthService
 		}
 	}
 
-	public async Task<LoginResponseDto?> RefreshAsync(string refreshToken, string deviceId, string licenseKey)
+	public async Task<LoginResponseDto?> RefreshAsync(RefreshRequestDto refreshRequestDto)
 	{
 		try
 		{
-			var response = await _httpClient.PostAsJsonAsync($"{_baseUrl}/auth/refresh", new
-			{
-				refreshToken,
-				deviceHardwareId = deviceId
-			});
+			var response = await _httpClient.PostAsJsonAsync($"{_baseUrl}/auth/refresh", refreshRequestDto);
 
 			if (!response.IsSuccessStatusCode) return null;
 			return await response.Content.ReadFromJsonAsync<LoginResponseDto>();
