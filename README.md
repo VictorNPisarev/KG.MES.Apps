@@ -54,12 +54,12 @@ API: http://192.168.0.179:3000/api
 dotnet publish -c Release -o \\server\inetpub\wwwroot\Kg.Mes.Apps\main
 
 #через скрипт локально (режим разработки и тестирования)
-.\publish.ps1 -Project main -Configuration debug -Environment development
+.\publishApps.ps1 -Project main -Configuration debug -Environment development
 #debug и development - значения по умолчанию: можно запустить, указав только проект
-.\publish.ps1 -Project main
+.\publishApps.ps1 -Project main
 
 #через скрипт на сервер (продакшн)
-.\publish.ps1 -Project main -Configuration release -Environment production
+.\publishApps.ps1 -Project main -Configuration release -Environment production
 ```
 
 Файл app_offline.htm (Элегантный, без остановки пула)
