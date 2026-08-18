@@ -67,3 +67,9 @@ main {
     overflow-y: auto;
     padding: 1.5rem;
 }
+
+.sidebar-logo {
+	width: 64px;
+	height: 64px;
+	object-fit: contain;
+}

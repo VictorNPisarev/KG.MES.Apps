@@ -12,7 +12,10 @@ else if (_isAuthorized == true)
 }
 else
 {
-	NavManager.NavigateTo("login");
+	@*NavManager.NavigateTo("login");*@
+	<div class="text-center py-5">
+		<p>Перенаправление на страницу входа...</p>
+	</div>
 }
 
 @* Debug панель — убрать в продакшене *@
@@ -24,7 +27,7 @@ else
 		<div><strong>RefreshToken:</strong> <span style="word-break: break-all;">@_debugInfo?.RefreshToken</span></div>
 		<div><strong>LicenseKey:</strong> @_debugInfo?.LicenseKey</div>
 		<div><strong>DeviceId:</strong> @_debugInfo?.DeviceId</div>
-		<div><strong>ExpiresAt:</strong> @_debugInfo?.ExpiresAt.ToString("HH:mm:ss")</div>
+		<div><strong>ExpiresAt:</strong> @_debugInfo?.ExpiresAt?.ToString("HH:mm:ss")</div>
 		<div><strong>Remaining:</strong> @_remainingSeconds сек</div>
 		<button class="btn btn-sm btn-outline-danger mt-1" @onclick="ClearSession" style="font-size: 10px;">
 			Сбросить сессию

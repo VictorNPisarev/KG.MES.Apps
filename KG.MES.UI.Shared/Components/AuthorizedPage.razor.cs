@@ -22,17 +22,17 @@ public partial class AuthorizedPage
 	private Timer? _timer;
 	private class DebugInfo
 	{
-		public string AccessToken { get; set; } = "";
-		public string RefreshToken { get; set; } = "";
-		public string LicenseKey { get; set; } = "";
-		public string DeviceId { get; set; } = "";
-		public DateTime ExpiresAt { get; set; }
+		public string? AccessToken { get; set; } = "";
+		public string? RefreshToken { get; set; } = "";
+		public string? LicenseKey { get; set; } = "";
+		public string? DeviceId { get; set; } = "";
+		public DateTime? ExpiresAt { get; set; }
 	}
 
 	private async Task UpdateTimer()
 	{
-		if (_debugInfo == null) return;
-		_remainingSeconds = (int)(_debugInfo.ExpiresAt - DateTime.UtcNow).TotalSeconds;
+		if (_debugInfo == null || _debugInfo.ExpiresAt == null) return;
+		_remainingSeconds = (int)((TimeSpan)(_debugInfo.ExpiresAt - DateTime.UtcNow)).TotalSeconds;
 		if (_remainingSeconds <= 0) _remainingSeconds = 0;
 		await InvokeAsync(StateHasChanged);
 	}
@@ -60,87 +60,146 @@ public partial class AuthorizedPage
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		//if (!firstRender) return;
+		//if (!firstRender)
+		//	return;
 
-		//if (Session.IsAuthenticated)
+		// 1. Если сессия уже в памяти (только что залогинились, без F5)
+		if (Session.IsAuthenticated)
+		{
+			_isAuthorized = true;
+			StateHasChanged();
+			return;
+		}
+
+		// 2. Пробуем восстановить из localStorage
+		//var sessionJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "session_data");
+
+		await Session.RestoreAsync(JSRuntime);
+
+		//if (string.IsNullOrEmpty(sessionJson))
+		if (string.IsNullOrEmpty(Session.AccessToken))
+		{
+			_isAuthorized = false;
+			NavManager.NavigateTo($"{NavManager.BaseUri}login");
+			return;
+		}
+
+		//SessionData? data;
+		//try
 		//{
-		//	_isAuthorized = true;
-		//	StateHasChanged();
+		//	data = JsonSerializer.Deserialize<SessionData>(sessionJson);
+		//}
+		//catch
+		//{
+		//	data = null;
+		//}
+
+		//if (data == null || string.IsNullOrEmpty(data.RefreshToken))
+		//{
+		//	await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "session_data");
+		//	_isAuthorized = false;
+		//	NavManager.NavigateTo($"{NavManager.BaseUri}login");
 		//	return;
 		//}
 
-		// Пробуем восстановить сессию из localStorage
-		var sessionJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "session_data");
-		if (!string.IsNullOrEmpty(sessionJson))
+		//// Debug info
+		var licenseKey = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "license_key") ?? "";
+		var deviceId = await LicenseService.GetDeviceIdAsync();
+
+
+		if (Session.ExpiresAt > DateTime.UtcNow)
 		{
-			var data = JsonSerializer.Deserialize<SessionData>(sessionJson);
 
 			_debugInfo = new DebugInfo
 			{
-				AccessToken = data?.AccessToken ?? "",
-				RefreshToken = data?.RefreshToken ?? "",
-				LicenseKey = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "license_key") ?? "",
-				DeviceId = await LicenseService.GetDeviceIdAsync(),
-				ExpiresAt = data?.ExpiresAt ?? DateTime.MinValue
+				AccessToken = Session.AccessToken,
+				RefreshToken = Session.RefreshToken,
+				LicenseKey = Session.LicenseKey,
+				DeviceId = Session.DeviceId,
+				ExpiresAt = Session.ExpiresAt
 			};
-
-			_remainingSeconds = (int)(_debugInfo.ExpiresAt - DateTime.UtcNow).TotalSeconds;
+			_remainingSeconds = (int)((TimeSpan)(Session.ExpiresAt - DateTime.UtcNow)).TotalSeconds;
 			_timer = new Timer(async _ => await UpdateTimer(), null, 0, 1000);
 
-			if (data != null && !string.IsNullOrEmpty(data.RefreshToken))
-			{
-				// Проверяем срок access_token
-				if (data.ExpiresAt > DateTime.UtcNow)
-				{
-					// Токен ещё жив — используем его
-					_isAuthorized = true;
-					StateHasChanged();
-					return;
-				}
+		// 3. Access token ещё жив — восстанавливаем сессию в память
+		//if (data.ExpiresAt > DateTime.UtcNow)
+		//{
+			//Session.SetSession(
+			//	new LoginResponseDto
+			//	{
+			//		AccessToken = data.AccessToken,
+			//		RefreshToken = data.RefreshToken,
+			//		ExpiresIn = (int)(data.ExpiresAt - DateTime.UtcNow).TotalSeconds,
+			//		User = data.User
+			//	},
+			//	licenseKey,
+			//	deviceId
+			//);
 
-				// Токен протух — пробуем refresh
-				var deviceHardwareId = await LicenseService.GetDeviceIdAsync();
-				var licenseFile = await LicenseService.LoadLicenseAsync();
-				var licenseKey = licenseFile?.LicenseKey
-					?? await JSRuntime.InvokeAsync<string>("localStorage.getItem", "license_key") ?? "";
-
-				if (!string.IsNullOrEmpty(licenseKey))
-				{
-					var request = new RefreshRequestDto
-					{
-						RefreshToken = data.RefreshToken,
-						LicenseKey = licenseKey,
-						DeviceHardwareId = deviceHardwareId
-					};
-
-
-					var response = await AuthService.RefreshAsync(request);
-					if (response != null)
-					{
-						//Session.SetSession(response, licenseKey, deviceId);
-
-						var newSessionData = JsonSerializer.Serialize(new
-						{
-							accessToken = response.AccessToken,
-							refreshToken = response.RefreshToken,
-							expiresAt = DateTime.UtcNow.AddSeconds(response.ExpiresIn)
-						});
-						await JSRuntime.InvokeVoidAsync("localStorage.setItem", "session_data", newSessionData);
-
-						_isAuthorized = true;
-						StateHasChanged();
-						return;
-					}
-				}
-				StateHasChanged();
-			}
-
-			//await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "session_data");
+			_isAuthorized = true;
+			StateHasChanged();
+			return;
 		}
 
+		// 4. Токен протух — пробуем refresh
+
+		if (string.IsNullOrEmpty(Session.RefreshToken))
+		{
+			_isAuthorized = false;
+			NavManager.NavigateTo($"{NavManager.BaseUri}login");
+			return;
+		}
+
+		var request = new RefreshRequestDto
+		{
+			RefreshToken = Session.RefreshToken,
+			LicenseKey = Session.LicenseKey ?? licenseKey,
+			DeviceHardwareId = Session.DeviceId ?? deviceId
+		};
+
+		var response = await AuthService.RefreshAsync(request);
+
+		if (response != null)
+		{
+			var newExpiresAt = DateTime.UtcNow.AddSeconds(response.ExpiresIn);
+
+			//var newSessionData = JsonSerializer.Serialize(new
+			//{
+			//	accessToken = response.AccessToken,
+			//	refreshToken = response.RefreshToken,
+			//	expiresAt = newExpiresAt,
+			//	user = response.User
+			//});
+			//await JSRuntime.InvokeVoidAsync("localStorage.setItem", "session_data", newSessionData);
+
+			// ← ВОТ ЭТОГО НЕ ХВАТАЛО: восстанавливаем сессию в память
+			Session.SetSession(response, licenseKey, deviceId);
+
+			_debugInfo = new DebugInfo
+			{
+				AccessToken = Session.AccessToken,
+				RefreshToken = Session.RefreshToken,
+				LicenseKey = Session.LicenseKey,
+				DeviceId = Session.DeviceId,
+				ExpiresAt = Session.ExpiresAt
+			};
+
+			if(_debugInfo.ExpiresAt != null)
+			{
+				_remainingSeconds = (int)((TimeSpan)(_debugInfo.ExpiresAt - DateTime.UtcNow)).TotalSeconds;
+				_timer = new Timer(async _ => await UpdateTimer(), null, 0, 1000);
+			}
+			await Session.PersistAsync(JSRuntime);
+
+			_isAuthorized = true;
+			StateHasChanged();
+			return;
+		}
+
+		// 5. Refresh не сработал — чистим и на логин
+		await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "session_data");
 		_isAuthorized = false;
 		NavManager.NavigateTo($"{NavManager.BaseUri}login");
-		StateHasChanged();
 	}
 
 	private class SessionData
@@ -153,5 +212,8 @@ public partial class AuthorizedPage
 
 		[JsonPropertyName("expiresAt")]
 		public DateTime ExpiresAt { get; set; }
+
+		[JsonPropertyName("user")]
+		public UserDto? User { get; set; }
 	}
 }

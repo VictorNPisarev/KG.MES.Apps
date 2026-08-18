@@ -21,10 +21,34 @@ public partial class UserLogin : ComponentBase
 	private bool _isLoading;
 	private bool _isAuthorized;
 
-	protected override async Task OnInitializedAsync()
-	{
-		var license = await LicenseService.LoadLicenseAsync();
+	//protected override async Task OnInitializedAsync()
+	//{
+	//	var license = await LicenseService.LoadLicenseAsync();
 		
+	//	if (license != null)
+	//	{
+	//		_licenseKey = license.LicenseKey;
+	//		_licenseKeyHandle = "";
+	//	}
+	//	else
+	//	{
+	//		// 2. Файла нет — пробую из localStorage
+	//		_licenseKey = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "license_key") ?? "";
+	//		if (!string.IsNullOrEmpty(_licenseKey))
+	//		{
+	//			_licenseKeyHandle = ""; // ключ уже есть
+	//		}
+	//		// Если и там пусто — покажем поле ввода
+	//	}
+	//}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (!firstRender)
+			return;
+
+		var license = await LicenseService.LoadLicenseAsync();
+
 		if (license != null)
 		{
 			_licenseKey = license.LicenseKey;
@@ -32,14 +56,14 @@ public partial class UserLogin : ComponentBase
 		}
 		else
 		{
-			// 2. Файла нет — пробую из localStorage
 			_licenseKey = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "license_key") ?? "";
 			if (!string.IsNullOrEmpty(_licenseKey))
 			{
-				_licenseKeyHandle = ""; // ключ уже есть
+				_licenseKeyHandle = "";
 			}
-			// Если и там пусто — покажем поле ввода
 		}
+
+		StateHasChanged();
 	}
 
 	private async Task Login()
@@ -77,21 +101,17 @@ public partial class UserLogin : ComponentBase
 
 			if (response != null)
 			{
-				Session.SetSession(response, _licenseKey, await LicenseService.GetDeviceIdAsync());
+				var deviceId = await LicenseService.GetDeviceIdAsync();
+				Session.SetSession(response, _licenseKey, deviceId);
 
-				// Сохраняем в localStorage
-				var sessionData = JsonSerializer.Serialize(new
-				{
-					accessToken = response.AccessToken,
-					refreshToken = response.RefreshToken,
-					expiresAt = DateTime.UtcNow.AddSeconds(response.ExpiresIn)
-				});
-				await JSRuntime.InvokeVoidAsync("localStorage.setItem", "session_data", sessionData);
+				// Сохраняем в localStorage через сервис
+				await Session.PersistAsync(JSRuntime);
 
+				// Лицензию тоже сохраняем, если нужно
 				if (!string.IsNullOrEmpty(_licenseKeyHandle))
 					await JSRuntime.InvokeVoidAsync("localStorage.setItem", "license_key", _licenseKey);
 
-				NavManager.NavigateTo(NavManager.BaseUri, true);
+				NavManager.NavigateTo(NavManager.BaseUri);
 			}
 			else
 			{

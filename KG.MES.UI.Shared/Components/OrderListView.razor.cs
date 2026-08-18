@@ -27,6 +27,7 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 	[Inject] private IJSRuntime JSRuntime { get; set; } = null!;
 	[Inject] private IEventAggregator EventAggregator { get; set; } = null!;
 	[Inject] private NavigationManager NavManager { get; set; } = null!;
+	[Inject] private UserSessionService Session { get; set; } = null!;
 
 
 	private TListItem? order;
@@ -183,6 +184,7 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 
 		try
 		{
+			ApiService.Session = Session;
 			orders = await ApiService.GetOrdersAsync<TListItem>(
 				endpoint: Endpoint,
 				workplaceId: selectedWorkplaceId,

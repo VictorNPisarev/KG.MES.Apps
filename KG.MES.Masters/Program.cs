@@ -29,7 +29,7 @@ builder.Services.AddSingleton(LoadViewSettings());
 builder.Services.AddSingleton<SupplyService>();
 builder.Services.AddScoped<IEventAggregator, EventAggregator>();
 builder.Services.AddScoped<ISocketService, SignalRService>();
-builder.Services.AddSingleton<UserSessionService>();
+builder.Services.AddScoped<UserSessionService>();
 builder.Services.AddScoped<LicenseService>();
 
 var app = builder.Build();

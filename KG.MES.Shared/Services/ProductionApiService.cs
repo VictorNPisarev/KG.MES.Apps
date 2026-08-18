@@ -1,10 +1,11 @@
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using KG.MES.Shared.Models;
 using KG.MES.Shared.Models.Dto;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
 
 namespace KG.MES.Shared.Services;
 
@@ -13,22 +14,52 @@ public class ProductionApiService
 	private readonly HttpClient _httpClient;
 	private readonly ILogger<ProductionApiService> _logger;
 	private readonly IConfiguration _configuration;
+	private UserSessionService _session;
+	public UserSessionService Session 
+	{
+		get 
+		{
+			return _session;
+		}
+		set
+		{
+			_session = value;
+		}
+	}
+	private string BaseUrl => _configuration["ProductionApi:BaseUrl"] ?? "http://192.168.0.179:3031/api";
+	private int TimeoutSeconds => _configuration.GetValue<int>("ProductionApi:TimeoutSeconds", 30);
+	private int RetryCount => _configuration.GetValue<int>("ProductionApi:RetryCount", 3);
+
 
 	public ProductionApiService(
 		HttpClient httpClient,
 		ILogger<ProductionApiService> logger,
-		IConfiguration configuration)
+		IConfiguration configuration,
+		UserSessionService session)
 	{
 		_httpClient = httpClient;
 		_logger = logger;
 		_configuration = configuration;
+		_session = session;
 	}
 
-	private string BaseUrl => _configuration["ProductionApi:BaseUrl"] ?? "http://192.168.0.179:3031/api";
+	/// <summary>
+	/// Проставляет/сбрасывает Authorization-заголовок из текущей сессии.
+	/// </summary>
+	private async Task EnsureAuthorization()
+	{
+		await _session.RestoreAsync();
 
-	private int TimeoutSeconds => _configuration.GetValue<int>("ProductionApi:TimeoutSeconds", 30);
-
-	private int RetryCount => _configuration.GetValue<int>("ProductionApi:RetryCount", 3);
+		if (!string.IsNullOrEmpty(_session.AccessToken))
+		{
+			_httpClient.DefaultRequestHeaders.Authorization =
+				new AuthenticationHeaderValue("Bearer", _session.AccessToken);
+		}
+		else
+		{
+			_httpClient.DefaultRequestHeaders.Authorization = null;
+		}
+	}
 
 	/// <summary>
 	/// POST запись нового заказ в бд
@@ -38,6 +69,8 @@ public class ProductionApiService
 	/// <returns></returns>
 	public async Task<bool> ExportToProductionAsync(ProductionOrderExportDto dto)
 	{
+		await EnsureAuthorization();
+
 		var retries = 0;
 
 		while (retries < RetryCount)
@@ -109,6 +142,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			// Поиск по номеру
 			if (!string.IsNullOrEmpty(number))
 			{
@@ -158,6 +193,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 			var response = await _httpClient.GetAsync($"{BaseUrl}/health", cts.Token);
 			return response.IsSuccessStatusCode;
@@ -178,6 +215,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var queryParams = new Dictionary<string, string>
 			{
 				["page"] = page.ToString(),
@@ -230,6 +269,8 @@ public class ProductionApiService
 		string? sortBy = null,
 		string? sortOrder = null)
 	{
+		await EnsureAuthorization();
+
 		var queryParams = new Dictionary<string, string>
 		{
 			["page"] = page.ToString(),
@@ -269,6 +310,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			return await _httpClient.GetFromJsonAsync<OrderDto>($"{BaseUrl}/orders/{id}");
 		}
 		catch (Exception ex)
@@ -282,6 +325,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var response = await _httpClient.GetFromJsonAsync<List<WorkplaceDto>>($"{BaseUrl}/workplaces/active");
 			return response ?? [];
 		}
@@ -297,6 +342,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var response = await _httpClient.GetFromJsonAsync<List<WorkplaceDto>>($"{BaseUrl}/workplaces/all");
 			return response ?? [];
 		}
@@ -312,6 +359,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			return await _httpClient.GetFromJsonAsync<WorkplaceDto>($"{BaseUrl}/workplaces/{id}");
 		}
 		catch (Exception ex)
@@ -325,6 +374,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var response = await _httpClient.PutAsJsonAsync(
 				$"{BaseUrl}/orders/{id}/status",
 				new { status });
@@ -341,6 +392,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var response = await _httpClient.PutAsJsonAsync(
 				$"{BaseUrl}/orders/{id}/notes",
 				new { masterNotes = notes });
@@ -365,6 +418,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var url = $"{BaseUrl}/{endpoint}/{id}";
 			return await _httpClient.GetFromJsonAsync<T>(url);
 		}
@@ -384,6 +439,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var url = $"{BaseUrl}/orders/{orderId}/trace";
 			var response = await _httpClient.GetFromJsonAsync<OrderTraceResponse>(url);
 			return response?.OrderTraces?.FirstOrDefault();
@@ -404,6 +461,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var url = $"{BaseUrl}/orders/{orderId}/supplies";
 			var supplies = await _httpClient.GetFromJsonAsync<List<OrderSupplyDto>>(url)
 							?? [];
@@ -421,6 +480,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var url = $"{BaseUrl}/orders/{orderId}/supplies";
 			Console.WriteLine($"UpdateOrderSuppliesAsync url: {url}");
 			var body = new { supplies };
@@ -439,6 +500,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var url = $"{BaseUrl}/supplies/conditions";
 			return await _httpClient.GetFromJsonAsync<List<SupplyConditionDto>>(url)
 					?? [];
@@ -454,6 +517,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var url = $"{BaseUrl}/supplies/types";
 			return await _httpClient.GetFromJsonAsync<List<SupplyTypeDto>>(url)
 					?? [];
@@ -469,6 +534,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var url = $"{BaseUrl}/orders/{orderId}/comments";
 			return await _httpClient.GetFromJsonAsync<List<OrderCommentViewModel>>(url)
 					?? new List<OrderCommentViewModel>();
@@ -484,6 +551,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
 			HttpResponseMessage response;
 			if (comment.IsNew)
@@ -512,6 +581,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
 			HttpResponseMessage response;
 			if (comment.IsNew)
@@ -540,6 +611,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
 			HttpResponseMessage response;
 			if (comment.IsNew)
@@ -568,6 +641,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			Console.WriteLine($"SaveCommentAsync orderId:{orderId}");
 			HttpResponseMessage response;
 
@@ -589,6 +664,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var response = await _httpClient.DeleteAsync(
 				$"{BaseUrl}/orders/{orderId}/comments/{commentId}");
 			return response.IsSuccessStatusCode;
@@ -604,6 +681,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var url = $"{BaseUrl}/workplaces";
 			if (!string.IsNullOrEmpty(type))
 				url += $"?type={type}";
@@ -623,6 +702,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var url = $"{BaseUrl}/workplaces/{workplaceId}/stats";
 
 			_logger.LogInformation("GetWorkplaceStatsAsync: {url}", url);
@@ -640,6 +721,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var url = $"{BaseUrl}/workplaces/{workplaceId}/blocks";
 
 			_logger.LogInformation("GetWorkplaceBlocksAsync: {url}", url);
@@ -658,6 +741,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var url = $"{BaseUrl}/workplaces/{workplaceId}/history?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}&limit={limit}";
 
 			_logger.LogInformation("GetWorkplaceHistoryAsync: {url}", url);
@@ -675,6 +760,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var body = new { workplaces = updates };
 			var response = await _httpClient.PutAsJsonAsync(
 				$"{BaseUrl}/traces/{orderId}/workplace", body);
@@ -691,6 +778,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var url = $"{BaseUrl}/traces/{productionOrderId}/workplace/{workplaceId}";
 			//var body = new { status, userId, notes };
 			var body = new {status};
@@ -717,6 +806,8 @@ public class ProductionApiService
 
 		try
 		{
+			await EnsureAuthorization();
+
 			var url = $"{BaseUrl}/ProductionCalendar/calculate";
 
 			var body = new
@@ -725,21 +816,7 @@ public class ProductionApiService
 				workingDays = workingDays
 			};
 
-			Console.WriteLine();
-			Console.WriteLine();
-			Console.WriteLine("ДО _httpClient.PostAsJsonAsync(url, body);");
-
 			var response = await _httpClient.PostAsJsonAsync(url, body);
-
-			Console.WriteLine("ПОСЛЕ _httpClient.PostAsJsonAsync(url, body);");
-			Console.WriteLine();
-
-			Console.WriteLine(response);
-			Console.WriteLine();
-
-			Console.WriteLine(response);
-			Console.WriteLine();
-			Console.WriteLine();
 
 			if (!response.IsSuccessStatusCode)
 			{
@@ -747,11 +824,7 @@ public class ProductionApiService
 				throw new Exception($"Ошибка расчета даты: {error}");
 			}
 
-			Console.WriteLine("ПОСЛЕ_2 _httpClient.PostAsJsonAsync(url, body);");
-
 			var result = await response.Content.ReadFromJsonAsync<CalculateReadyDateDto>();
-
-			Console.WriteLine("ПОСЛЕ_3 _httpClient.PostAsJsonAsync(url, body);");
 
 			return result?.EndDate;
 
@@ -766,6 +839,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var response = await _httpClient.PostAsync($"{BaseUrl}/orders/{orderId}/complete", null);
 			return response.IsSuccessStatusCode;
 		}
@@ -780,6 +855,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var response = await _httpClient.PostAsync($"{BaseUrl}/orders/{orderId}/departure", null);
 			return response.IsSuccessStatusCode;
 		}
@@ -794,6 +871,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var url = $"{BaseUrl}/orders/{orderId}/commerce";
 			return await _httpClient.GetFromJsonAsync<OrderCommerceDto>(url);
 		}
@@ -806,17 +885,23 @@ public class ProductionApiService
 
 	public async Task<bool> DeleteOrderAsync(Guid orderId)
 	{
+		await EnsureAuthorization();
+
 		var response = await _httpClient.DeleteAsync($"{BaseUrl}/orders/{orderId}");
 		return response.IsSuccessStatusCode;
 	}
 
 	public async Task<ProductionOrderExportDto?> GetOrderForEditAsync(Guid orderId)
 	{
+		await EnsureAuthorization();
+
 		return await _httpClient.GetFromJsonAsync<ProductionOrderExportDto>($"{BaseUrl}/orders/{orderId}/edit");
 	}
 
 	public async Task<bool> UpdateOrderAsync(Guid orderId, ProductionOrderExportDto dto)
 	{
+		await EnsureAuthorization();
+
 		var response = await _httpClient.PutAsJsonAsync($"{BaseUrl}/orders/{orderId}", dto);
 		return response.IsSuccessStatusCode;
 	}
@@ -825,6 +910,8 @@ public class ProductionApiService
 	{
 		try
 		{
+			await EnsureAuthorization();
+
 			var url = $"{BaseUrl}/orders/workplaces/{workplaceId}/in-work";
 			return await _httpClient.GetFromJsonAsync<List<OrderWorkplaceDto>>(url) ?? [];
 		}
