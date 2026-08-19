@@ -64,7 +64,7 @@ if (Test-Path "$iisPath\#app_offline.htm")
 
 #4.2 Копирую файлы (удаляются все, которых нет в источнике, исключая app_offline.htm)
 Write-Host "Copying to $server..." -ForegroundColor Yellow
-& robocopy $publishPath $iisPath /MIR /XF "app_offline.htm" /NP /NDL /NJH /NJS
+& robocopy $publishPath $iisPath /MIR /XF "app_offline.htm" "license.key" /NP /NDL /NJH /NJS
 
 # 3. Деактивирую app_offline.htm (возвращаем #)
 if (Test-Path "$iisPath\app_offline.htm")

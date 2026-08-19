@@ -7,11 +7,11 @@ namespace KG.MES.Shared.Services;
 
 public class UserSessionService
 {
-	private LoginResponseDto? _loginResponse;
+	private LoginResponseDto? loginResponse;
 
-	public string? AccessToken => _loginResponse?.AccessToken;
-	public string? RefreshToken => _loginResponse?.RefreshToken;
-	public UserDto? User => _loginResponse?.User;
+	public string? AccessToken => loginResponse?.AccessToken;
+	public string? RefreshToken => loginResponse?.RefreshToken;
+	public UserDto? User => loginResponse?.User;
 	public DateTime? ExpiresAt { get; private set; }
 	public string? LicenseKey { get; private set; }
 	public string? DeviceId { get; private set; }
@@ -27,7 +27,7 @@ public class UserSessionService
 
 	public void SetSession(LoginResponseDto response, string licenseKey, string deviceId)
 	{
-		_loginResponse = response;
+		loginResponse = response;
 		LicenseKey = licenseKey;
 		DeviceId = deviceId;
 		ExpiresAt = DateTime.UtcNow.AddSeconds(response.ExpiresIn);
@@ -35,7 +35,7 @@ public class UserSessionService
 
 	public void Clear()
 	{
-		_loginResponse = null;
+		loginResponse = null;
 		LicenseKey = null;
 		DeviceId = null;
 		ExpiresAt = null;
@@ -63,7 +63,7 @@ public class UserSessionService
 				return;
 			}
 
-			_loginResponse = new LoginResponseDto
+			loginResponse = new LoginResponseDto
 			{
 				AccessToken = data.AccessToken,
 				RefreshToken = data.RefreshToken,
@@ -85,19 +85,19 @@ public class UserSessionService
 	/// </summary>
 	public async Task PersistAsync(IJSRuntime jsRuntime)
 	{
-		if (_loginResponse == null)
+		if (loginResponse == null)
 			return;
 
-		var expiresAt = DateTime.UtcNow.AddSeconds(_loginResponse.ExpiresIn);
+		var expiresAt = DateTime.UtcNow.AddSeconds(loginResponse.ExpiresIn);
 		ExpiresAt = expiresAt;  // ← обновляем в памяти
 
 
 		var data = new StoredSession
 		{
-			AccessToken = _loginResponse.AccessToken,
-			RefreshToken = _loginResponse.RefreshToken,
+			AccessToken = loginResponse.AccessToken,
+			RefreshToken = loginResponse.RefreshToken,
 			ExpiresAt = expiresAt,
-			User = _loginResponse.User,
+			User = loginResponse.User,
 			LicenseKey = LicenseKey,
 			DeviceId = DeviceId
 		};

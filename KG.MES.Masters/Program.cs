@@ -25,6 +25,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddHttpClient<ProductionApiService>();
 builder.Services.AddHttpClient<AuthService>();
+builder.Services.AddHttpClient<AdminService>();
 builder.Services.AddSingleton(LoadViewSettings());
 builder.Services.AddSingleton<SupplyService>();
 builder.Services.AddScoped<IEventAggregator, EventAggregator>();

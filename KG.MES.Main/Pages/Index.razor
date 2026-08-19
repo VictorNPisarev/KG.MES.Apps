@@ -4,10 +4,12 @@
 
 @inject OrderViewSettings AppSettings
 
-<OrderListView TListItem="OrderDto" TCardItem="OrderDto" Settings="@AppSettings">
-	<HeaderActions>
-		<NavLink href="/upload" class="btn btn-primary">
-			<i class="bi bi-upload"></i> Загрузить XML
-		</NavLink>
-	</HeaderActions>
-</OrderListView>
+<AuthorizedPage>
+	<OrderListView TListItem="OrderDto" TCardItem="OrderDto" Settings="@AppSettings">
+		<HeaderActions>
+			<NavLink href="/upload" class="btn btn-primary">
+				<i class="bi bi-upload"></i> Загрузить XML
+			</NavLink>
+		</HeaderActions>
+	</OrderListView>
+</AuthorizedPage>
