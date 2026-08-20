@@ -108,7 +108,7 @@
 	</div>
 
 	<!-- Панель над таблицей -->
-	<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+	@*<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
 		<div class="text-muted">
 			@if (orders.Data.Any())
 			{
@@ -172,7 +172,7 @@
 				}
 			</div>
 		</div>
-	</div>
+	</div>*@
 
 	<!-- Таблица -->
 	@if (isLoading)
@@ -190,7 +190,46 @@
 		<div class="row g-0 d-flex w-100" style="flex-wrap: nowrap;">
 			<div class="@(useSplitView && selectedOrder != null ? "resizable-panel" : "table-responsive mt-3")"
 					id="split-panel" style="@(useSplitView && selectedOrder != null ? "width: " + savedPanelWidth : "width: 100%")">
-				<table class="table table-hover">
+				<DynamicTable TListItem="TListItem" Items="orders.Data" ColumnInfos="columnInfos"
+					ColumnSettings="columnSettings" TableKey="@tableKey" ShowActions="true">
+					<RowActions>
+						<div class="text-muted me-auto">
+							@if (orders.Data.Any())
+							{
+								<span>Показано @((orders.Page - 1) * orders.Limit + 1)-@(Math.Min(orders.Page * orders.Limit,
+																orders.Total)) из @orders.Total</span>
+							}
+						</div>
+						<button class="btn btn-sm btn-outline-secondary" @onclick="ToggleViewMode"
+							title="@(useSplitView ? "Модальное окно" : "Разделённый вид")">
+							<i class="bi @(useSplitView ? "bi-window" : "bi-layout-split")"></i>
+						</button>
+					</RowActions>
+					<RowTemplate>
+						<div class="d-flex flex-row gap-2">
+							<button class="btn btn-sm btn-outline-primary"
+									@onclick="() => OpenOrder(context!)">
+								<i class="bi bi-eye"></i>
+							</button>
+							@if (Settings.CanEdit)
+							{
+								<button class="btn btn-sm btn-outline-success" @onclick="() => EditOrder(context!)"
+									title="Редактировать">
+									<i class="bi bi-pencil"></i>
+								</button>
+							}
+							@if (Settings.CanDelete)
+							{
+								<button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteOrder(context!)"
+									title="Удалить">
+									<i class="bi bi-trash"></i>
+								</button>
+							}
+						</div>
+					</RowTemplate>
+				</DynamicTable>
+
+				@*<table class="table table-hover">
 					<thead class="table-light">
 						<tr>
 							@foreach (var col in visibleData)
@@ -276,12 +315,13 @@
 							</tr>
 						}
 					</tbody>
-				</table>
+				</table>*@
 			</div>
 			@if (useSplitView && selectedOrder != null)
 			{
 				<div class="sticky-panel" style="flex: 1; min-width: 0; max-height: calc(100vh - 200px); overflow-y: auto;">
 					<div class="p-3">
+						<div/>
 						<div class="d-flex justify-content-between align-items-center mb-3">
 							<h5>
 								Заказ №@GetOrderNumber(selectedOrder!)

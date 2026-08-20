@@ -91,6 +91,7 @@ public partial class CreateOrderPage
 			await CalculateReadyDateAsync();
 			RtmDateCash = RtmDate;
 			ApprovedDaysCash = ApprovedDays;
+			UnapprovedDaysCash = UnapprovedDays;
 		}
 	}
 

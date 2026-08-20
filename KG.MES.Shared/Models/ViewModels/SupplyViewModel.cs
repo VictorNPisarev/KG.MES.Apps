@@ -36,5 +36,15 @@ public class SupplyViewModel : IListItemViewModel
 
 	public string? AlumWaterShieldComment { get; set; }
 
+	[Column("Отлив", Order = 6, IsBadge = true, DisplayGroup = "supply_status", CommentField = "WindowsillComment")]
+	public string? Windowsill { get; set; }
+
+	public string? WindowsillComment { get; set; }
+
+	[Column("Д/А", Order = 6, IsBadge = true, DisplayGroup = "supply_status", CommentField = "WoodAlumComment")]
+	public string? WoodAlum { get; set; }
+
+	public string? WoodAlumComment { get; set; }
+
 	public string? Machine { get; set; }
 }
