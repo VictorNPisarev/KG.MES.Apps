@@ -262,4 +262,19 @@ public class AdminService
 			return false;
 		}
 	}
+
+	public async Task<List<RoleDto>> GetRolesAsync()
+	{
+		try
+		{
+			AddAuthHeader();
+			return await httpClient.GetFromJsonAsync<List<RoleDto>>($"{baseUrl}/admin/roles")
+				   ?? new List<RoleDto>();
+		}
+		catch (Exception ex)
+		{
+			logger.LogError(ex, "Error fetching roles");
+			return new List<RoleDto>();
+		}
+	}
 }

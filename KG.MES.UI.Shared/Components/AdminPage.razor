@@ -12,13 +12,13 @@
 
 	<ul class="nav nav-tabs mb-4">
 		<li class="nav-item">
-			<button class="nav-link @(activeTab == "licenses" ? "active" : "")" @onclick='() => activeTab = "licenses"'>
-				<i class="bi bi-key me-1"></i> Лицензии
+			<button class="nav-link @(activeTab == "users" ? "active" : "")" @onclick='() => activeTab = "users"'>
+				<i class="bi bi-people me-1"></i> Сотрудники
 			</button>
 		</li>
 		<li class="nav-item">
-			<button class="nav-link @(activeTab == "users" ? "active" : "")" @onclick='() => activeTab = "users"'>
-				<i class="bi bi-people me-1"></i> Сотрудники
+			<button class="nav-link @(activeTab == "licenses" ? "active" : "")" @onclick='() => activeTab = "licenses"'>
+				<i class="bi bi-key me-1"></i> Лицензии
 			</button>
 		</li>
 	</ul>
@@ -87,7 +87,7 @@
 			</div>
 		</div>
 	}
-	else
+	else if (activeTab == "users")
 	{
 		<div class="card shadow-sm">
 			<div class="card-header d-flex justify-content-between align-items-center">
@@ -128,27 +128,30 @@
 										</td>
 										<td>@(user.LastLoginAt?.ToString("dd.MM.yyyy HH:mm") ?? "—")</td>
 										<td>
-											@if (CanSetRole)
-											{
-												<button class="btn btn-sm btn-outline-primary" @onclick="() => OpenSetRoleModal(user)">
-													<i class="bi bi-person-gear"></i>
-												</button>
-											}
-											@if (CanBlockUser)
-											{
-												@if (user.IsActive)
+											<div class="d-flex align-items-center gap-3">
+												@if (CanBlockUser)
 												{
-													<button class="btn btn-sm btn-outline-danger" @onclick="() => BlockUser(user.Id)">
-														<i class="bi bi-lock"></i>
+													<div class="user-toggle-block" @onclick="() => ToggleUserBlock(user)">
+														<div class="user-toggle-icons">
+															<i class="bi bi-unlock-fill @(user.IsActive ? "text-success" : "text-muted")"
+																style="font-size: 0.6rem;"></i>
+															<i class="bi bi-lock-fill @(!user.IsActive ? "text-danger" : "text-muted")"
+																style="font-size: 0.6rem;"></i>
+														</div>
+														<div class="toggle-track-slim @(user.IsActive ? "" : "block")">
+															<div class="toggle-thumb-slim"></div>
+														</div>
+													</div>
+												}
+												@if (CanSetRole)
+												{
+													<button class="btn btn-sm btn-outline-primary d-flex align-items-center justify-content-center" 
+															style="width: 28px; height: 28px;"
+															@onclick="() => OpenSetRoleModal(user)">
+														<i class="bi bi-person-gear" style="font-size: 0.9rem;"></i>
 													</button>
 												}
-												else
-												{
-													<button class="btn btn-sm btn-outline-success" @onclick="() => UnblockUser(user.Id)">
-														<i class="bi bi-unlock"></i>
-													</button>
-												}
-											}
+											</div>
 										</td>
 									</tr>
 								}
@@ -234,10 +237,10 @@
 					<div class="mb-3">
 						<label class="form-label">Роль</label>
 						<select class="form-select" @bind="newUserRole">
-							<option value="User">Пользователь</option>
-							<option value="Manager">Менеджер</option>
-							<option value="SalesManager">Руководитель продаж</option>
-							<option value="Admin">Администратор</option>
+							@foreach (var role in roles@*.Where(r => Config.AllowedRolesToCreate.Contains(r.Name))*@)
+							{
+								<option value="@role.Name">@role.Name</option>
+							}
 						</select>
 					</div>
 					<div class="mb-3">
@@ -299,10 +302,10 @@
 					<div class="mb-3">
 						<label class="form-label">Роль для @selectedUser?.Name</label>
 						<select class="form-select" @bind="selectedRole">
-							<option value="User">Пользователь</option>
-							<option value="Manager">Менеджер</option>
-							<option value="SalesManager">Руководитель продаж</option>
-							<option value="Admin">Администратор</option>
+							@foreach (var role in roles)
+							{
+								<option value="@role.Name">@role.Name</option>
+							}
 						</select>
 					</div>
 				</div>

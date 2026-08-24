@@ -20,7 +20,7 @@ public partial class AdminPage
 	private bool CanSetRole => Config.AllowSetRole;
 	private bool CanResetPassword => Config.AllowResetPassword;
 
-	private string activeTab = "licenses";
+	private string activeTab = "users";
 	private List<LicenseDto> licenses = [];
 	private List<UserAdminListItemDto> users = [];
 	private bool showCreateLicense;
@@ -56,8 +56,11 @@ public partial class AdminPage
 	private int extendDays = 30;
 	private bool extendUnlimited;
 
+	private List<RoleDto> roles = [];
+
 	protected override async Task OnInitializedAsync()
 	{
+		roles = await AdminService.GetRolesAsync();
 		await LoadLicenses();
 		await LoadUsers();
 	}
@@ -212,5 +215,15 @@ public partial class AdminPage
 		showRevokeModal = false;
 		showSetRoleModal = false;
 		showExtendModal = false;
+	}
+
+	private async Task ToggleUserBlock(UserAdminListItemDto user)
+	{
+		if (user.IsActive)
+			await AdminService.BlockUserAsync(user.Id);
+		else
+			await AdminService.UnblockUserAsync(user.Id);
+
+		await LoadUsers();
 	}
 }

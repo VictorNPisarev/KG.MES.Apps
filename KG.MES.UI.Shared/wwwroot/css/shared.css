@@ -7,6 +7,7 @@
 @import 'workplaces.css';
 @import 'orderIcons.css';
 @import 'login.css';
+@import 'admin.css';
 
 .sticky-header {
 	position: sticky;

@@ -1,4 +1,6 @@
 @page "/admin"
-@attribute [Authorize(Roles = "Admin,Master,User")]
 
-<AdminPage Config="@Config" />
+<AuthorizedPage>
+	<AdminPage Config="@Config" />
+</AuthorizedPage>
+
