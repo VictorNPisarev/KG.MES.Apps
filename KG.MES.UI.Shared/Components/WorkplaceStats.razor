@@ -75,89 +75,57 @@
 			<div class="card-body">
 				@if (activeTab == "history")
 				{
-					@if (selectedWorkplaceId != null)// && stats != null)
+					@if (selectedWorkplaceId != null)
 					{
-						<div class="card">
-							<div class="card-header d-flex align-items-center">
-								<h6 class="mb-0">
-									История операций 
-									<small class="text-muted ms-2">@dateFrom.ToString("dd.MM.yyyy") – @dateTo.ToString("dd.MM.yyyy")</small>
-								</h6>
-								<button class="btn btn-sm btn-link text-secondary p-0 ms-2" @onclick="() => showDateFilter = !showDateFilter">
-									<i class="bi bi-calendar3"></i>
-								</button>
-							</div>
-							
-							@if (showDateFilter)
-							{
-								<div class="card-body bg-light border-bottom py-2">
-									<div class="d-flex align-items-center gap-2">
-										<label class="form-label small mb-0">С</label>
-										<input type="date" class="form-control form-control-sm" style="width: auto;" @bind="dateFrom" />
-										<label class="form-label small mb-0">По</label>
-										<input type="date" class="form-control form-control-sm" style="width: auto;" @bind="dateTo" />
-										<button class="btn btn-sm btn-primary" @onclick="ApplyFilter">Применить</button>
+						<div>
+							<DynamicTable TListItem="WorkplaceHistoryDto" Items="filteredHistory" ShowActions="true">
+								<RowActions>
+									<div class="d-flex me-auto gap-2">
+										<button class="btn btn-sm @(historyFilter == "all" ? "btn-dark" : "btn-outline-dark")"
+												@onclick='() => historyFilter = "all"'>
+											Все
+										</button>
+										<button class="btn btn-sm @(historyFilter == "START" ? "btn-primary" : "btn-outline-primary")"
+												@onclick='() => historyFilter = "START"'>
+											<i class="bi bi-play-fill me-1"></i> Взято в работу
+										</button>
+										<button class="btn btn-sm @(historyFilter == "COMPLETE" ? "btn-success" : "btn-outline-success")"
+												@onclick='() => historyFilter = "COMPLETE"'>
+											<i class="bi bi-check-lg me-1"></i> Завершено
+										</button>
+
+										<span class="text-muted small align-self-center">
+											@dateFrom.ToString("dd.MM") – @dateTo.ToString("dd.MM")
+										</span>
+										@if (!showDateFilter)
+										{
+											<button class="btn btn-sm btn-link text-secondary p-0 align-self-center"
+													@onclick="() => showDateFilter = !showDateFilter">
+												<i class="bi bi-calendar3"></i>
+											</button>
+										}
+										else
+										{
+											<div class="card bg-light mb-3">
+												<div class="card-body py-2">
+													<div class="d-flex align-items-center gap-2">
+														<label class="form-label small mb-0">С</label>
+														<input type="date" class="form-control form-control-sm" style="width: auto;"
+															@bind="dateFrom" />
+														<label class="form-label small mb-0">По</label>
+														<input type="date" class="form-control form-control-sm" style="width: auto;"
+															@bind="dateTo" />
+														<button class="btn btn-sm btn-primary" @onclick="ApplyFilter">Применить</button>
+													</div>
+												</div>
+											</div>
+										}
 									</div>
-								</div>
-							}
-							<div class="card-body p-0">
-								@if (history.Any())
-								{
-									<div class="table-responsive">
-										<table class="table table-sm mb-0">
-											<thead>
-												<tr>
-													<th>Тип</th>
-													<th>Заказ</th>
-													<th>Сотрудник</th>
-													<th>Время</th>
-													<th>Примечание</th>
-													<th>Окна, шт</th>
-													<th>Окна, м²</th>
-													<th>Щитовые, шт</th>
-													<th>Щитовые, м²</th>
-												</tr>
-											</thead>
-											<tbody>
-												@foreach (var h in history)
-												{
-													<tr>
-														<td>
-															<span class="badge @BadgeHelper.GetBadgeClass(h.OperationType.ToString())">
-																@h.OperationType
-															</span>
-														</td>
-														<td>@h.OrderNumber</td>
-														<td>@h.UserName</td>
-														<td>@h.OperationTime.ToString("dd.MM HH:mm")</td>
-														<td>@h.Notes</td>
-														<td>@h.WindowCount</td>
-														<td>@h.WindowArea?.ToString("F2")</td>
-														<td>@h.PlateCount</td>
-														<td>@h.PlateArea?.ToString("F2")</td>
-													</tr>
-												}
-											</tbody>
-											<tfoot class="table-light fw-bold">
-												<tr>
-													<td>Итого:</td>
-													<td>заказов:@history.Select(h => h.OrderNumber).Distinct().Count()</td>
-													<td/>
-													<td/>
-													<td/>
-													<td>@history.Sum(h => h.WindowCount)</td>
-													<td>@history.Sum(h => h.WindowArea ?? 0).ToString("F2")</td>
-													<td>@history.Sum(h => h.PlateCount)</td>
-													<td>@history.Sum(h => h.PlateArea ?? 0).ToString("F2")</td>
-												</tr>
-											</tfoot>
-										</table>
-									</div>
-								}
-								else
-								{
-									<p class="text-muted small p-3">Нет операций</p>
-								}
+								</RowActions>
+							</DynamicTable>
+							<div class="d-flex justify-content-end mt-2">
+								<span class="fw-bold">Окна: @TotalHistoryWindows шт / @TotalHistoryWindowArea.ToString("F2") м²</span>
+								<span class="fw-bold ms-3">Щитовые: @TotalHistoryPlates шт / @TotalHistoryPlateArea.ToString("F2") м²</span>
 							</div>
 						</div>
 					}

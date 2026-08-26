@@ -23,6 +23,8 @@ public partial class WorkplaceStats
 	private string activeTab = "orders";
 	private List<OrderWorkplaceDto> workplaceOrders = [];
 	private string orderFilter = "all";
+	private string historyFilter = "all";
+
 	private DateTime orderDateFrom = DateTime.Now.AddDays(-7);
 	private DateTime orderDateTo = DateTime.Now;
 	private bool showOrderDateFilter;
@@ -87,6 +89,20 @@ public partial class WorkplaceStats
 		EditSupply = false
 	};
 
+	private List<WorkplaceHistoryDto> filteredHistory =>
+		historyFilter == "all"
+			? history
+			: history.Where(h => h.OperationType == historyFilter).ToList();
+
+	private int TotalHistoryWindows => filteredHistory.GroupBy(h => h.OrderNumber)
+										.Select(g => g.First()).Sum(h => h.WindowCount);
+	private decimal TotalHistoryWindowArea => filteredHistory.GroupBy(h => h.OrderNumber)
+										.Select(g => g.First()).Sum(h => h.WindowArea ?? 0);
+	private int TotalHistoryPlates => filteredHistory.GroupBy(h => h.OrderNumber)
+										.Select(g => g.First()).Sum(h => h.PlateCount);
+	private decimal TotalHistoryPlateArea => filteredHistory.GroupBy(h => h.OrderNumber)
+										.Select(g => g.First()).Sum(h => h.PlateArea ?? 0);
+
 	private List<OrderWorkplaceDto> filteredOrders => orderFilter == "all"
 		? workplaceOrders
 			.Where(o => o.ReadyDate >= orderDateFrom && o.ReadyDate <= orderDateTo.AddDays(1))
@@ -100,8 +116,12 @@ public partial class WorkplaceStats
 			.ToList();
 
 	// Итоги по заказам
-	private int TotalWindows => filteredOrders.Sum(o => o.WindowCount);
-	private decimal TotalWindowArea => filteredOrders.Sum(o => o.WindowArea ?? 0);
-	private int TotalPlates => filteredOrders.Sum(o => o.PlateCount);
-	private decimal TotalPlateArea => filteredOrders.Sum(o => o.PlateArea ?? 0);
+	private int TotalWindows => filteredOrders.GroupBy(h => h.OrderNumber)
+										.Select(g => g.First()).Sum(o => o.WindowCount);
+	private decimal TotalWindowArea => filteredOrders.GroupBy(h => h.OrderNumber)
+										.Select(g => g.First()).Sum(o => o.WindowArea ?? 0);
+	private int TotalPlates => filteredOrders.GroupBy(h => h.OrderNumber)
+										.Select(g => g.First()).Sum(o => o.PlateCount);
+	private decimal TotalPlateArea => filteredOrders.GroupBy(h => h.OrderNumber)
+										.Select(g => g.First()).Sum(o => o.PlateArea ?? 0);
 }
