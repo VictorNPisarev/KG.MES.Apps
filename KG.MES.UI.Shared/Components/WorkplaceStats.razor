@@ -1,3 +1,4 @@
+@using KG.MES.Shared.Constants
 @using KG.MES.Shared.Helpers
 @using KG.MES.Shared.Models.Dto
 <PageTitle>Статистика рабочих мест</PageTitle>
@@ -31,7 +32,7 @@
 							@onclick="async () => { if (wp.IsWorkplace) await SelectWorkplace(wp.Id); else ClearSelection(); }">*@
 						<tr class="@(wp.Id == selectedWorkplaceId ? "table-active" : "")"
 							style="cursor: pointer;"
-							@onclick="async () => await SelectWorkplace(wp.Id)">
+							@onclick="async () => await SelectWorkplace(wp)">
 							<td>
 								@*<i class="bi @(wp.IsWorkplace ? "bi-gear" : "bi-flag") me-2"></i>*@
 								@wp.Name
@@ -48,86 +49,34 @@
 	</div>
 
 	@* Статистика и история выбранного участка *@
-	@if (selectedWorkplaceId != null)
+	@if (selectedWorkplace != null)
 	{
 		<div class="card mt-4">
 			<div class="card-header">
 				<ul class="nav nav-tabs card-header-tabs">
-					<li class="nav-item">
-						<button class="nav-link @(activeTab == "orders" ? "active" : "")" @onclick='() => activeTab ="orders"'>
-							<i class="bi bi-list-check me-1"></i> Заказы в работе
-						</button>
-					</li>
-					<li class="nav-item">
-						<button class="nav-link @(activeTab == "history" ? "active" : "")" @onclick='() => activeTab ="history"'>
-							<i class="bi bi-clock-history me-1"></i> История операций
-						</button>
-					</li>
+					@if (selectedWorkplace.IsWorkplace || selectedWorkplace.Code == WorkplaceCodes.None)
+					{
+						<li class="nav-item">
+							<button class="nav-link @(activeTab == "orders" ? "active" : "")" @onclick='() => activeTab ="orders"'>
+								<i class="bi bi-list-check me-1"></i> Заказы в работе
+							</button>
+						</li>
+					}
+					@if (selectedWorkplace.Code != WorkplaceCodes.None)
+					{
+						<li class="nav-item">
+							<button class="nav-link @(activeTab == "history" ? "active" : "")" @onclick='() => activeTab ="history"'>
+								<i class="bi bi-clock-history me-1"></i> История операций
+							</button>
+						</li>
+					}
 				</ul>
 			</div>
 			<div class="card-body">
 				@if (activeTab == "history")
 				{
-					@* История операций (ваш существующий код) *@
 					@if (selectedWorkplaceId != null)// && stats != null)
 					{
-						@*<div class="row g-2 mb-4">
-							<div class="col-3">
-								<div class="stat-card bg-warning bg-opacity-10">
-									<div class="stat-number">@(stats.PendingCount + stats.JoineryCount)</div>
-									<div class="stat-label">Ожидают</div>
-								</div>
-							</div>
-							<div class="col-3">
-								<div class="stat-card bg-primary bg-opacity-10">
-									<div class="stat-number">@stats.ActiveCount</div>
-									<div class="stat-label">В работе</div>
-								</div>
-							</div>
-							<div class="col-3">
-								<div class="stat-card bg-success bg-opacity-10">
-									<div class="stat-number">@stats.CompletedCount</div>
-									<div class="stat-label">Завершено</div>
-								</div>
-							</div>
-						</div>
-
-						<div class="card mb-3">
-							<div class="card-header">
-								<h6 class="mb-0">Заблокированные заказы</h6>
-							</div>
-							<div class="card-body p-0">
-								@if (blocks.Any())
-								{
-									<table class="table table-sm mb-0">
-										<thead>
-											<tr>
-												<th>Заказ</th>
-												<th>Причина</th>
-												<th>Дата</th>
-												<th>Сотрудник</th>
-											</tr>
-										</thead>
-										<tbody>
-											@foreach (var b in blocks)
-											{
-												<tr>
-													<td>@b.OrderNumber</td>
-													<td>@b.Reason</td>
-													<td>@b.BlockedAt.ToString("dd.MM HH:mm")</td>
-													<td>@b.UserName</td>
-												</tr>
-											}
-										</tbody>
-									</table>
-								}
-								else
-								{
-									<p class="text-muted small p-3">Нет заблокированных заказов</p>
-								}
-							</div>
-						</div>*@
-
 						<div class="card">
 							<div class="card-header d-flex align-items-center">
 								<h6 class="mb-0">
@@ -154,33 +103,56 @@
 							<div class="card-body p-0">
 								@if (history.Any())
 								{
-									<table class="table table-sm mb-0">
-										<thead>
-											<tr>
-												<th>Тип</th>
-												<th>Заказ</th>
-												<th>Сотрудник</th>
-												<th>Время</th>
-												<th>Примечание</th>
-											</tr>
-										</thead>
-										<tbody>
-											@foreach (var h in history)
-											{
+									<div class="table-responsive">
+										<table class="table table-sm mb-0">
+											<thead>
 												<tr>
-													<td>
-														<span class="badge @BadgeHelper.GetBadgeClass(h.OperationType.ToString())">
-															@h.OperationType
-														</span>
-													</td>
-													<td>@h.OrderNumber</td>
-													<td>@h.UserName</td>
-													<td>@h.OperationTime.ToString("dd.MM HH:mm")</td>
-													<td>@h.Notes</td>
+													<th>Тип</th>
+													<th>Заказ</th>
+													<th>Сотрудник</th>
+													<th>Время</th>
+													<th>Примечание</th>
+													<th>Окна, шт</th>
+													<th>Окна, м²</th>
+													<th>Щитовые, шт</th>
+													<th>Щитовые, м²</th>
 												</tr>
-											}
-										</tbody>
-									</table>
+											</thead>
+											<tbody>
+												@foreach (var h in history)
+												{
+													<tr>
+														<td>
+															<span class="badge @BadgeHelper.GetBadgeClass(h.OperationType.ToString())">
+																@h.OperationType
+															</span>
+														</td>
+														<td>@h.OrderNumber</td>
+														<td>@h.UserName</td>
+														<td>@h.OperationTime.ToString("dd.MM HH:mm")</td>
+														<td>@h.Notes</td>
+														<td>@h.WindowCount</td>
+														<td>@h.WindowArea?.ToString("F2")</td>
+														<td>@h.PlateCount</td>
+														<td>@h.PlateArea?.ToString("F2")</td>
+													</tr>
+												}
+											</tbody>
+											<tfoot class="table-light fw-bold">
+												<tr>
+													<td>Итого:</td>
+													<td>заказов:@history.Select(h => h.OrderNumber).Distinct().Count()</td>
+													<td/>
+													<td/>
+													<td/>
+													<td>@history.Sum(h => h.WindowCount)</td>
+													<td>@history.Sum(h => h.WindowArea ?? 0).ToString("F2")</td>
+													<td>@history.Sum(h => h.PlateCount)</td>
+													<td>@history.Sum(h => h.PlateArea ?? 0).ToString("F2")</td>
+												</tr>
+											</tfoot>
+										</table>
+									</div>
 								}
 								else
 								{
@@ -199,115 +171,64 @@
 				}
 				else if (activeTab == "orders")
 				{
-					
-					@* Список заказов в работе/ожидании *@
-					@*<div class="d-flex gap-2 mb-3">
-						<button class="btn btn-sm @(orderFilter == "all" ? "btn-dark" : "btn-outline-dark")"
-								@onclick='() => orderFilter = "all"'>
-							Все
-						</button>
-						<button class="btn btn-sm @(orderFilter == "pending" ? "btn-warning" : "btn-outline-warning")"
-								@onclick='() => orderFilter = "pending"'>
-							Ожидают
-						</button>
-						<button class="btn btn-sm @(orderFilter == "active" ? "btn-primary" : "btn-outline-primary")"
-								@onclick='() => orderFilter = "active"'>
-							В работе
-						</button>
-					</div>*@
-
-					@* Список заказов с фильтром *@
 					var filteredOrders = orderFilter == "all" 
 						? workplaceOrders.OrderBy(w => w.ReadyDate).ToList()
 						: workplaceOrders.Where(o => o.Status.ToLower() == orderFilter)
 							.OrderBy(w => w.ReadyDate).ToList();
 
-							@*<div class="row g-0 d-flex w-100" style="flex-wrap: nowrap;">*@
-							<div>
-								@*<div class="@(useSplitView && selectedOrder != null ? "resizable-panel" : "table-responsive mt-3")"
-										id="split-panel" style="@(useSplitView && selectedOrder != null ? "width: " + savedPanelWidth : "width: 100%")">*@
-								<DynamicTable TListItem="OrderWorkplaceDto" Items="filteredOrders "ShowActions="true">
-										<RowActions>
-											<div class="d-flex me-auto gap-2">
-												<button class="btn btn-sm @(orderFilter == "all" ? "btn-dark" : "btn-outline-dark")"
-													@onclick='() => orderFilter = "all"'>
-													Все
-												</button>
-												<button
-													class="btn btn-sm @(orderFilter == "pending" ? "btn-warning" : "btn-outline-warning")"
-													@onclick='() => orderFilter = "pending"'>
-													Ожидают
-												</button>
-												<button
-													class="btn btn-sm @(orderFilter == "active" ? "btn-primary" : "btn-outline-primary")"
-													@onclick='() => orderFilter = "active"'>
-													В работе
-												</button>
+					<div>
+						<DynamicTable TListItem="OrderWorkplaceDto" Items="filteredOrders" ShowActions="true">
+							<RowActions>
+								<div class="d-flex me-auto gap-2">
+									<button class="btn btn-sm @(orderFilter == "all" ? "btn-dark" : "btn-outline-dark")"
+										@onclick='() => orderFilter = "all"'>
+										Все
+									</button>
+									<button
+										class="btn btn-sm @(orderFilter == "pending" ? "btn-warning" : "btn-outline-warning")"
+										@onclick='() => orderFilter = "pending"'>
+										Ожидают
+									</button>
+									<button
+										class="btn btn-sm @(orderFilter == "active" ? "btn-primary" : "btn-outline-primary")"
+										@onclick='() => orderFilter = "active"'>
+										В работе
+									</button>
+
+									<span class="text-muted small align-self-center">
+										@orderDateFrom.ToString("dd.MM") – @orderDateTo.ToString("dd.MM")
+									</span>
+									<button class="btn btn-sm btn-link text-secondary p-0 align-self-center"
+										@onclick="() => showOrderDateFilter = !showOrderDateFilter">
+										<i class="bi bi-calendar3"></i>
+									</button>
+								</div>
+								@if (showOrderDateFilter)
+								{
+									<div class="card bg-light mb-3">
+										<div class="card-body py-2">
+											<div class="d-flex align-items-center gap-2">
+												<label class="form-label small mb-0">С</label>
+												<input type="date" class="form-control form-control-sm" style="width: auto;"
+													@bind="orderDateFrom" />
+												<label class="form-label small mb-0">По</label>
+												<input type="date" class="form-control form-control-sm" style="width: auto;"
+													@bind="orderDateTo" />
+												<button class="btn btn-sm btn-primary"
+													@onclick="() => showOrderDateFilter = false">Применить</button>
 											</div>
-										</RowActions>
-										<RowTemplate>
-										</RowTemplate>
-									</DynamicTable>
-								@*</div>*@
-							</div>
-					@*@if (filteredOrders.Any())
-					{
-						<div class="table-responsive">
-							<table class="table table-sm table-hover">
-								<thead>
-									<tr>
-										<th>№ заказа</th>
-										<th>Статус</th>
-										<th>Готовность</th>
-										<th>Окна, шт</th>
-										<th>Окна, м²</th>
-										<th>Щитовые, шт</th>
-										<th>Щитовые, м²</th>
-									</tr>
-								</thead>
-								<tbody>
-									@foreach (var o in filteredOrders)
-									{
-										<tr>
-											<td>
-												@if (o.IsEconom)
-												{
-													<i class="bi bi-piggy-bank-fill text-secondary me-1" title="Эконом"></i>
-												}
-												@if (o.IsClaim)
-												{
-													<i class="bi bi-exclamation-triangle-fill text-danger me-1" title="Рекламация"></i>
-												}
-												@if (o.IsOnlyPaid)
-												{
-													<i class="bi bi-cash-stack text-success" title="Оплачен"></i>
-												}
-												<strong>@o.OrderNumber</strong>
-												@if (o.IsBlocked)
-												{
-													<i class="bi bi-lock-fill text-danger ms-1" title="Заблокирован"></i>
-												}
-											</td>
-											<td>
-												<span class="badge @BadgeHelper.GetBadgeClass(o.Status, "workplace_status")">
-													@BadgeHelper.GetDisplayValue(o.Status, "workplace_status")
-												</span>
-											</td>
-											<td>@o.ReadyDate?.ToString("dd.MM.yyyy")</td>
-											<td>@o.WindowCount</td>
-											<td>@o.WindowArea?.ToString("F2")</td>
-											<td>@o.PlateCount</td>
-											<td>@o.PlateArea?.ToString("F2")</td>
-										</tr>
-									}
-								</tbody>
-							</table>
+										</div>
+									</div>
+								}
+							</RowActions>
+						</DynamicTable>
+
+
+						<div class="d-flex justify-content-end mt-2">
+							<span class="fw-bold me-3">Окна: @TotalWindows шт / @TotalWindowArea.ToString("F2") м²</span>
+							<span class="fw-bold">Щитовые: @TotalPlates шт / @TotalPlateArea.ToString("F2") м²</span>
 						</div>
-					}
-					else
-					{
-						<p class="text-muted">Нет заказов в работе</p>
-					}*@
+					</div>
 				}
 			</div>
 		</div>
