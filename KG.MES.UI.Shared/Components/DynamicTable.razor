@@ -127,6 +127,43 @@
 							</tr>
 						}
 					</tbody>
+					@if (ShowTotal && columnInfos.Any(c => c.ShowTotal))
+					{
+						<tfoot class="table-light fw-bold">
+							<tr>
+								@foreach (var col in BuildVisibleColumns())
+								{
+										<td>
+											@if (col.Info.ShowTotal)
+											{
+													var total = GetColumnTotal(col.Info);
+													@if (col.Info.Format == "F2")
+													{
+															@total.ToString("F2")
+													}
+													else
+													{
+															@total.ToString("0")
+													}
+											}
+											else
+											{
+												@if (col == visibleData.First())
+												{
+													<text>Итого:</text>
+												}
+
+													@* Пустая ячейка для несуммируемых колонок *@
+											}
+										</td>
+								}
+								@if (ShowActions && RowTemplate != null)
+								{
+										<td></td>
+								}
+							</tr>
+						</tfoot>
+					}
 				</table>
 			}
 	</div>

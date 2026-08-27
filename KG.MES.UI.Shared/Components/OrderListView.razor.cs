@@ -57,6 +57,9 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 	private bool dropdownOpen;
 	private Guid[] selectedWorkplaceIds = [];
 	private SavedFilter? savedFilter;
+	private ElementReference pageContainer;
+	private double? scrollYBeforeModal;
+
 
 	private IconInfo testIcon = new IconInfo
 	{
@@ -255,6 +258,9 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		}
 		else
 		{
+			// Сохраняем позицию скролла
+			scrollYBeforeModal = await JSRuntime.InvokeAsync<double>("scrollFunctions.getScrollTop", pageContainer);
+
 			isModalOpen = true;
 			StateHasChanged();
 		}
@@ -302,6 +308,16 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		{
 			await LoadOrders();
 			StateHasChanged();
+
+			// Восстанавливаем позицию скролла
+			if (scrollYBeforeModal.HasValue)
+			{
+				// Восстанавливаем позицию
+				await JSRuntime.InvokeVoidAsync("scrollFunctions.setScrollTop", pageContainer, scrollYBeforeModal.Value);
+				// Сбрасываем переменную, чтобы не скроллить при обычных рендерах
+				scrollYBeforeModal = null;
+			}
+
 		}
 	}
 

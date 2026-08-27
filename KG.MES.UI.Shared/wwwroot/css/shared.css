@@ -316,3 +316,8 @@ span:focus {
 	background: rgba(33, 37, 41, 0.1);
 	color: rgba(33, 37, 41, 0.55);
 }
+
+.table tfoot td {
+	border-top: 2px solid #0d6efd;
+	font-weight: 700;
+}

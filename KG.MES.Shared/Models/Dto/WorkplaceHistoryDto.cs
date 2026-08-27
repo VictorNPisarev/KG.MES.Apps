@@ -26,18 +26,49 @@ public class WorkplaceHistoryDto
 	public string? Notes { get; set; }
 
 	[JsonPropertyName("window_count")]
-	[Column("Окна, шт", Order = 5)]
+	[Column("Окна, шт", Order = 5, ShowTotal = true)]
 	public int WindowCount { get; set; }
 
 	[JsonPropertyName("window_area")]
-	[Column("Окна, м²", Order = 6, DisplayFormat = "F2")]
+	[Column("Окна, м²", Order = 6, DisplayFormat = "F2", ShowTotal = true)]
 	public decimal? WindowArea { get; set; }
 
 	[JsonPropertyName("plate_count")]
-	[Column("Щитовые, шт", Order = 7)]
+	[Column("Щитовые, шт", Order = 7, ShowTotal = true)]
 	public int PlateCount { get; set; }
 
 	[JsonPropertyName("plate_area")]
-	[Column("Щитовые, м²", Order = 8, DisplayFormat = "F2")]
+	[Column("Щитовые, м²", Order = 8, DisplayFormat = "F2", ShowTotal = true)]
 	public decimal? PlateArea { get; set; }
+
+	[JsonPropertyName("is_econom")]
+	[Column("Эконом", Order = 10, IsBadge = true)]
+	public bool IsEconom { get; set; }
+
+	[JsonPropertyName("is_claim")]
+	[Column("Рекламация", Order = 11, IsBadge = true)]
+	public bool IsClaim { get; set; }
+
+	[JsonPropertyName("is_only_paid")]
+	[Column("Оплачен, не запущен", Order = 12, IsBadge = true)]
+	public bool IsOnlyPaid { get; set; }
+
+	[JsonPropertyName("is_two_side_paint")]
+	[Column("2-стор. покраска", Order = 13, IsBadge = true)]
+	public bool IsTwoSidePaint { get; set; }
+
+	[Column("***", Order = 2, Visible = false, IconConditions = new[] { "IsClaim:Claim",
+																		"IsEconom:Econom",
+																		"IsOnlyPaid:Paid",
+																		"IsTwoSidePaint:TwoSidePaint",
+																		"IsOnlyPlate:Plate" })]
+	public string OrderFlags { get; } = string.Empty;
+
+	public bool IsOnlyPlate
+	{
+		get
+		{
+			return WindowCount == 0 && PlateCount > 0;
+		}
+	}
 }

@@ -12,6 +12,10 @@ public partial class DynamicTable<TListItem> : ComponentBase
 	[Parameter] public bool ShowActions { get; set; }
 	[Parameter] public RenderFragment? RowActions { get; set; }
 	[Parameter] public RenderFragment<TListItem>? RowTemplate { get; set; }
+	[Parameter] public bool ShowTotal { get; set; } = true;
+	[Parameter] public string? TotalDistinctBy { get; set; } // Чтобы в итого не попадали одинаковые заказы 
+	// (например, если в таблице один и тот же заказ с разными статусами - история операций)
+
 
 	private List<ColumnInfo> columnInfos = [];
 	private List<ColumnSetting> columnSettings = [];
@@ -80,5 +84,31 @@ public partial class DynamicTable<TListItem> : ComponentBase
 	{
 		var json = TableSettingsManager.Serialize(columnSettings);
 		await JSRuntime.InvokeVoidAsync("localStorage.setItem", $"table_settings_{TableKey}", json);
+	}
+
+	private IEnumerable<TListItem> ItemsForTotal =>
+	string.IsNullOrEmpty(TotalDistinctBy)
+		? Items
+		: Items
+			.GroupBy(i => typeof(TListItem).GetProperty(TotalDistinctBy!)?.GetValue(i))
+			.Select(g => g.First());
+
+
+	private decimal GetColumnTotal(ColumnInfo column)
+	{
+		if (!column.ShowTotal) return 0;
+
+		return ItemsForTotal.Sum(item =>
+		{
+			var prop = typeof(TListItem).GetProperty(column.PropertyName);
+			var value = prop?.GetValue(item);
+			return value switch
+			{
+				int i => i,
+				decimal d => d,
+				double d => (decimal)d,
+				_ => 0
+			};
+		});
 	}
 }

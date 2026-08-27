@@ -54,19 +54,19 @@
 		<div class="card mt-4">
 			<div class="card-header">
 				<ul class="nav nav-tabs card-header-tabs">
-					@if (selectedWorkplace.IsWorkplace || selectedWorkplace.Code == WorkplaceCodes.None)
-					{
-						<li class="nav-item">
-							<button class="nav-link @(activeTab == "orders" ? "active" : "")" @onclick='() => activeTab ="orders"'>
-								<i class="bi bi-list-check me-1"></i> Заказы в работе
-							</button>
-						</li>
-					}
 					@if (selectedWorkplace.Code != WorkplaceCodes.None)
 					{
 						<li class="nav-item">
 							<button class="nav-link @(activeTab == "history" ? "active" : "")" @onclick='() => activeTab ="history"'>
 								<i class="bi bi-clock-history me-1"></i> История операций
+							</button>
+						</li>
+					}
+					@if (selectedWorkplace.IsWorkplace || selectedWorkplace.Code == WorkplaceCodes.None)
+					{
+						<li class="nav-item">
+							<button class="nav-link @(activeTab == "orders" ? "active" : "")" @onclick='() => activeTab ="orders"'>
+								<i class="bi bi-list-check me-1"></i> Заказы в работе
 							</button>
 						</li>
 					}
@@ -78,7 +78,8 @@
 					@if (selectedWorkplaceId != null)
 					{
 						<div>
-							<DynamicTable TListItem="WorkplaceHistoryDto" Items="filteredHistory" ShowActions="true">
+							<DynamicTable TListItem="WorkplaceHistoryDto" Items="filteredHistory" TableKey="stats_history" 
+											ShowActions="true" ShowTotal="true" TotalDistinctBy="OrderNumber">
 								<RowActions>
 									<div class="d-flex me-auto gap-2">
 										<button class="btn btn-sm @(historyFilter == "all" ? "btn-dark" : "btn-outline-dark")"
@@ -94,11 +95,11 @@
 											<i class="bi bi-check-lg me-1"></i> Завершено
 										</button>
 
-										<span class="text-muted small align-self-center">
-											@dateFrom.ToString("dd.MM") – @dateTo.ToString("dd.MM")
-										</span>
 										@if (!showDateFilter)
 										{
+											<span class="text-muted small align-self-center">
+												@dateFrom.ToString("dd.MM") – @dateTo.ToString("dd.MM")
+											</span>
 											<button class="btn btn-sm btn-link text-secondary p-0 align-self-center"
 													@onclick="() => showDateFilter = !showDateFilter">
 												<i class="bi bi-calendar3"></i>
@@ -106,27 +107,19 @@
 										}
 										else
 										{
-											<div class="card bg-light mb-3">
-												<div class="card-body py-2">
-													<div class="d-flex align-items-center gap-2">
-														<label class="form-label small mb-0">С</label>
-														<input type="date" class="form-control form-control-sm" style="width: auto;"
-															@bind="dateFrom" />
-														<label class="form-label small mb-0">По</label>
-														<input type="date" class="form-control form-control-sm" style="width: auto;"
-															@bind="dateTo" />
-														<button class="btn btn-sm btn-primary" @onclick="ApplyFilter">Применить</button>
-													</div>
-												</div>
+											<div class="d-flex align-items-center gap-2">
+												<label class="form-label small mb-0">С</label>
+												<input type="date" class="form-control form-control-sm" style="width: auto;"
+													@bind="dateFrom" />
+												<label class="form-label small mb-0">По</label>
+												<input type="date" class="form-control form-control-sm" style="width: auto;"
+													@bind="dateTo" />
+												<button class="btn btn-sm btn-primary" @onclick="ApplyFilter">Применить</button>
 											</div>
 										}
 									</div>
 								</RowActions>
 							</DynamicTable>
-							<div class="d-flex justify-content-end mt-2">
-								<span class="fw-bold">Окна: @TotalHistoryWindows шт / @TotalHistoryWindowArea.ToString("F2") м²</span>
-								<span class="fw-bold ms-3">Щитовые: @TotalHistoryPlates шт / @TotalHistoryPlateArea.ToString("F2") м²</span>
-							</div>
 						</div>
 					}
 					else
@@ -145,7 +138,8 @@
 							.OrderBy(w => w.ReadyDate).ToList();
 
 					<div>
-						<DynamicTable TListItem="OrderWorkplaceDto" Items="filteredOrders" ShowActions="true">
+						<DynamicTable TListItem="OrderWorkplaceDto" Items="filteredOrders" TableKey="stats_orders" 
+										ShowActions="true" ShowTotal="true" TotalDistinctBy="OrderNumber">
 							<RowActions>
 								<div class="d-flex me-auto gap-2">
 									<button class="btn btn-sm @(orderFilter == "all" ? "btn-dark" : "btn-outline-dark")"
@@ -162,40 +156,9 @@
 										@onclick='() => orderFilter = "active"'>
 										В работе
 									</button>
-
-									<span class="text-muted small align-self-center">
-										@orderDateFrom.ToString("dd.MM") – @orderDateTo.ToString("dd.MM")
-									</span>
-									<button class="btn btn-sm btn-link text-secondary p-0 align-self-center"
-										@onclick="() => showOrderDateFilter = !showOrderDateFilter">
-										<i class="bi bi-calendar3"></i>
-									</button>
 								</div>
-								@if (showOrderDateFilter)
-								{
-									<div class="card bg-light mb-3">
-										<div class="card-body py-2">
-											<div class="d-flex align-items-center gap-2">
-												<label class="form-label small mb-0">С</label>
-												<input type="date" class="form-control form-control-sm" style="width: auto;"
-													@bind="orderDateFrom" />
-												<label class="form-label small mb-0">По</label>
-												<input type="date" class="form-control form-control-sm" style="width: auto;"
-													@bind="orderDateTo" />
-												<button class="btn btn-sm btn-primary"
-													@onclick="() => showOrderDateFilter = false">Применить</button>
-											</div>
-										</div>
-									</div>
-								}
 							</RowActions>
 						</DynamicTable>
-
-
-						<div class="d-flex justify-content-end mt-2">
-							<span class="fw-bold me-3">Окна: @TotalWindows шт / @TotalWindowArea.ToString("F2") м²</span>
-							<span class="fw-bold">Щитовые: @TotalPlates шт / @TotalPlateArea.ToString("F2") м²</span>
-						</div>
 					</div>
 				}
 			</div>
