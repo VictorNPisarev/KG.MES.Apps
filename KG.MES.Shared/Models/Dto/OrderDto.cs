@@ -10,20 +10,20 @@ public class OrderDto
 	public Guid Id { get; set; }
 
 	[JsonPropertyName("order_number")]
-	[Column("№ заказа", Order = 1, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" })]
+	[Column("№ заказа", Order = 1, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" }, Sortable = true)]
 	public string OrderNumber { get; set; } = string.Empty;
 
 	[JsonPropertyName("current_status")]
-	[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name")]
+	[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name", Sortable = true)]
 	public string? Status { get; set; }
 
 
 	[JsonPropertyName("rtm_date")]
-	[Column("Дата запуска", Order = 4, DisplayFormat = "dd.MM.yyyy")]
+	[Column("Дата запуска", Order = 4, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? RtmDate { get; set; }
 
 	[JsonPropertyName("ready_date")]
-	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy")]
+	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? ReadyDate { get; set; }
 
 	[JsonPropertyName("window_count")]

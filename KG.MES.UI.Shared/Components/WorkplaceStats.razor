@@ -27,14 +27,10 @@
 				<tbody>
 					@foreach (var wp in workplaces)
 					{
-						@*<tr class="@(wp.Id == selectedWorkplaceId ? "table-active" : "")" 
-								style='@(wp.IsWorkplace ? "cursor: pointer;" : "cursor: arrow;")' 
-							@onclick="async () => { if (wp.IsWorkplace) await SelectWorkplace(wp.Id); else ClearSelection(); }">*@
 						<tr class="@(wp.Id == selectedWorkplaceId ? "table-active" : "")"
 							style="cursor: pointer;"
 							@onclick="async () => await SelectWorkplace(wp)">
 							<td>
-								@*<i class="bi @(wp.IsWorkplace ? "bi-gear" : "bi-flag") me-2"></i>*@
 								@wp.Name
 							</td>
 							<td>@wp.WindowCount</td>
@@ -79,7 +75,7 @@
 					{
 						<div>
 							<DynamicTable TListItem="WorkplaceHistoryDto" Items="filteredHistory" TableKey="stats_history" 
-											ShowActions="true" ShowTotal="true" TotalDistinctBy="OrderNumber">
+											ShowActions="true" ShowTotal="true" TotalDistinctBy="OrderNumber" AllowSorting="true">
 								<RowActions>
 									<div class="d-flex me-auto gap-2">
 										<button class="btn btn-sm @(historyFilter == "all" ? "btn-dark" : "btn-outline-dark")"
@@ -139,7 +135,7 @@
 
 					<div>
 						<DynamicTable TListItem="OrderWorkplaceDto" Items="filteredOrders" TableKey="stats_orders" 
-										ShowActions="true" ShowTotal="true" TotalDistinctBy="OrderNumber">
+										ShowActions="true" ShowTotal="true" TotalDistinctBy="OrderNumber" AllowSorting="true">
 							<RowActions>
 								<div class="d-flex me-auto gap-2">
 									<button class="btn btn-sm @(orderFilter == "all" ? "btn-dark" : "btn-outline-dark")"

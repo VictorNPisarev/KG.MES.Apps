@@ -12,5 +12,6 @@ namespace KG.MES.Shared.Helpers
 		public string? DisplayGroup { get; set; }  // группа для поиска отображаемого текста в конфиге
 		public string[]? IconConditions { get; set; }
 		public bool ShowTotal { get; set; }
+		public bool Sortable { get; set; }
 	}
 }

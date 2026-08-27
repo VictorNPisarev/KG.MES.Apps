@@ -6,19 +6,19 @@ namespace KG.MES.Shared.Models.Dto;
 public class WorkplaceHistoryDto
 {
 	[JsonPropertyName("operation_time")]
-	[Column("Время", Order = 3, DisplayFormat = "dd.MM.yyyy HH:mm")]
+	[Column("Время", Order = 3, DisplayFormat = "dd.MM.yyyy HH:mm", Sortable = true)]
 	public DateTime OperationTime { get; set; }
 
 	[JsonPropertyName("operation_type")]
-	[Column("Тип", Order = 0, IsBadge = true, BadgeGroup = "workplace_status")]
+	[Column("Тип", Order = 0, IsBadge = true, BadgeGroup = "workplace_status", Sortable = true)]
 	public string OperationType { get; set; } = string.Empty;
 
 	[JsonPropertyName("order_number")]
-	[Column("Заказ", Order = 1)]
+	[Column("Заказ", Order = 1, Sortable = true)]
 	public string OrderNumber { get; set; } = string.Empty;
 
 	[JsonPropertyName("user_name")]
-	[Column("Сотрудник", Order = 2)]
+	[Column("Сотрудник", Order = 2, Sortable = true)]
 	public string? UserName { get; set; }
 
 	[JsonPropertyName("notes")]

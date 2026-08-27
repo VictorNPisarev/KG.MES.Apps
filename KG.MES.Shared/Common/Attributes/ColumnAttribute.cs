@@ -21,6 +21,8 @@ namespace KG.MES.Shared.Attributes
 
 		public bool ShowTotal { get; set; } = false; // true - если надо вывести сумму в подвале таблицы (используется при выводе таблицы через DynamicTable)
 
+		public bool Sortable { get; set; } = false;
+
 		public ColumnAttribute(string title)
 		{
 			Title = title;

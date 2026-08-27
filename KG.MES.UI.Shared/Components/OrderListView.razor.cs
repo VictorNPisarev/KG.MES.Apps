@@ -179,6 +179,21 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		StateHasChanged();
 	}
 
+	private async Task LoadSortFromStorage()
+	{
+		try
+		{
+			var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"sort_{tableKey}");
+			if (!string.IsNullOrEmpty(json))
+			{
+				var data = JsonSerializer.Deserialize<SortData>(json);
+				sortBy = data?.SortBy ?? "ready_date";
+				sortOrder = data?.Ascending == true ? "asc" : "desc";
+			}
+		}
+		catch { }
+	}
+	
 	private async Task LoadOrders()
 	{
 		isLoading = true;
@@ -186,6 +201,8 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 
 		try
 		{
+			await LoadSortFromStorage();
+
 			orders = await ApiService.GetOrdersAsync<TListItem>(
 				endpoint: Endpoint,
 				workplaceId: selectedWorkplaceId,
@@ -457,6 +474,13 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 			await ApplyFilters();
 			StateHasChanged();
 		}
+	}
+
+	private async Task HandleSortChanged((string SortBy, bool Ascending) sort)
+	{
+		sortBy = sort.SortBy;
+		sortOrder = sort.Ascending ? "asc" : "desc";
+		await LoadOrders();
 	}
 
 	public void Dispose()

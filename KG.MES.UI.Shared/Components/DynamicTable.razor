@@ -64,15 +64,29 @@
 						<tr>
 							@foreach (var col in visibleData)
 							{
-								<th style="@(col.Setting.Width > 0 ? $"width: {col.Setting.Width}px;" : "")">
+								@*<th style="@(col.Setting.Width > 0 ? $"width: {col.Setting.Width}px;" : "")">
 									@col.Info.Title
+								</th>*@
+								<th style="@(col.Setting.Width > 0 ? $"width: {col.Setting.Width}px;" : "")">
+									@if (AllowSorting && col.Info.Sortable)
+									{
+										<button class="btn btn-link p-0 text-dark fw-bold text-decoration-none" 
+												@onclick="() => SortBy(col.Info.PropertyName)">
+											@col.Info.Title
+											<i class="bi @GetSortIcon(col.Info) ms-1"></i>
+										</button>
+									}
+									else
+									{
+										@col.Info.Title
+									}
 								</th>
 							}
 							<th style="width: 40px;"></th>
 						</tr>
 					</thead>
 					<tbody>
-						@foreach (var item in Items)
+						@foreach (var item in SortedItems)
 						{
 							<tr>
 								@foreach (var col in visibleData)

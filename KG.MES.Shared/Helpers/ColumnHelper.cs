@@ -25,7 +25,8 @@ public static class ColumnHelper
 				CommentField = x.Attr.CommentField,
 				DisplayGroup = x.Attr.DisplayGroup,
 				IconConditions = x.Attr.IconConditions,
-				ShowTotal = x.Attr.ShowTotal
+				ShowTotal = x.Attr.ShowTotal,
+				Sortable = x.Attr.Sortable
 			})
 			.ToList();
 	}

@@ -1,4 +1,6 @@
+using System.Text.Json;
 using KG.MES.Shared.Helpers;
+using KG.MES.Shared.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -14,12 +16,15 @@ public partial class DynamicTable<TListItem> : ComponentBase
 	[Parameter] public RenderFragment<TListItem>? RowTemplate { get; set; }
 	[Parameter] public bool ShowTotal { get; set; } = true;
 	[Parameter] public string? TotalDistinctBy { get; set; } // Чтобы в итого не попадали одинаковые заказы 
-	// (например, если в таблице один и тот же заказ с разными статусами - история операций)
-
+															 // (например, если в таблице один и тот же заказ с разными статусами - история операций)
+	[Parameter] public bool AllowSorting { get; set; } = false;
+	[Parameter] public EventCallback<(string SortBy, bool Ascending)> OnSortChanged { get; set; }
 
 	private List<ColumnInfo> columnInfos = [];
 	private List<ColumnSetting> columnSettings = [];
 	private bool isColumnsOpen;
+	private string? sortBy;
+	private bool sortAscending = true;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -30,6 +35,8 @@ public partial class DynamicTable<TListItem> : ComponentBase
 			: TableSettingsManager.GetDefaultSettings<TListItem>();
 
 		await LoadSettings();
+		await LoadSortSettings();
+
 	}
 
 	private async Task LoadSettings()
@@ -110,5 +117,71 @@ public partial class DynamicTable<TListItem> : ComponentBase
 				_ => 0
 			};
 		});
+	}
+
+	private IEnumerable<TListItem> SortedItems
+	{
+		get
+		{
+			if (string.IsNullOrEmpty(sortBy)) return Items;
+
+			var prop = typeof(TListItem).GetProperty(sortBy);
+			if (prop == null) return Items;
+
+			return sortAscending
+				? Items.OrderBy(i => prop.GetValue(i))
+				: Items.OrderByDescending(i => prop.GetValue(i));
+		}
+	}
+
+	private async Task SortBy(string propertyName)
+	{
+		if (sortBy == propertyName)
+		{
+			sortAscending = !sortAscending;
+		}
+		else
+		{
+			sortBy = propertyName;
+			sortAscending = true;
+		}
+
+		await SaveSortSettings();
+
+		if (OnSortChanged.HasDelegate)
+			await OnSortChanged.InvokeAsync((sortBy, sortAscending));
+
+		StateHasChanged();
+	}
+
+	private string GetSortIcon(ColumnInfo column)
+	{
+		if (!column.Sortable || sortBy != column.PropertyName) return "bi-arrow-down-up";
+		return sortAscending ? "bi-sort-down-alt" : "bi-sort-down";
+	}
+
+	private async Task SaveSortSettings()
+	{
+		var sortData = JsonSerializer.Serialize(new
+		{
+			sortBy = sortBy,
+			ascending = sortAscending
+		});
+		await JSRuntime.InvokeVoidAsync("localStorage.setItem", $"sort_{TableKey}", sortData);
+	}
+
+	private async Task LoadSortSettings()
+	{
+		try
+		{
+			var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"sort_{TableKey}");
+			if (!string.IsNullOrEmpty(json))
+			{
+				var data = JsonSerializer.Deserialize<SortData>(json);
+				sortBy = data?.SortBy;
+				sortAscending = data?.Ascending ?? true;
+			}
+		}
+		catch { }
 	}
 }
