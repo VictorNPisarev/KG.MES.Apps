@@ -35,3 +35,37 @@
 	font-weight: 500;
 	color: #0d6efd;
 }
+
+/*Настройка ширины колонок таблицы*/
+.form-range-sm
+{
+	height: 10px;
+}
+
+.form-range-sm::-webkit-slider-runnable-track
+{
+	height: 10px;
+	background: #ced4da;
+	border-radius: 5px;
+}
+
+.form-range-sm::-webkit-slider-thumb
+{
+	width: 8px;
+	height: 8px;
+	margin-top: 1px;
+}
+
+/*Настройка ширины колонок таблицы для Firefox */
+.form-range-sm::-moz-range-track
+{
+	height: 10px;
+	background: #ced4da;
+	border-radius: 5px;
+}
+
+.form-range-sm::-moz-range-thumb
+{
+	width: 8px;
+	height: 8px;
+}

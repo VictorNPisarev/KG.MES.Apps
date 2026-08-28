@@ -26,6 +26,8 @@ public partial class DynamicTable<TListItem> : ComponentBase
 	private string? sortBy;
 	private bool sortAscending = true;
 
+	private bool isResizeMode;
+
 	protected override async Task OnInitializedAsync()
 	{
 		columnInfos = ColumnHelper.GetColumns<TListItem>();
@@ -205,6 +207,32 @@ public partial class DynamicTable<TListItem> : ComponentBase
 			}
 		}
 		catch { }
+	}
+
+	private void ToggleResizeMode()
+	{
+		isResizeMode = !isResizeMode;
+		StateHasChanged();
+	}
+
+	private async Task UpdateWidth(string propertyName, string? value)
+	{
+		if (int.TryParse(value, out var width))
+		{
+			var setting = columnSettings.FirstOrDefault(s => s.PropertyName == propertyName);
+			if (setting != null)
+			{
+				setting.Width = width;
+				// Не сохраняем при каждом движении — только при отпускании
+			}
+		}
+	}
+
+	private async Task SaveWidths()
+	{
+		await SaveSettings();
+		isResizeMode = false;
+		StateHasChanged();
 	}
 
 	private class IconInfo

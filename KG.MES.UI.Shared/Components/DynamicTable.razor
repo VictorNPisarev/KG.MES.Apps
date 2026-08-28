@@ -52,6 +52,11 @@
 					@onclick="() => isColumnsOpen = false"></div>
 			}
 		</div>
+		<button class="btn btn-sm btn-outline-secondary @(isResizeMode ? "active" : "")"
+				@onclick="ToggleResizeMode" title="Настроить ширину колонок">
+			<i class="bi bi-arrows"></i>
+		</button>
+
 	@*</div>*@
 </div>
 
@@ -68,18 +73,35 @@
 									@col.Info.Title
 								</th>*@
 								<th style="@(col.Setting.Width > 0 ? $"width: {col.Setting.Width}px;" : "")">
-									@if (AllowSorting && col.Info.Sortable)
+									@if (isResizeMode)
 									{
-										<button class="btn btn-link p-0 text-dark fw-bold text-decoration-none d-flex align-items-center gap-1" 
-												@onclick="() => SortBy(col.Info.PropertyName)">
-											@col.Info.Title
-											@{ var sortIcon = GetSortIconAttributes(col.Info); }
-										<i class="bi @sortIcon.Class @sortIcon.Css ms-1" title="@sortIcon.Title"></i>
-										</button>
+										<div class="d-flex flex-column align-items-start">
+											<span class="text-dark fw-bold text-truncate mb-1" style="max-width: 100%; font-size: 0.9rem;">
+												@col.Info.Title
+											</span>
+											<input type="range" min="50" max="300" 
+												value="@col.Setting.Width"
+												@oninput="(e) => UpdateWidth(col.Info.PropertyName, e.Value?.ToString())"
+												@onchange="async (e) => { await UpdateWidth(col.Info.PropertyName, e.Value?.ToString()); await SaveWidths(); }"
+												class="form-range form-range-sm" style="width: 100%;" />
+											<small class="text-muted" style="font-size: 0.7rem;">@col.Setting.Width px</small>
+										</div>
 									}
 									else
 									{
-										@col.Info.Title
+										@if (AllowSorting && col.Info.Sortable)
+										{
+											<button class="btn btn-link p-0 text-dark fw-bold text-decoration-none d-flex align-items-center gap-1" 
+													@onclick="() => SortBy(col.Info.PropertyName)">
+												@col.Info.Title
+												@{ var sortIcon = GetSortIconAttributes(col.Info); }
+											<i class="bi @sortIcon.Class @sortIcon.Css ms-1" title="@sortIcon.Title"></i>
+											</button>
+										}
+										else
+										{
+											@col.Info.Title
+										}
 									}
 								</th>
 							}
