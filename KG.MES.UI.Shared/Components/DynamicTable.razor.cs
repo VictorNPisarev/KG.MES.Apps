@@ -154,18 +154,40 @@ public partial class DynamicTable<TListItem> : ComponentBase
 		StateHasChanged();
 	}
 
-	private string GetSortIcon(ColumnInfo column)
+	private IconInfo GetSortIconAttributes(ColumnInfo column)
 	{
-		if (!column.Sortable || sortBy != column.PropertyName) return "bi-arrow-down-up";
-		return sortAscending ? "bi-sort-down-alt" : "bi-sort-down";
+		if (!column.Sortable)
+			return new IconInfo();
+
+		if (sortBy != column.PropertyName)
+			return new IconInfo
+			{
+				Class = "bi-arrow-down-up",
+				Css = "sort-icon-default",
+				Title = "Сортировать"
+			};
+
+		return sortAscending
+			? new IconInfo
+			{
+				Class = "bi-sort-down-alt",
+				Css = "sort-icon-asc",
+				Title = "По возрастанию"
+			}
+			: new IconInfo
+			{
+				Class = "bi-sort-down",
+				Css = "sort-icon-desc",
+				Title = "По убыванию"
+			};
 	}
 
 	private async Task SaveSortSettings()
 	{
 		var sortData = JsonSerializer.Serialize(new
 		{
-			sortBy = sortBy,
-			ascending = sortAscending
+			SortBy = sortBy,
+			Ascending = sortAscending
 		});
 		await JSRuntime.InvokeVoidAsync("localStorage.setItem", $"sort_{TableKey}", sortData);
 	}
@@ -183,5 +205,12 @@ public partial class DynamicTable<TListItem> : ComponentBase
 			}
 		}
 		catch { }
+	}
+
+	private class IconInfo
+	{
+		public string Class { get; set; } = "";
+		public string Css { get; set; } = "";
+		public string Title { get; set; } = "";
 	}
 }

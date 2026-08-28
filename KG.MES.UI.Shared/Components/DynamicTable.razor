@@ -70,10 +70,11 @@
 								<th style="@(col.Setting.Width > 0 ? $"width: {col.Setting.Width}px;" : "")">
 									@if (AllowSorting && col.Info.Sortable)
 									{
-										<button class="btn btn-link p-0 text-dark fw-bold text-decoration-none" 
+										<button class="btn btn-link p-0 text-dark fw-bold text-decoration-none d-flex align-items-center gap-1" 
 												@onclick="() => SortBy(col.Info.PropertyName)">
 											@col.Info.Title
-											<i class="bi @GetSortIcon(col.Info) ms-1"></i>
+											@{ var sortIcon = GetSortIconAttributes(col.Info); }
+										<i class="bi @sortIcon.Class @sortIcon.Css ms-1" title="@sortIcon.Title"></i>
 										</button>
 									}
 									else

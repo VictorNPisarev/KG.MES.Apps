@@ -15,7 +15,7 @@ public class OrderDto
 
 	[JsonPropertyName("current_status")]
 	[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name", Sortable = true)]
-	public string? Status { get; set; }
+	public string? CurrentStatus { get; set; }
 
 
 	[JsonPropertyName("rtm_date")]
@@ -98,7 +98,7 @@ public static class OrderDtoExtension
 		return new OrderViewModel
 		{
 			OrderNumber = orderDto.OrderNumber,
-			Status = orderDto.Status,
+			Status = orderDto.CurrentStatus,
 			RtmDate = orderDto.RtmDate,
 			ReadyDate = orderDto.ReadyDate,
 			WindowCount = orderDto.WindowCount,

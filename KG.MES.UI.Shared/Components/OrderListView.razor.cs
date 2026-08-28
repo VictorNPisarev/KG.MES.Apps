@@ -73,6 +73,7 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		columnInfos = ColumnHelper.GetColumns<TListItem>();
 
 		await LoadSettings();
+		//await LoadSortFromStorage();
 		workplaces = await ApiService.GetAllWorkplacesAsync();//await ApiService.GetActiveWorkplacesAsync();
 		await LoadOrders();
 
@@ -201,8 +202,6 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 
 		try
 		{
-			await LoadSortFromStorage();
-
 			orders = await ApiService.GetOrdersAsync<TListItem>(
 				endpoint: Endpoint,
 				workplaceId: selectedWorkplaceId,
