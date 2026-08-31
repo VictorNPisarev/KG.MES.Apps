@@ -24,7 +24,9 @@ public static class ColumnHelper
 				BadgeGroup = x.Attr.BadgeGroup,
 				CommentField = x.Attr.CommentField,
 				DisplayGroup = x.Attr.DisplayGroup,
-				IconConditions = x.Attr.IconConditions
+				IconConditions = x.Attr.IconConditions,
+				ShowTotal = x.Attr.ShowTotal,
+				Sortable = x.Attr.Sortable
 			})
 			.ToList();
 	}
