@@ -72,12 +72,21 @@ public partial class DynamicTable<TListItem> : ComponentBase
 	private async Task MoveColumn(string propertyName, int direction)
 	{
 		var setting = columnSettings.FirstOrDefault(s => s.PropertyName == propertyName);
+		
 		if (setting == null) return;
+		
 		var ordered = columnSettings.OrderBy(s => s.Order).ToList();
+
+		for (int i = 0; i < ordered.Count; i++)
+			ordered[i].Order = i;
+
 		var idx = ordered.IndexOf(setting);
 		var newIdx = idx + direction;
+		
 		if (newIdx < 0 || newIdx >= ordered.Count) return;
+		
 		(ordered[idx].Order, ordered[newIdx].Order) = (ordered[newIdx].Order, ordered[idx].Order);
+
 		await SaveSettings();
 		StateHasChanged();
 	}
@@ -231,8 +240,18 @@ public partial class DynamicTable<TListItem> : ComponentBase
 	private async Task SaveWidths()
 	{
 		await SaveSettings();
-		isResizeMode = false;
+		//isResizeMode = false;
 		StateHasChanged();
+	}
+
+	private async Task ResetWidth(string propertyName)
+	{
+		var setting = columnSettings.FirstOrDefault(s => s.PropertyName == propertyName);
+		if (setting != null)
+		{
+			setting.Width = 0; // 0 = авто
+			await SaveWidths();
+		}
 	}
 
 	private class IconInfo

@@ -76,14 +76,20 @@
 									@if (isResizeMode)
 									{
 										<div class="d-flex flex-column align-items-start">
-											<span class="text-dark fw-bold text-truncate mb-1" style="max-width: 100%; font-size: 0.9rem;">
+											@*<span class="text-dark fw-bold text-truncate mb-1" style="max-width: 100%; font-size: 0.9rem;">*@
 												@col.Info.Title
-											</span>
-											<input type="range" min="50" max="300" 
-												value="@col.Setting.Width"
-												@oninput="(e) => UpdateWidth(col.Info.PropertyName, e.Value?.ToString())"
-												@onchange="async (e) => { await UpdateWidth(col.Info.PropertyName, e.Value?.ToString()); await SaveWidths(); }"
-												class="form-range form-range-sm" style="width: 100%;" />
+											@*</span>*@
+											<div class="d-flex align-items-center gap-1 w-100">
+												<input type="range" min="50" max="300" 
+													value="@col.Setting.Width"
+													@oninput="(e) => UpdateWidth(col.Info.PropertyName, e.Value?.ToString())"
+													@onchange="async (e) => { await UpdateWidth(col.Info.PropertyName, e.Value?.ToString()); await SaveWidths(); }"
+													class="form-range form-range-sm" style="width: 100%;" />
+												<button class="btn-reset-width" @onclick="() => ResetWidth(col.Info.PropertyName)"
+														title="Автоматическая ширина">
+													<i class="bi bi-x-circle" style="font-size: 0.6rem;"></i>
+												</button>
+											</div>
 											<small class="text-muted" style="font-size: 0.7rem;">@col.Setting.Width px</small>
 										</div>
 									}

@@ -69,3 +69,27 @@
 	width: 8px;
 	height: 8px;
 }
+
+/*Кнопка сброса ширины*/
+.btn-reset-width 
+{
+	width: 0.8rem;
+	height: 0.8rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #000000;
+	cursor: pointer;
+	padding: 0;
+	border: none;
+	background: none;
+}
+
+.btn-reset-width:hover {
+	color: #dc3545;
+}
+
+.btn-reset-width i {
+	font-size: 0.8rem;
+	line-height: 1;
+}
