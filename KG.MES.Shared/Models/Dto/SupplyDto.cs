@@ -10,15 +10,15 @@ public class SupplyDto
 	public Guid Id { get; set; }
 
 	[JsonPropertyName("order_number")]
-	[Column("№ заказа", Order = 0, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" })]
+	[Column("№ заказа", Order = 0, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" }, Sortable = true)]
 	public string OrderNumber { get; set; } = string.Empty;
 
 	[JsonPropertyName("rtm_date")]
-	[Column("Дата запуска", Visible = false, DisplayFormat = "dd.MM.yyyy")]
+	[Column("Дата запуска", Visible = false, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? RtmDate { get; set; }
 
 	[JsonPropertyName("ready_date")]
-	[Column("Готовность", Order = 1, DisplayFormat = "dd.MM.yyyy")]
+	[Column("Готовность", Order = 1, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? ReadyDate { get; set; }
 
 	[JsonPropertyName("machine")]
