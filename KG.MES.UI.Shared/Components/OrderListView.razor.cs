@@ -57,6 +57,9 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 	private bool dropdownOpen;
 	private Guid[] selectedWorkplaceIds = [];
 	private SavedFilter? savedFilter;
+	private ElementReference pageContainer;
+	private double? scrollYBeforeModal;
+
 
 	private IconInfo testIcon = new IconInfo
 	{
@@ -70,6 +73,7 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		columnInfos = ColumnHelper.GetColumns<TListItem>();
 
 		await LoadSettings();
+		//await LoadSortFromStorage();
 		workplaces = await ApiService.GetAllWorkplacesAsync();//await ApiService.GetActiveWorkplacesAsync();
 		await LoadOrders();
 
@@ -176,6 +180,21 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		StateHasChanged();
 	}
 
+	private async Task LoadSortFromStorage()
+	{
+		try
+		{
+			var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"sort_{tableKey}");
+			if (!string.IsNullOrEmpty(json))
+			{
+				var data = JsonSerializer.Deserialize<SortData>(json);
+				sortBy = data?.SortBy ?? "ready_date";
+				sortOrder = data?.Ascending == true ? "asc" : "desc";
+			}
+		}
+		catch { }
+	}
+	
 	private async Task LoadOrders()
 	{
 		isLoading = true;
@@ -255,6 +274,9 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		}
 		else
 		{
+			// Сохраняем позицию скролла
+			scrollYBeforeModal = await JSRuntime.InvokeAsync<double>("scrollFunctions.getScrollTop", pageContainer);
+
 			isModalOpen = true;
 			StateHasChanged();
 		}
@@ -302,6 +324,16 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		{
 			await LoadOrders();
 			StateHasChanged();
+
+			// Восстанавливаем позицию скролла
+			if (scrollYBeforeModal.HasValue)
+			{
+				// Восстанавливаем позицию
+				await JSRuntime.InvokeVoidAsync("scrollFunctions.setScrollTop", pageContainer, scrollYBeforeModal.Value);
+				// Сбрасываем переменную, чтобы не скроллить при обычных рендерах
+				scrollYBeforeModal = null;
+			}
+
 		}
 	}
 
@@ -441,6 +473,13 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 			await ApplyFilters();
 			StateHasChanged();
 		}
+	}
+
+	private async Task HandleSortChanged((string SortBy, bool Ascending) sort)
+	{
+		sortBy = sort.SortBy;
+		sortOrder = sort.Ascending ? "asc" : "desc";
+		await LoadOrders();
 	}
 
 	public void Dispose()

@@ -1,4 +1,6 @@
+using System.Text.Json;
 using KG.MES.Shared.Helpers;
+using KG.MES.Shared.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -12,10 +14,19 @@ public partial class DynamicTable<TListItem> : ComponentBase
 	[Parameter] public bool ShowActions { get; set; }
 	[Parameter] public RenderFragment? RowActions { get; set; }
 	[Parameter] public RenderFragment<TListItem>? RowTemplate { get; set; }
+	[Parameter] public bool ShowTotal { get; set; } = true;
+	[Parameter] public string? TotalDistinctBy { get; set; } // Чтобы в итого не попадали одинаковые заказы 
+															 // (например, если в таблице один и тот же заказ с разными статусами - история операций)
+	[Parameter] public bool AllowSorting { get; set; } = false;
+	[Parameter] public EventCallback<(string SortBy, bool Ascending)> OnSortChanged { get; set; }
 
 	private List<ColumnInfo> columnInfos = [];
 	private List<ColumnSetting> columnSettings = [];
 	private bool isColumnsOpen;
+	private string? sortBy;
+	private bool sortAscending = true;
+
+	private bool isResizeMode;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -26,6 +37,8 @@ public partial class DynamicTable<TListItem> : ComponentBase
 			: TableSettingsManager.GetDefaultSettings<TListItem>();
 
 		await LoadSettings();
+		await LoadSortSettings();
+
 	}
 
 	private async Task LoadSettings()
@@ -59,12 +72,21 @@ public partial class DynamicTable<TListItem> : ComponentBase
 	private async Task MoveColumn(string propertyName, int direction)
 	{
 		var setting = columnSettings.FirstOrDefault(s => s.PropertyName == propertyName);
+		
 		if (setting == null) return;
+		
 		var ordered = columnSettings.OrderBy(s => s.Order).ToList();
+
+		for (int i = 0; i < ordered.Count; i++)
+			ordered[i].Order = i;
+
 		var idx = ordered.IndexOf(setting);
 		var newIdx = idx + direction;
+		
 		if (newIdx < 0 || newIdx >= ordered.Count) return;
+		
 		(ordered[idx].Order, ordered[newIdx].Order) = (ordered[newIdx].Order, ordered[idx].Order);
+
 		await SaveSettings();
 		StateHasChanged();
 	}
@@ -80,5 +102,162 @@ public partial class DynamicTable<TListItem> : ComponentBase
 	{
 		var json = TableSettingsManager.Serialize(columnSettings);
 		await JSRuntime.InvokeVoidAsync("localStorage.setItem", $"table_settings_{TableKey}", json);
+	}
+
+	private IEnumerable<TListItem> ItemsForTotal =>
+	string.IsNullOrEmpty(TotalDistinctBy)
+		? Items
+		: Items
+			.GroupBy(i => typeof(TListItem).GetProperty(TotalDistinctBy!)?.GetValue(i))
+			.Select(g => g.First());
+
+
+	private decimal GetColumnTotal(ColumnInfo column)
+	{
+		if (!column.ShowTotal) return 0;
+
+		return ItemsForTotal.Sum(item =>
+		{
+			var prop = typeof(TListItem).GetProperty(column.PropertyName);
+			var value = prop?.GetValue(item);
+			return value switch
+			{
+				int i => i,
+				decimal d => d,
+				double d => (decimal)d,
+				_ => 0
+			};
+		});
+	}
+
+	private IEnumerable<TListItem> SortedItems
+	{
+		get
+		{
+			if (string.IsNullOrEmpty(sortBy)) return Items;
+
+			var prop = typeof(TListItem).GetProperty(sortBy);
+			if (prop == null) return Items;
+
+			return sortAscending
+				? Items.OrderBy(i => prop.GetValue(i))
+				: Items.OrderByDescending(i => prop.GetValue(i));
+		}
+	}
+
+	private async Task SortBy(string propertyName)
+	{
+		if (sortBy == propertyName)
+		{
+			sortAscending = !sortAscending;
+		}
+		else
+		{
+			sortBy = propertyName;
+			sortAscending = true;
+		}
+
+		await SaveSortSettings();
+
+		if (OnSortChanged.HasDelegate)
+			await OnSortChanged.InvokeAsync((sortBy, sortAscending));
+
+		StateHasChanged();
+	}
+
+	private IconInfo GetSortIconAttributes(ColumnInfo column)
+	{
+		if (!column.Sortable)
+			return new IconInfo();
+
+		if (sortBy != column.PropertyName)
+			return new IconInfo
+			{
+				Class = "bi-arrow-down-up",
+				Css = "sort-icon-default",
+				Title = "Сортировать"
+			};
+
+		return sortAscending
+			? new IconInfo
+			{
+				Class = "bi-sort-down-alt",
+				Css = "sort-icon-asc",
+				Title = "По возрастанию"
+			}
+			: new IconInfo
+			{
+				Class = "bi-sort-down",
+				Css = "sort-icon-desc",
+				Title = "По убыванию"
+			};
+	}
+
+	private async Task SaveSortSettings()
+	{
+		var sortData = JsonSerializer.Serialize(new
+		{
+			SortBy = sortBy,
+			Ascending = sortAscending
+		});
+		await JSRuntime.InvokeVoidAsync("localStorage.setItem", $"sort_{TableKey}", sortData);
+	}
+
+	private async Task LoadSortSettings()
+	{
+		try
+		{
+			var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"sort_{TableKey}");
+			if (!string.IsNullOrEmpty(json))
+			{
+				var data = JsonSerializer.Deserialize<SortData>(json);
+				sortBy = data?.SortBy;
+				sortAscending = data?.Ascending ?? true;
+			}
+		}
+		catch { }
+	}
+
+	private void ToggleResizeMode()
+	{
+		isResizeMode = !isResizeMode;
+		StateHasChanged();
+	}
+
+	private async Task UpdateWidth(string propertyName, string? value)
+	{
+		if (int.TryParse(value, out var width))
+		{
+			var setting = columnSettings.FirstOrDefault(s => s.PropertyName == propertyName);
+			if (setting != null)
+			{
+				setting.Width = width;
+				// Не сохраняем при каждом движении — только при отпускании
+			}
+		}
+	}
+
+	private async Task SaveWidths()
+	{
+		await SaveSettings();
+		//isResizeMode = false;
+		StateHasChanged();
+	}
+
+	private async Task ResetWidth(string propertyName)
+	{
+		var setting = columnSettings.FirstOrDefault(s => s.PropertyName == propertyName);
+		if (setting != null)
+		{
+			setting.Width = 0; // 0 = авто
+			await SaveWidths();
+		}
+	}
+
+	private class IconInfo
+	{
+		public string Class { get; set; } = "";
+		public string Css { get; set; } = "";
+		public string Title { get; set; } = "";
 	}
 }

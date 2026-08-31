@@ -1,3 +1,4 @@
+@using KG.MES.Shared.Constants
 @using KG.MES.Shared.Helpers
 @using KG.MES.Shared.Models.Dto
 <PageTitle>Статистика рабочих мест</PageTitle>
@@ -26,14 +27,10 @@
 				<tbody>
 					@foreach (var wp in workplaces)
 					{
-						@*<tr class="@(wp.Id == selectedWorkplaceId ? "table-active" : "")" 
-								style='@(wp.IsWorkplace ? "cursor: pointer;" : "cursor: arrow;")' 
-							@onclick="async () => { if (wp.IsWorkplace) await SelectWorkplace(wp.Id); else ClearSelection(); }">*@
 						<tr class="@(wp.Id == selectedWorkplaceId ? "table-active" : "")"
 							style="cursor: pointer;"
-							@onclick="async () => await SelectWorkplace(wp.Id)">
+							@onclick="async () => await SelectWorkplace(wp)">
 							<td>
-								@*<i class="bi @(wp.IsWorkplace ? "bi-gear" : "bi-flag") me-2"></i>*@
 								@wp.Name
 							</td>
 							<td>@wp.WindowCount</td>
@@ -48,145 +45,77 @@
 	</div>
 
 	@* Статистика и история выбранного участка *@
-	@if (selectedWorkplaceId != null)
+	@if (selectedWorkplace != null)
 	{
 		<div class="card mt-4">
 			<div class="card-header">
 				<ul class="nav nav-tabs card-header-tabs">
-					<li class="nav-item">
-						<button class="nav-link @(activeTab == "orders" ? "active" : "")" @onclick='() => activeTab ="orders"'>
-							<i class="bi bi-list-check me-1"></i> Заказы в работе
-						</button>
-					</li>
-					<li class="nav-item">
-						<button class="nav-link @(activeTab == "history" ? "active" : "")" @onclick='() => activeTab ="history"'>
-							<i class="bi bi-clock-history me-1"></i> История операций
-						</button>
-					</li>
+					@if (selectedWorkplace.Code != WorkplaceCodes.None)
+					{
+						<li class="nav-item">
+							<button class="nav-link @(activeTab == "history" ? "active" : "")" @onclick='() => activeTab ="history"'>
+								<i class="bi bi-clock-history me-1"></i> История операций
+							</button>
+						</li>
+					}
+					@if (selectedWorkplace.IsWorkplace || selectedWorkplace.Code == WorkplaceCodes.None)
+					{
+						<li class="nav-item">
+							<button class="nav-link @(activeTab == "orders" ? "active" : "")" @onclick='() => activeTab ="orders"'>
+								<i class="bi bi-list-check me-1"></i> Заказы в работе
+							</button>
+						</li>
+					}
 				</ul>
 			</div>
 			<div class="card-body">
 				@if (activeTab == "history")
 				{
-					@* История операций (ваш существующий код) *@
-					@if (selectedWorkplaceId != null)// && stats != null)
+					@if (selectedWorkplaceId != null)
 					{
-						@*<div class="row g-2 mb-4">
-							<div class="col-3">
-								<div class="stat-card bg-warning bg-opacity-10">
-									<div class="stat-number">@(stats.PendingCount + stats.JoineryCount)</div>
-									<div class="stat-label">Ожидают</div>
-								</div>
-							</div>
-							<div class="col-3">
-								<div class="stat-card bg-primary bg-opacity-10">
-									<div class="stat-number">@stats.ActiveCount</div>
-									<div class="stat-label">В работе</div>
-								</div>
-							</div>
-							<div class="col-3">
-								<div class="stat-card bg-success bg-opacity-10">
-									<div class="stat-number">@stats.CompletedCount</div>
-									<div class="stat-label">Завершено</div>
-								</div>
-							</div>
-						</div>
+						<div>
+							<DynamicTable TListItem="WorkplaceHistoryDto" Items="filteredHistory" TableKey="stats_history" 
+											ShowActions="true" ShowTotal="true" TotalDistinctBy="OrderNumber" AllowSorting="true">
+								<RowActions>
+									<div class="d-flex me-auto gap-2">
+										<button class="btn btn-sm @(historyFilter == "all" ? "btn-dark" : "btn-outline-dark")"
+												@onclick='() => historyFilter = "all"'>
+											Все
+										</button>
+										<button class="btn btn-sm @(historyFilter == "START" ? "btn-primary" : "btn-outline-primary")"
+												@onclick='() => historyFilter = "START"'>
+											<i class="bi bi-play-fill me-1"></i> Взято в работу
+										</button>
+										<button class="btn btn-sm @(historyFilter == "COMPLETE" ? "btn-success" : "btn-outline-success")"
+												@onclick='() => historyFilter = "COMPLETE"'>
+											<i class="bi bi-check-lg me-1"></i> Завершено
+										</button>
 
-						<div class="card mb-3">
-							<div class="card-header">
-								<h6 class="mb-0">Заблокированные заказы</h6>
-							</div>
-							<div class="card-body p-0">
-								@if (blocks.Any())
-								{
-									<table class="table table-sm mb-0">
-										<thead>
-											<tr>
-												<th>Заказ</th>
-												<th>Причина</th>
-												<th>Дата</th>
-												<th>Сотрудник</th>
-											</tr>
-										</thead>
-										<tbody>
-											@foreach (var b in blocks)
-											{
-												<tr>
-													<td>@b.OrderNumber</td>
-													<td>@b.Reason</td>
-													<td>@b.BlockedAt.ToString("dd.MM HH:mm")</td>
-													<td>@b.UserName</td>
-												</tr>
-											}
-										</tbody>
-									</table>
-								}
-								else
-								{
-									<p class="text-muted small p-3">Нет заблокированных заказов</p>
-								}
-							</div>
-						</div>*@
-
-						<div class="card">
-							<div class="card-header d-flex align-items-center">
-								<h6 class="mb-0">
-									История операций 
-									<small class="text-muted ms-2">@dateFrom.ToString("dd.MM.yyyy") – @dateTo.ToString("dd.MM.yyyy")</small>
-								</h6>
-								<button class="btn btn-sm btn-link text-secondary p-0 ms-2" @onclick="() => showDateFilter = !showDateFilter">
-									<i class="bi bi-calendar3"></i>
-								</button>
-							</div>
-							
-							@if (showDateFilter)
-							{
-								<div class="card-body bg-light border-bottom py-2">
-									<div class="d-flex align-items-center gap-2">
-										<label class="form-label small mb-0">С</label>
-										<input type="date" class="form-control form-control-sm" style="width: auto;" @bind="dateFrom" />
-										<label class="form-label small mb-0">По</label>
-										<input type="date" class="form-control form-control-sm" style="width: auto;" @bind="dateTo" />
-										<button class="btn btn-sm btn-primary" @onclick="ApplyFilter">Применить</button>
+										@if (!showDateFilter)
+										{
+											<span class="text-muted small align-self-center">
+												@dateFrom.ToString("dd.MM") – @dateTo.ToString("dd.MM")
+											</span>
+											<button class="btn btn-sm btn-link text-secondary p-0 align-self-center"
+													@onclick="() => showDateFilter = !showDateFilter">
+												<i class="bi bi-calendar3"></i>
+											</button>
+										}
+										else
+										{
+											<div class="d-flex align-items-center gap-2">
+												<label class="form-label small mb-0">С</label>
+												<input type="date" class="form-control form-control-sm" style="width: auto;"
+													@bind="dateFrom" />
+												<label class="form-label small mb-0">По</label>
+												<input type="date" class="form-control form-control-sm" style="width: auto;"
+													@bind="dateTo" />
+												<button class="btn btn-sm btn-primary" @onclick="ApplyFilter">Применить</button>
+											</div>
+										}
 									</div>
-								</div>
-							}
-							<div class="card-body p-0">
-								@if (history.Any())
-								{
-									<table class="table table-sm mb-0">
-										<thead>
-											<tr>
-												<th>Тип</th>
-												<th>Заказ</th>
-												<th>Сотрудник</th>
-												<th>Время</th>
-												<th>Примечание</th>
-											</tr>
-										</thead>
-										<tbody>
-											@foreach (var h in history)
-											{
-												<tr>
-													<td>
-														<span class="badge @BadgeHelper.GetBadgeClass(h.OperationType.ToString())">
-															@h.OperationType
-														</span>
-													</td>
-													<td>@h.OrderNumber</td>
-													<td>@h.UserName</td>
-													<td>@h.OperationTime.ToString("dd.MM HH:mm")</td>
-													<td>@h.Notes</td>
-												</tr>
-											}
-										</tbody>
-									</table>
-								}
-								else
-								{
-									<p class="text-muted small p-3">Нет операций</p>
-								}
-							</div>
+								</RowActions>
+							</DynamicTable>
 						</div>
 					}
 					else
@@ -199,115 +128,34 @@
 				}
 				else if (activeTab == "orders")
 				{
-					
-					@* Список заказов в работе/ожидании *@
-					@*<div class="d-flex gap-2 mb-3">
-						<button class="btn btn-sm @(orderFilter == "all" ? "btn-dark" : "btn-outline-dark")"
-								@onclick='() => orderFilter = "all"'>
-							Все
-						</button>
-						<button class="btn btn-sm @(orderFilter == "pending" ? "btn-warning" : "btn-outline-warning")"
-								@onclick='() => orderFilter = "pending"'>
-							Ожидают
-						</button>
-						<button class="btn btn-sm @(orderFilter == "active" ? "btn-primary" : "btn-outline-primary")"
-								@onclick='() => orderFilter = "active"'>
-							В работе
-						</button>
-					</div>*@
-
-					@* Список заказов с фильтром *@
 					var filteredOrders = orderFilter == "all" 
 						? workplaceOrders.OrderBy(w => w.ReadyDate).ToList()
 						: workplaceOrders.Where(o => o.Status.ToLower() == orderFilter)
 							.OrderBy(w => w.ReadyDate).ToList();
 
-							@*<div class="row g-0 d-flex w-100" style="flex-wrap: nowrap;">*@
-							<div>
-								@*<div class="@(useSplitView && selectedOrder != null ? "resizable-panel" : "table-responsive mt-3")"
-										id="split-panel" style="@(useSplitView && selectedOrder != null ? "width: " + savedPanelWidth : "width: 100%")">*@
-								<DynamicTable TListItem="OrderWorkplaceDto" Items="filteredOrders "ShowActions="true">
-										<RowActions>
-											<div class="d-flex me-auto gap-2">
-												<button class="btn btn-sm @(orderFilter == "all" ? "btn-dark" : "btn-outline-dark")"
-													@onclick='() => orderFilter = "all"'>
-													Все
-												</button>
-												<button
-													class="btn btn-sm @(orderFilter == "pending" ? "btn-warning" : "btn-outline-warning")"
-													@onclick='() => orderFilter = "pending"'>
-													Ожидают
-												</button>
-												<button
-													class="btn btn-sm @(orderFilter == "active" ? "btn-primary" : "btn-outline-primary")"
-													@onclick='() => orderFilter = "active"'>
-													В работе
-												</button>
-											</div>
-										</RowActions>
-										<RowTemplate>
-										</RowTemplate>
-									</DynamicTable>
-								@*</div>*@
-							</div>
-					@*@if (filteredOrders.Any())
-					{
-						<div class="table-responsive">
-							<table class="table table-sm table-hover">
-								<thead>
-									<tr>
-										<th>№ заказа</th>
-										<th>Статус</th>
-										<th>Готовность</th>
-										<th>Окна, шт</th>
-										<th>Окна, м²</th>
-										<th>Щитовые, шт</th>
-										<th>Щитовые, м²</th>
-									</tr>
-								</thead>
-								<tbody>
-									@foreach (var o in filteredOrders)
-									{
-										<tr>
-											<td>
-												@if (o.IsEconom)
-												{
-													<i class="bi bi-piggy-bank-fill text-secondary me-1" title="Эконом"></i>
-												}
-												@if (o.IsClaim)
-												{
-													<i class="bi bi-exclamation-triangle-fill text-danger me-1" title="Рекламация"></i>
-												}
-												@if (o.IsOnlyPaid)
-												{
-													<i class="bi bi-cash-stack text-success" title="Оплачен"></i>
-												}
-												<strong>@o.OrderNumber</strong>
-												@if (o.IsBlocked)
-												{
-													<i class="bi bi-lock-fill text-danger ms-1" title="Заблокирован"></i>
-												}
-											</td>
-											<td>
-												<span class="badge @BadgeHelper.GetBadgeClass(o.Status, "workplace_status")">
-													@BadgeHelper.GetDisplayValue(o.Status, "workplace_status")
-												</span>
-											</td>
-											<td>@o.ReadyDate?.ToString("dd.MM.yyyy")</td>
-											<td>@o.WindowCount</td>
-											<td>@o.WindowArea?.ToString("F2")</td>
-											<td>@o.PlateCount</td>
-											<td>@o.PlateArea?.ToString("F2")</td>
-										</tr>
-									}
-								</tbody>
-							</table>
-						</div>
-					}
-					else
-					{
-						<p class="text-muted">Нет заказов в работе</p>
-					}*@
+					<div>
+						<DynamicTable TListItem="OrderWorkplaceDto" Items="filteredOrders" TableKey="stats_orders" 
+										ShowActions="true" ShowTotal="true" TotalDistinctBy="OrderNumber" AllowSorting="true">
+							<RowActions>
+								<div class="d-flex me-auto gap-2">
+									<button class="btn btn-sm @(orderFilter == "all" ? "btn-dark" : "btn-outline-dark")"
+										@onclick='() => orderFilter = "all"'>
+										Все
+									</button>
+									<button
+										class="btn btn-sm @(orderFilter == "pending" ? "btn-warning" : "btn-outline-warning")"
+										@onclick='() => orderFilter = "pending"'>
+										Ожидают
+									</button>
+									<button
+										class="btn btn-sm @(orderFilter == "active" ? "btn-primary" : "btn-outline-primary")"
+										@onclick='() => orderFilter = "active"'>
+										В работе
+									</button>
+								</div>
+							</RowActions>
+						</DynamicTable>
+					</div>
 				}
 			</div>
 		</div>

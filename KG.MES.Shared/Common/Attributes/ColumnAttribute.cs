@@ -15,9 +15,13 @@ namespace KG.MES.Shared.Attributes
 		public string? DisplayGroup { get; set; }  // группа для поиска отображаемого текста в конфиге
 		
 		/// <summary>
-		/// Аттрибут добавляющий иконку в полю по условному bool полю.
+		/// Аттрибут добавляющий иконку в поле по условному bool полю.
 		/// </summary>
 		public string[]? IconConditions { get; set; } // ["IsClaim:Claim", "IsEconom:Econom"]
+
+		public bool ShowTotal { get; set; } = false; // true - если надо вывести сумму в подвале таблицы (используется при выводе таблицы через DynamicTable)
+
+		public bool Sortable { get; set; } = false;
 
 		public ColumnAttribute(string title)
 		{

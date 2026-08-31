@@ -6,7 +6,7 @@
 
 <PageTitle>@Title</PageTitle>
 
-<div class="container-fluid py-4">
+<div class="container-fluid py-4" @ref="pageContainer" style="max-height: calc(100vh - 50px); overflow-y: auto;">
 	<!-- Sticky заголовок -->
 	<div class="sticky-header">
 		<div class="container-fluid">
@@ -107,73 +107,6 @@
 		</div>
 	</div>
 
-	<!-- Панель над таблицей -->
-	@*<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
-		<div class="text-muted">
-			@if (orders.Data.Any())
-			{
-				<span>Показано @((orders.Page - 1) * orders.Limit + 1)-@(Math.Min(orders.Page * orders.Limit, orders.Total)) из @orders.Total</span>
-			}
-		</div>
-		<div class="d-flex gap-2">
-			<button class="btn btn-sm btn-outline-secondary" @onclick="ToggleViewMode"
-				title="@(useSplitView ? "Модальное окно" : "Разделённый вид")">
-				<i class="bi @(useSplitView ? "bi-window" : "bi-layout-split")"></i>
-			</button>
-			<!-- Колонки -->
-			<div class="position-relative">
-				<button class="btn btn-sm btn-outline-secondary"
-						@onclick="() => isColumnsOpen = !isColumnsOpen"
-						type="button">
-					<i class="bi bi-gear"></i> Колонки
-					<i class="bi @(isColumnsOpen ? "bi-chevron-up" : "bi-chevron-down") ms-1 small"></i>
-				</button>
-
-				@if (isColumnsOpen)
-				{
-					<div class="dropdown-menu dropdown-menu-end show p-3"
-						style="min-width: 300px; position: absolute; right: 0; z-index: 1000;">
-						<h6 class="dropdown-header">Настройка колонок</h6>
-						@foreach (var setting in columnSettings.OrderBy(s => s.Order))
-						{
-							var info = columnInfos.FirstOrDefault(i => i.PropertyName == setting.PropertyName);
-							var title = info?.Title ?? setting.PropertyName;
-							<div class="d-flex align-items-center py-1">
-								<div class="form-check mb-0">
-									<input type="checkbox"
-										class="form-check-input"
-										id="col-@setting.PropertyName"
-										checked="@setting.Visible"
-										@onchange="(e) => ToggleColumn(setting.PropertyName, (bool)(e.Value ?? false))" />
-									<label class="form-check-label" for="col-@setting.PropertyName">
-										@title
-									</label>
-									<button class="btn btn-sm btn-link p-0"
-											@onclick="() => MoveColumn(setting.PropertyName, -1)" disabled="@(setting.Order <= 0)">
-										<i class="bi bi-chevron-up small"></i>
-									</button>
-									<button class="btn btn-sm btn-link p-0"
-											@onclick="() => MoveColumn(setting.PropertyName, 1)">
-										<i class="bi bi-chevron-down small"></i>
-									</button>
-								</div>
-							</div>
-						}
-						<hr />
-						<button class="btn btn-sm btn-outline-primary w-100" @onclick="async () => { await ResetColumns(); isColumnsOpen = false; }">
-							<i class="bi bi-arrow-counterclockwise"></i> Сбросить
-						</button>
-					</div>
-
-					<!-- Затемнение для закрытия при клике снаружи -->
-					<div class="position-fixed top-0 start-0 w-100 h-100"
-						style="z-index: 999;"
-						@onclick="() => isColumnsOpen = false"></div>
-				}
-			</div>
-		</div>
-	</div>*@
-
 	<!-- Таблица -->
 	@if (isLoading)
 	{
@@ -191,7 +124,8 @@
 			<div class="@(useSplitView && selectedOrder != null ? "resizable-panel" : "table-responsive mt-3")"
 					id="split-panel" style="@(useSplitView && selectedOrder != null ? "width: " + savedPanelWidth : "width: 100%")">
 				<DynamicTable TListItem="TListItem" Items="orders.Data" ColumnInfos="columnInfos"
-					ColumnSettings="columnSettings" TableKey="@tableKey" ShowActions="true">
+					ColumnSettings="columnSettings" TableKey="@tableKey" ShowActions="true"
+					OnSortChanged="HandleSortChanged" AllowSorting="true">
 					<RowActions>
 						<div class="text-muted me-auto">
 							@if (orders.Data.Any())

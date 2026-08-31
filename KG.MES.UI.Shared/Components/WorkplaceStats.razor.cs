@@ -1,3 +1,4 @@
+using KG.MES.Shared.Constants;
 using KG.MES.Shared.Models.Config;
 using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Services;
@@ -15,16 +16,32 @@ public partial class WorkplaceStats
 	private List<BlockedOrderDto> blocks = [];
 	private List<WorkplaceHistoryDto> history = [];
 	private Guid? selectedWorkplaceId;
+	private WorkplaceDto? selectedWorkplace;
 	private DateTime dateFrom = DateTime.Now.AddDays(-7);
 	private DateTime dateTo = DateTime.Now;
 	private bool showDateFilter;
-	private string activeTab = "orders";
+	private string activeTab = "history";
 	private List<OrderWorkplaceDto> workplaceOrders = [];
 	private string orderFilter = "all";
+	private string historyFilter = "all";
+
+	private DateTime orderDateFrom = DateTime.Now.AddDays(-7);
+	private DateTime orderDateTo = DateTime.Now;
+	private bool showOrderDateFilter;
+
 	protected override async Task OnInitializedAsync()
 	{
 		Console.WriteLine("WorkplaceStats OnInitializedAsync");
 		workplaces = await ApiService.GetWorkplacesAsync();//("active");
+	}
+
+	private async Task SelectWorkplace(WorkplaceDto wp)
+	{
+		selectedWorkplace = wp;
+		activeTab = selectedWorkplace.IsWorkplace ? activeTab : "history";
+		activeTab = selectedWorkplace.Code == WorkplaceCodes.None ? "orders" : activeTab;
+		await SelectWorkplace(wp.Id);
+
 	}
 
 	private async Task SelectWorkplace(Guid id)
@@ -71,4 +88,37 @@ public partial class WorkplaceStats
 		ShowSupply = false,
 		EditSupply = false
 	};
+
+	private List<WorkplaceHistoryDto> filteredHistory =>
+		historyFilter == "all"
+			? history
+			: history.Where(h => h.OperationType == historyFilter).ToList();
+
+	private List<WorkplaceHistoryDto> distinctHistory => filteredHistory
+		.GroupBy(h => h.OrderNumber)
+		.Select(g => g.First())
+		.ToList();
+
+	private int TotalHistoryWindows => distinctHistory.Sum(h => h.WindowCount);
+	private decimal TotalHistoryWindowArea => distinctHistory.Sum(h => h.WindowArea ?? 0);
+	private int TotalHistoryPlates => distinctHistory.Sum(h => h.PlateCount);
+	private decimal TotalHistoryPlateArea => distinctHistory.Sum(h => h.PlateArea ?? 0);
+
+	private List<OrderWorkplaceDto> filteredOrders => orderFilter == "all"
+		? workplaceOrders
+		: workplaceOrders
+			.Where(o => o.Status.ToLower() == orderFilter)
+			.OrderBy(w => w.ReadyDate)
+			.ToList();
+
+	private List<OrderWorkplaceDto> distinctOrders => filteredOrders
+		.GroupBy(h => h.OrderNumber)
+		.Select(g => g.First())
+		.ToList();
+
+	// Итоги по заказам
+	private int TotalWindows => distinctOrders.Sum(o => o.WindowCount);
+	private decimal TotalWindowArea => distinctOrders.Sum(o => o.WindowArea ?? 0);
+	private int TotalPlates => distinctOrders.Sum(o => o.PlateCount);
+	private decimal TotalPlateArea => distinctOrders.Sum(o => o.PlateArea ?? 0);
 }
