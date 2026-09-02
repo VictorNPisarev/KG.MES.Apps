@@ -13,5 +13,11 @@ public enum OrderIcon
 	TwoSidePaint,
 
 	[IconClass("bi-stack", "order-icon-plate", "Только щитовые")]
-	Plate
+	Plate,
+
+	[IconClass("bi bi-box-arrow-in-right", "icon-transfer-start", "Переходящий заказ")]
+	StartOperationTransfer,
+
+	[IconClass("bi bi-box-arrow-right", "icon-transfer-complete", "Переходящий заказ")]
+	CompleteOperationTransfer
 }

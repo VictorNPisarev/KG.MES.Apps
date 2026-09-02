@@ -3,6 +3,7 @@ using KG.MES.Shared.Models.Config;
 using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Services;
 using Microsoft.AspNetCore.Components;
+using KG.MES.Shared.Extensions;
 
 namespace KG.MES.UI.Shared.Components;
 
@@ -15,6 +16,7 @@ public partial class WorkplaceStats
 	private WorkplaceStatsDto? stats;
 	private List<BlockedOrderDto> blocks = [];
 	private List<WorkplaceHistoryDto> history = [];
+	private List<WorkplaceHistoryViewModel> historyViewModel = [];
 	private Guid? selectedWorkplaceId;
 	private WorkplaceDto? selectedWorkplace;
 	private DateTime dateFrom = DateTime.Now.AddDays(-7);
@@ -50,6 +52,7 @@ public partial class WorkplaceStats
 		stats = await ApiService.GetWorkplaceStatsAsync(id);
 		blocks = await ApiService.GetWorkplaceBlocksAsync(id);
 		history = await ApiService.GetWorkplaceHistoryAsync(id, dateFrom, dateTo, 1000);
+		historyViewModel = new List<WorkplaceHistoryViewModel>().CreateWithTransferIndicators(history, dateFrom, dateTo);
 		workplaceOrders = await ApiService.GetActiveAndPendingOrdersAsync(id);
 		StateHasChanged();
 	}
@@ -60,6 +63,7 @@ public partial class WorkplaceStats
 		stats = null;
 		blocks.Clear();
 		history.Clear();
+		historyViewModel.Clear();
 		workplaceOrders.Clear();
 		StateHasChanged();
 	}
@@ -72,6 +76,9 @@ public partial class WorkplaceStats
 		
 		history = await ApiService.GetWorkplaceHistoryAsync(
 			(Guid)selectedWorkplaceId, dateFrom, dateTo, 1000);
+
+		historyViewModel = new List<WorkplaceHistoryViewModel>().CreateWithTransferIndicators(history, dateFrom, dateTo);
+
 		StateHasChanged();
 	}
 
@@ -89,12 +96,20 @@ public partial class WorkplaceStats
 		EditSupply = false
 	};
 
-	private List<WorkplaceHistoryDto> filteredHistory =>
+	//private List<WorkplaceHistoryDto> filteredHistory =>
+	//	historyFilter == "all"
+	//		? history
+	//		: history.Where(h => h.OperationType == historyFilter).ToList();
+	private List<WorkplaceHistoryViewModel> filteredHistory =>
 		historyFilter == "all"
-			? history
-			: history.Where(h => h.OperationType == historyFilter).ToList();
+			? historyViewModel
+			: historyViewModel.Where(h => h.OperationType == historyFilter).ToList();
 
-	private List<WorkplaceHistoryDto> distinctHistory => filteredHistory
+	//private List<WorkplaceHistoryDto> distinctHistory => filteredHistory
+	//	.GroupBy(h => h.OrderNumber)
+	//	.Select(g => g.First())
+	//	.ToList();
+	private List<WorkplaceHistoryViewModel> distinctHistory => filteredHistory
 		.GroupBy(h => h.OrderNumber)
 		.Select(g => g.First())
 		.ToList();

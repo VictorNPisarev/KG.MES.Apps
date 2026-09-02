@@ -74,7 +74,7 @@
 					@if (selectedWorkplaceId != null)
 					{
 						<div>
-							<DynamicTable TListItem="WorkplaceHistoryDto" Items="filteredHistory" TableKey="stats_history" 
+							<DynamicTable TListItem="WorkplaceHistoryViewModel" Items="filteredHistory" TableKey="stats_history" 
 											ShowActions="true" ShowTotal="true" TotalDistinctBy="OrderNumber" AllowSorting="true">
 								<RowActions>
 									<div class="d-flex me-auto gap-2">
