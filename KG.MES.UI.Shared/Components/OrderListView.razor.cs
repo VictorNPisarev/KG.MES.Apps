@@ -22,6 +22,9 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 	[Parameter] public EventCallback<TListItem> OnEditOrder { get; set; }
 	[Parameter] public EventCallback<TListItem> OnDeleteOrder { get; set; }
 	[Parameter] public RenderFragment? HeaderActions { get; set; }
+	[Parameter] public Func<Guid?, Guid[]?, string?, int, int, string?, string?, Task<PaginatedResponse<TListItem>>>? LoadItems { get; set; }
+	[Parameter] public Func<Guid, Task<TCardItem>>? LoadItem { get; set; }
+
 
 	[Inject] private ProductionApiService ApiService { get; set; } = null!;
 	[Inject] private IJSRuntime JSRuntime { get; set; } = null!;
@@ -29,7 +32,6 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 	[Inject] private NavigationManager NavManager { get; set; } = null!;
 
 
-	private TListItem? order;
 	private OrderDashboard<TCardItem>? dashboardRef;
 	private string Endpoint => Settings.ListEndpoint;
 	private string CardEndpoint => Settings.CardEndpoint;
@@ -73,8 +75,7 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		columnInfos = ColumnHelper.GetColumns<TListItem>();
 
 		await LoadSettings();
-		//await LoadSortFromStorage();
-		workplaces = await ApiService.GetAllWorkplacesAsync();//await ApiService.GetActiveWorkplacesAsync();
+		workplaces = await ApiService.GetAllWorkplacesAsync();
 		await LoadOrders();
 
 		EventAggregator.Subscribe<OrderUpdatedEvent>(OnOrderUpdated);
@@ -110,6 +111,15 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 			}
 
 			var tableSettings = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"table_settings_{tableKey}");
+
+			//TODO временно, чтобы у пользователей не слетели настройки UI. Спустя время надо убрать.
+			if (string.IsNullOrEmpty(tableSettings))
+			{
+				// Пробуем старый ключ с Dto
+				var oldTableKey = tableKey.Replace("ViewModel", "Dto");
+				tableSettings = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"table_settings_{oldTableKey}");
+			}
+
 			columnSettings = TableSettingsManager.GetSettings<TListItem>(tableSettings);
 		}
 		catch
@@ -202,16 +212,29 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 
 		try
 		{
-			orders = await ApiService.GetOrdersAsync<TListItem>(
-				endpoint: Endpoint,
-				workplaceId: selectedWorkplaceId,
-				workplaceIds: selectedWorkplaceIds,
-				orderNumber: string.IsNullOrEmpty(searchNumber) ? null : searchNumber,
-				page: currentPage,
-				limit: pageSize,
-				sortBy: sortBy,
-				sortOrder: sortOrder
-			);
+			//orders = await ApiService.GetOrdersAsync<TListItem>(
+			//	endpoint: Endpoint,
+			//	workplaceId: selectedWorkplaceId,
+			//	workplaceIds: selectedWorkplaceIds,
+			//	orderNumber: string.IsNullOrEmpty(searchNumber) ? null : searchNumber,
+			//	page: currentPage,
+			//	limit: pageSize,
+			//	sortBy: sortBy,
+			//	sortOrder: sortOrder
+			//);
+
+			if (LoadItems != null)
+			{
+				orders = await LoadItems(
+					selectedWorkplaceId,
+					selectedWorkplaceIds,
+					string.IsNullOrEmpty(searchNumber) ? null : searchNumber,
+					currentPage,
+					pageSize,
+					sortBy,
+					sortOrder
+				);
+			}
 		}
 		catch (Exception ex)
 		{

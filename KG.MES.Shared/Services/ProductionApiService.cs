@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using KG.MES.Shared.Models;
 using KG.MES.Shared.Models.Dto;
+using KG.MES.Shared.Models.ViewModels;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -465,18 +466,18 @@ public class ProductionApiService
 		}
 	}
 
-	public async Task<List<OrderCommentViewModel>> GetOrderCommentsAsync(Guid orderId)
+	public async Task<List<OrderCommentDto>> GetOrderCommentsAsync(Guid orderId)
 	{
 		try
 		{
 			var url = $"{BaseUrl}/orders/{orderId}/comments";
-			return await _httpClient.GetFromJsonAsync<List<OrderCommentViewModel>>(url)
-					?? new List<OrderCommentViewModel>();
+			return await _httpClient.GetFromJsonAsync<List<OrderCommentDto>>(url)
+					?? new List<OrderCommentDto>();
 		}
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Error fetching comments for order {Id}", orderId);
-			return new List<OrderCommentViewModel>();
+			return new List<OrderCommentDto>();
 		}
 	}
 

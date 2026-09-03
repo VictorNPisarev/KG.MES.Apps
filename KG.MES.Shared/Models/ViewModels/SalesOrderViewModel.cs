@@ -1,25 +1,18 @@
 using System.Text.Json.Serialization;
 using KG.MES.Shared.Attributes;
 using KG.MES.Shared.Models.Dto;
-using KG.MES.Shared.Models.ViewModels;
 using Mapster;
 
 namespace KG.MES.Shared.Models.ViewModels;
 
-public class MastersOrderViewModel
+public class SalesOrderViewModel
 {
 	public Guid Id { get; set; }
 
-	[Column("№ заказа", Order = 1, IconConditions = new[] { "IsClaim:Claim", "IsOnlyPlate:Plate", "IsEconom:Econom", "IsTwoSidePaint:TwoSidePaint" })]
+	[Column("№ заказа", Order = 1, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" })]
 	public string OrderNumber { get; set; } = string.Empty;
 
-	[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name")]
-	public string? CurrentStatus { get; set; }
-
-	[Column("Дата запуска", Order = 4, DisplayFormat = "dd.MM.yyyy")]
-	public DateTime? RtmDate { get; set; }
-
-	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy")]
+	[Column("Дата готовности", Order = 2, DisplayFormat = "dd.MM.yyyy")]
 	public DateTime? ReadyDate { get; set; }
 
 	[Column("Окна, шт", Order = 6)]
@@ -43,20 +36,30 @@ public class MastersOrderViewModel
 	[Column("Оплачен, не запущен", Order = 12, IsBadge = true)]
 	public bool IsOnlyPaid { get; set; }
 
-	[Column("2-стор. покраска", Order = 13, IsBadge = true)]
-	public bool IsTwoSidePaint { get; set; }
+	[Column("Дата запуска", Visible = false, DisplayFormat = "dd.MM.yyyy")]
+	public DateTime StartDate { get; set; }
 
-	public string? ProductionOrderId { get; set; }
+	public Guid? ProductionOrderId { get; set; }
 
-	public string? CurrentWorkplaceId { get; set; }
+	public Guid? CurrentWorkplaceId { get; set; }
 
-	[Column("Контрагент", Visible = false)]
-	public string CustomerName { get; set; } = string.Empty;
+	[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name")]
+	public string? CurrentStatus { get; set; }
 
-	public string? CurrentWorkplaceName { get; set; }
+	public Guid? ManagerId { get; set; }
 
-	[Column("Станок", Order = 12, Visible = true, IsBadge = true)]
-	public string? Machine { get; set; }
+	[Column("Менеджер", Order = 4)]
+	public string? ManagerName { get; set; }
+
+	public Guid? CustomerId { get; set; }
+
+	[Column("Контрагент", Order = 5)]
+	public string? CustomerName { get; set; }
+
+	[Column("Стоимость", Order = 6)]
+	public decimal? Amount { get; set; }
+
+	public string? Currency { get; set; }
 
 	[Column("***", Order = 2, Visible = false, IconConditions = new[] { "IsClaim:Claim",
 																		"IsEconom:Econom",
@@ -73,10 +76,10 @@ public class MastersOrderViewModel
 		}
 	}
 
-	public MastersOrderViewModel () {}
+	public SalesOrderViewModel () {}
 
-	public MastersOrderViewModel (MastersOrderDto mastersOrderDto)
+	public SalesOrderViewModel (SalesOrderDto salesOrderDto)
 	{
-		mastersOrderDto.Adapt(this);
+		salesOrderDto.Adapt(this);
 	}
 }

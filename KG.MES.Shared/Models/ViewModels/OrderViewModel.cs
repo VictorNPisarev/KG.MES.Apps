@@ -1,21 +1,24 @@
+using System.Text.Json.Serialization;
 using KG.MES.Shared.Attributes;
 using KG.MES.Shared.Models.Dto;
-using KG.MES.Shared.Interfaces;
+using Mapster;
 
 namespace KG.MES.Shared.Models.ViewModels;
 
-public class OrderViewModel : IListItemViewModel
+public class OrderViewModel
 {
-	[Column("№ заказа", Order = 1)]
+	public Guid Id { get; set; }
+
+	[Column("№ заказа", Order = 1, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" }, Sortable = true)]
 	public string OrderNumber { get; set; } = string.Empty;
 
-	[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name")]
-	public string? Status { get; set; }
+	[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name", Sortable = true)]
+	public string? CurrentStatus { get; set; }
 
-	[Column("Дата запуска", Order = 4, DisplayFormat = "dd.MM.yyyy")]
+	[Column("Дата запуска", Order = 4, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? RtmDate { get; set; }
 
-	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy")]
+	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? ReadyDate { get; set; }
 
 	[Column("Окна, шт", Order = 6)]
@@ -39,9 +42,40 @@ public class OrderViewModel : IListItemViewModel
 	[Column("Оплачен, не запущен", Order = 12, IsBadge = true)]
 	public bool IsOnlyPaid { get; set; }
 
+	[Column("2-стор. покраска", Order = 13, IsBadge = true)]
+	public bool IsTwoSidePaint { get; set; }
+
+	public string? ProductionOrderId { get; set; }
+
+	public string? CurrentWorkplaceId { get; set; }
+
 	[Column("Контрагент", Visible = false)]
 	public string CustomerName { get; set; } = string.Empty;
 
-	[Column("Станок", Visible = true)]
+	public string? CurrentWorkplaceName { get; set; }
+
+	[Column("Станок", Order = 12, Visible = true, IsBadge = true)]
 	public string? Machine { get; set; }
+
+	[Column("***", Order = 2, Visible = false, IconConditions = new[] { "IsClaim:Claim",
+																		"IsEconom:Econom",
+																		"IsOnlyPaid:Paid",
+																		"IsTwoSidePaint:TwoSidePaint",
+																		"IsOnlyPlate:Plate" })]
+	public string OrderFlags { get; } = string.Empty;
+
+	public bool IsOnlyPlate
+	{
+		get
+		{
+			return WindowCount == 0 && PlateCount > 0;
+		}
+	}
+
+	public OrderViewModel() {}
+
+	public OrderViewModel(OrderDto orderDto)
+	{
+		orderDto.Adapt(this);
+	}
 }

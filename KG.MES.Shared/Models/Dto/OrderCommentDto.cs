@@ -19,16 +19,4 @@ namespace KG.MES.Shared.Models.Dto
 		[JsonPropertyName("user_name")]
 		public string? UserName { get; set; }
 	}
-
-	public class OrderCommentViewModel : OrderCommentDto
-	{
-		/// <summary>
-		/// Локальное состояние: новый (ещё не сохранён) или существующий.
-		/// </summary>
-		public bool IsNew { get; set; }
-		/// <summary>
-		/// Локальное состояние: редактируется ли сейчас.
-		/// </summary>
-		public bool IsEditing { get; set; }
-	}
 }

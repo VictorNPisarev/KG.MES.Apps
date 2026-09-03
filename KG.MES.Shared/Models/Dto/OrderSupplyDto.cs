@@ -25,6 +25,5 @@ namespace KG.MES.Shared.Models.Dto
 
 		[JsonPropertyName("comment")]
 		public string? Comment { get; set; }
-
 	}
 }

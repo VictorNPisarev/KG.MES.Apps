@@ -1,8 +1,7 @@
 ﻿@page "/"
 @using KG.MES.Shared.Models.Config
-@using KG.MES.Shared.Models.Dto
-
-@inject OrderViewSettings AppSettings
+@using KG.MES.Shared.Models.ViewModels
 
 @*<OrderListView TOrder="SupplyDto" Settings="@AppSettings" />*@
-<OrderListView TListItem="SupplyDto" TCardItem="OrderDto" Settings="@AppSettings" />
+<OrderListView TListItem="SupplyViewModel" LoadItems="LoadOrderViewModels" TCardItem="OrderViewModel" LoadItem="LoadOrderViewModel"
+	Settings="@AppSettings" />
