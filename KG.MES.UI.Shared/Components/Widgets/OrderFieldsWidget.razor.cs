@@ -1,5 +1,6 @@
 using KG.MES.Shared.Helpers;
 using KG.MES.Shared.Models.Config;
+using KG.MES.Shared.Models.ViewModels;
 using KG.MES.UI.Shared.Interfaces;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -14,8 +15,8 @@ public partial class OrderFieldsWidget<TOrder> : ComponentBase, ISavableWidget
 
 	[Inject] private IJSRuntime JSRuntime { get; set; } = null!;
 
-	private List<ColumnInfo> fieldInfos = new();
-	private List<ColumnSetting> fieldSettings = new();
+	private List<ColumnInfo> fieldInfos = [];
+	private List<ColumnSetting> fieldSettings = [];
 	private bool isSettingsOpen;
 
 	private string cardKey => $"fields_{typeof(TOrder).Name}";

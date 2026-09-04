@@ -1,10 +1,9 @@
 @page "/"
 @using KG.MES.Shared.Models.Config
 @using KG.MES.Shared.Models.Dto
+@using KG.MES.Shared.Models.ViewModels
 
-@inject OrderViewSettings AppSettings
-
-<OrderListView TListItem="OrderDto" TCardItem="OrderDto" Settings="@AppSettings">
+<OrderListView TListItem="OrderViewModel" LoadItems="LoadOrderViewModels" TCardItem="OrderViewModel" LoadItem="LoadOrderViewModel" Settings="@AppSettings">
 	<HeaderActions>
 		<NavLink href="/upload" class="btn btn-primary">
 			<i class="bi bi-upload"></i> Загрузить XML

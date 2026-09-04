@@ -41,16 +41,16 @@ else
 					@foreach (var s in supplies)
 					{
 						<tr>
-							<td class="supplies-material">@s.SupplyType?.DisplayName()</td>
+							<td class="supplies-material">@s.SupplyTypeName</td>
 							<td class="supplies-status">
 								<div class="d-flex align-items-center gap-1">
 									@if (EditMode)
 									{
 										<div class="dropdown" style="position: relative; display: inline-block;">
 											<span
-												class="badge @(BadgeHelper.GetBadgeClass(s.SupplyCondition?.ConditionCode) ?? "bg-light text-dark")"
+												class="badge @(BadgeHelper.GetBadgeClass(s.SupplyConditionCode) ?? "bg-light text-dark")"
 												style="cursor: pointer;" @onclick="() => ToggleDropdown(s.SupplyTypeId)">
-												@(s.SupplyCondition?.DisplayName() ?? "—")
+												@(s.SupplyConditionName ?? "—")
 												<i class="bi bi-chevron-down ms-1 small"></i>
 											</span>
 
@@ -61,7 +61,7 @@ else
 													{
 														<li>
 															<a class="dropdown-item"
-																@onclick="() => { SelectCondition(s, c.Id); CloseDropdown(s.SupplyTypeId); }"
+																@onclick="() => { SelectCondition(s, c); CloseDropdown(s.SupplyTypeId); }"
 																@onclick:preventDefault>
 																<span
 																	class="badge @BadgeHelper.GetBadgeClass(c.ConditionCode)">@c.DisplayName()</span>
@@ -77,8 +77,8 @@ else
 									}
 									else if (!string.IsNullOrEmpty(s.SupplyConditionId))
 									{
-										<span class="badge @BadgeHelper.GetBadgeClass(s.SupplyCondition?.ConditionCode)">
-											@s.SupplyCondition?.DisplayName()
+										<span class="badge @BadgeHelper.GetBadgeClass(s.SupplyConditionCode)">
+											@s.SupplyConditionName
 										</span>
 									}
 									else

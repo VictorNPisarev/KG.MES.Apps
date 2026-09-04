@@ -1,6 +1,6 @@
 @using KG.MES.Shared.Constants
 @using KG.MES.Shared.Helpers
-@using KG.MES.Shared.Models.Dto
+@using KG.MES.Shared.Models.ViewModels
 <PageTitle>Статистика рабочих мест</PageTitle>
 
 <div class="container-fluid py-4">
@@ -74,7 +74,7 @@
 					@if (selectedWorkplaceId != null)
 					{
 						<div>
-							<DynamicTable TListItem="WorkplaceHistoryDto" Items="filteredHistory" TableKey="stats_history" 
+							<DynamicTable TListItem="WorkplaceHistoryViewModel" Items="filteredHistory" TableKey="stats_history" 
 											ShowActions="true" ShowTotal="true" TotalDistinctBy="OrderNumber" AllowSorting="true">
 								<RowActions>
 									<div class="d-flex me-auto gap-2">
@@ -134,7 +134,7 @@
 							.OrderBy(w => w.ReadyDate).ToList();
 
 					<div>
-						<DynamicTable TListItem="OrderWorkplaceDto" Items="filteredOrders" TableKey="stats_orders" 
+						<DynamicTable TListItem="WorkplaceOrderViewModel" Items="filteredOrders" TableKey="stats_orders" 
 										ShowActions="true" ShowTotal="true" TotalDistinctBy="OrderNumber" AllowSorting="true">
 							<RowActions>
 								<div class="d-flex me-auto gap-2">

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using KG.MES.Shared.Models;
 using KG.MES.Shared.Models.Dto;
+using KG.MES.Shared.Models.ViewModels;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -465,18 +466,18 @@ public class ProductionApiService
 		}
 	}
 
-	public async Task<List<OrderCommentViewModel>> GetOrderCommentsAsync(Guid orderId)
+	public async Task<List<OrderCommentDto>> GetOrderCommentsAsync(Guid orderId)
 	{
 		try
 		{
 			var url = $"{BaseUrl}/orders/{orderId}/comments";
-			return await _httpClient.GetFromJsonAsync<List<OrderCommentViewModel>>(url)
-					?? new List<OrderCommentViewModel>();
+			return await _httpClient.GetFromJsonAsync<List<OrderCommentDto>>(url)
+					?? new List<OrderCommentDto>();
 		}
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Error fetching comments for order {Id}", orderId);
-			return new List<OrderCommentViewModel>();
+			return new List<OrderCommentDto>();
 		}
 	}
 
@@ -790,12 +791,12 @@ public class ProductionApiService
 		}
 	}
 
-	public async Task<OrderCommerceDto?> GetCommerceAsync(Guid orderId)
+	public async Task<CommerceOrderDto?> GetCommerceAsync(Guid orderId)
 	{
 		try
 		{
 			var url = $"{BaseUrl}/orders/{orderId}/commerce";
-			return await _httpClient.GetFromJsonAsync<OrderCommerceDto>(url);
+			return await _httpClient.GetFromJsonAsync<CommerceOrderDto>(url);
 		}
 		catch (Exception ex)
 		{
@@ -821,12 +822,12 @@ public class ProductionApiService
 		return response.IsSuccessStatusCode;
 	}
 
-	public async Task<List<OrderWorkplaceDto>> GetActiveAndPendingOrdersAsync(Guid workplaceId)
+	public async Task<List<WorkplaceOrderDto>> GetActiveAndPendingOrdersAsync(Guid workplaceId)
 	{
 		try
 		{
 			var url = $"{BaseUrl}/orders/workplaces/{workplaceId}/in-work";
-			return await _httpClient.GetFromJsonAsync<List<OrderWorkplaceDto>>(url) ?? [];
+			return await _httpClient.GetFromJsonAsync<List<WorkplaceOrderDto>>(url) ?? [];
 		}
 		catch (Exception ex)
 		{

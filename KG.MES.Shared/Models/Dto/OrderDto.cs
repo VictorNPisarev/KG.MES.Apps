@@ -1,6 +1,4 @@
 using System.Text.Json.Serialization;
-using KG.MES.Shared.Attributes;
-using KG.MES.Shared.Models.ViewModels;
 
 namespace KG.MES.Shared.Models.Dto;
 
@@ -10,52 +8,39 @@ public class OrderDto
 	public Guid Id { get; set; }
 
 	[JsonPropertyName("order_number")]
-	[Column("№ заказа", Order = 1, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" }, Sortable = true)]
 	public string OrderNumber { get; set; } = string.Empty;
 
 	[JsonPropertyName("current_status")]
-	[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name", Sortable = true)]
 	public string? CurrentStatus { get; set; }
 
-
 	[JsonPropertyName("rtm_date")]
-	[Column("Дата запуска", Order = 4, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? RtmDate { get; set; }
 
 	[JsonPropertyName("ready_date")]
-	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? ReadyDate { get; set; }
 
 	[JsonPropertyName("window_count")]
-	[Column("Окна, шт", Order = 6)]
 	public int WindowCount { get; set; }
 
 	[JsonPropertyName("window_area")]
-	[Column("Окна, м2", Order = 7, DisplayFormat = "F2")]
 	public double? WindowArea { get; set; }
 
 	[JsonPropertyName("plate_count")]
-	[Column("Щитовые, шт", Order = 8)]
 	public int PlateCount { get; set; }
 
 	[JsonPropertyName("plate_area")]
-	[Column("Щитовые, м2", Order = 9, DisplayFormat = "F2")]
 	public double? PlateArea { get; set; }
 
 	[JsonPropertyName("is_econom")]
-	[Column("Эконом", Order = 10, IsBadge = true)]
 	public bool IsEconom { get; set; }
 
 	[JsonPropertyName("is_claim")]
-	[Column("Рекламация", Order = 11, IsBadge = true)]
 	public bool IsClaim { get; set; }
 
 	[JsonPropertyName("is_only_paid")]
-	[Column("Оплачен, не запущен", Order = 12, IsBadge = true)]
 	public bool IsOnlyPaid { get; set; }
 
 	[JsonPropertyName("is_two_side_paint")]
-	[Column("2-стор. покраска", Order = 13, IsBadge = true)]
 	public bool IsTwoSidePaint { get; set; }
 
 	[JsonPropertyName("production_order_id")]
@@ -65,54 +50,11 @@ public class OrderDto
 	public string? CurrentWorkplaceId { get; set; }
 
 	[JsonPropertyName("customer_name")]
-	[Column("Контрагент", Visible = false)]
 	public string CustomerName { get; set; } = string.Empty;
 
 	[JsonPropertyName("current_workplace_name")]
 	public string? CurrentWorkplaceName { get; set; }
 
 	[JsonPropertyName("machine")]
-	[Column("Станок", Order = 12, Visible = true, IsBadge = true)]
 	public string? Machine { get; set; }
-
-	[Column("***", Order = 2, Visible = false, IconConditions = new[] { "IsClaim:Claim", 
-																		"IsEconom:Econom", 
-																		"IsOnlyPaid:Paid", 
-																		"IsTwoSidePaint:TwoSidePaint", 
-																		"IsOnlyPlate:Plate" })]
-	public string OrderFlags { get; } = string.Empty;
-
-	public bool IsOnlyPlate
-	{
-		get
-		{
-			return WindowCount == 0 && PlateCount > 0;
-		}
-	}
-}
-
-public static class OrderDtoExtension
-{
-	public static OrderViewModel ToViewModel(this OrderDto orderDto)
-	{
-		return new OrderViewModel
-		{
-			OrderNumber = orderDto.OrderNumber,
-			Status = orderDto.CurrentStatus,
-			RtmDate = orderDto.RtmDate,
-			ReadyDate = orderDto.ReadyDate,
-			WindowCount = orderDto.WindowCount,
-			WindowArea = orderDto.WindowArea,
-			PlateCount = orderDto.PlateCount,
-			PlateArea = orderDto.PlateArea,
-			IsEconom = orderDto.IsEconom,
-			IsClaim = orderDto.IsClaim,
-			IsOnlyPaid = orderDto.IsOnlyPaid,
-			CustomerName = orderDto.CustomerName,
-			Machine = orderDto.Machine
-		};
-	}
-
-	public static List<OrderViewModel> ToViewModels(this IEnumerable<OrderDto> dtos)
-		=> [.. dtos.Select(ToViewModel)];
 }
