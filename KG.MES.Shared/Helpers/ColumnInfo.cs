@@ -13,4 +13,5 @@ public class ColumnInfo
 	public string[]? IconConditions { get; set; }
 	public bool ShowTotal { get; set; }
 	public bool Sortable { get; set; }
+	public bool Filterable { get; set; }
 }

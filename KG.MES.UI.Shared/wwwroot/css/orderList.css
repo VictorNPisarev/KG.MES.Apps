@@ -93,3 +93,9 @@
 	font-size: 0.8rem;
 	line-height: 1;
 }
+
+.filter-group {
+	background: #f8f9fa93 !important;
+	border-radius: 4px;
+	padding: 4px 8px;
+}

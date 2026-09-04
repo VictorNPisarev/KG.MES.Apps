@@ -96,6 +96,66 @@
 				<i class="bi bi-floppy"></i>
 			</button>
 		</div>
+		@* Фильтр по полям *@
+		<div class="col-md-1">
+			<div class="position-relative">
+				<button class="btn btn-outline-secondary"
+						@onclick="ToggleAdvancedFilter" title="Расширенный фильтр" type="button">
+					<i class="bi bi-funnel"></i>
+					@if (HasAdvancedFilters)
+					{
+						<i class="bi bi-check-lg text-success ms-1"></i>
+					}
+				</button>
+
+				@if (showAdvancedFilter)
+				{
+					<div class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 999; background: transparent;"
+						@onclick="CloseAdvancedFilter"></div>
+
+					<div class="position-absolute top-100 start-0 bg-white border rounded shadow-sm p-2"
+						style="min-width: 200px; max-height: 300px; overflow-y: auto; z-index: 1000;">
+						@foreach (var group in advancedFilterGroups)
+						{
+							<div class="mb-2">
+								<button
+									class="btn btn-link p-0 text-dark text-decoration-none d-flex align-items-center gap-1 filter-group"
+									@onclick="() => ToggleAdvancedGroup(group.Key)">
+									<i class="bi @(expandedGroups.Contains(group.Key) ? "bi-dash" : "bi-plus")"></i>
+									<span>@group.Key</span>
+								</button>
+
+								@if (expandedGroups.Contains(group.Key))
+								{
+									<div class="ms-3 mt-1">
+										@foreach (var value in group.Value)
+										{
+											<div class="form-check">
+												<input type="checkbox" class="form-check-input"
+													id="adv-@group.Key-@value"
+													checked="@IsAdvancedFilterSelected(group.Key, value)"
+													@onchange="(e) => ToggleAdvancedFilterValue(group.Key, value, (bool)(e.Value ?? false))" />
+												<label class="form-check-label" for="adv-@group.Key-@value">
+													@value
+												</label>
+											</div>
+										}
+									</div>
+								}
+							</div>
+						}
+
+						@if (HasAdvancedFilters)
+						{
+							<hr />
+							<button class="btn btn-sm btn-outline-secondary w-100" @onclick="ClearAdvancedFilters">
+								<i class="bi bi-x-circle me-1"></i> Сбросить
+							</button>
+						}
+					</div>
+				}
+			</div>
+		</div>
 	</div>
 
 	<!-- Таблица -->
@@ -108,13 +168,15 @@
 			<p class="text-muted mt-2">Загружаем заказы...</p>
 		</div>
 	}
-	else if (orders.Data.Any())
+	@*else if (orders.Data.Any())*@
+	else if (FilteredItems.Any())
 	{
 		var visibleData = BuildVisibleColumns();
 		<div class="row g-0 d-flex w-100" style="flex-wrap: nowrap;">
 			<div class="@(useSplitView && selectedOrder != null ? "resizable-panel" : "table-responsive mt-3")"
 					id="split-panel" style="@(useSplitView && selectedOrder != null ? "width: " + savedPanelWidth : "width: 100%")">
-				<DynamicTable TListItem="TListItem" Items="orders.Data" ColumnInfos="columnInfos"
+				@*<DynamicTable TListItem="TListItem" Items="orders.Data" ColumnInfos="columnInfos"*@
+				<DynamicTable TListItem="TListItem" Items="FilteredItems" ColumnInfos="columnInfos"
 					ColumnSettings="columnSettings" TableKey="@tableKey" ShowActions="true"
 					OnSortChanged="HandleSortChanged" AllowSorting="true">
 					<RowActions>

@@ -61,7 +61,12 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 	private SavedFilter? savedFilter;
 	private ElementReference pageContainer;
 	private double? scrollYBeforeModal;
+	private bool showAdvancedFilter;
+	private Dictionary<string, HashSet<string>> selectedFilters = [];
+	private HashSet<string> expandedGroups = [];
 
+	private bool HasActiveFilters => selectedFilters.Values.Any(v => v.Count > 0);
+	private List<ColumnInfo> filterableColumns => columnInfos.Where(c => c.Filterable).ToList();
 
 	private IconInfo testIcon = new IconInfo
 	{
@@ -503,6 +508,116 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		sortBy = sort.SortBy;
 		sortOrder = sort.Ascending ? "asc" : "desc";
 		await LoadOrders();
+	}
+
+	// Фильтруемые поля из ColumnInfo
+	private Dictionary<string, List<string>> advancedFilterGroups => columnInfos
+		.Where(c => c.Filterable)
+		.ToDictionary(
+			c => c.Title,
+			c => orders.Data.Select(item =>
+			{
+				var prop = typeof(TListItem).GetProperty(c.PropertyName);
+				var value = prop?.GetValue(item);
+				return value switch
+				{
+					bool b => b ? "Да" : "Нет",
+					null => "—",
+					_ => value.ToString() ?? "—"
+				};
+			}).Distinct().ToList()
+		);
+
+	private bool HasAdvancedFilters => selectedFilters.Values.Any(v => v.Count > 0);
+	private void ToggleAdvancedFilter() => showAdvancedFilter = !showAdvancedFilter;
+	private void CloseAdvancedFilter() => showAdvancedFilter = false;
+
+	private void ToggleAdvancedGroup(string group)
+	{
+		if (expandedGroups.Contains(group))
+			expandedGroups.Remove(group);
+		else
+			expandedGroups.Add(group);
+	}
+
+	private void ToggleAdvancedFilterValue(string group, string value, bool selected)
+	{
+		if (!selectedFilters.ContainsKey(group))
+			selectedFilters[group] = new HashSet<string>();
+
+		if (selected)
+			selectedFilters[group].Add(value);
+		else
+			selectedFilters[group].Remove(value);
+
+		StateHasChanged();
+	}
+
+	private bool IsAdvancedFilterSelected(string group, string value) =>
+		selectedFilters.TryGetValue(group, out var values) && values.Contains(value);
+
+
+	// Уникальные значения для каждой фильтруемой колонки
+	private Dictionary<string, List<string>> GetFilterValues()
+	{
+		var result = new Dictionary<string, List<string>>();
+
+		foreach (var col in filterableColumns)
+		{
+			var values = orders.Data.Select(item =>
+			{
+				var prop = typeof(TListItem).GetProperty(col.PropertyName);
+				var value = prop?.GetValue(item);
+				return value switch
+				{
+					bool b => b ? "Да" : "Нет",
+					null => "—",
+					_ => value.ToString() ?? "—"
+				};
+			}).Distinct().OrderBy(v => v).ToList();
+
+			result[col.Title] = values;
+		}
+
+		return result;
+	}
+
+	// Отфильтрованные элементы
+	private IEnumerable<TListItem> FilteredItems
+	{
+		get
+		{
+			var filtered = orders.Data;
+
+			foreach (var filter in selectedFilters.Where(f => f.Value.Count > 0))
+			{
+				var col = columnInfos.FirstOrDefault(c => c.Title == filter.Key);
+				if (col == null) continue;
+
+				var prop = typeof(TListItem).GetProperty(col.PropertyName);
+				if (prop == null) continue;
+
+				filtered = filtered.Where(item =>
+				{
+					var value = prop.GetValue(item);
+					var stringValue = value switch
+					{
+						bool b => b ? "Да" : "Нет",
+						null => "—",
+						_ => value.ToString() ?? "—"
+					};
+					return filter.Value.Contains(stringValue);
+				}).ToList();
+			}
+
+			return filtered;
+		}
+	}
+
+	private void ClearAdvancedFilters()
+	{
+		selectedFilters.Clear();
+		StateHasChanged();
 	}
 
 	public void Dispose()

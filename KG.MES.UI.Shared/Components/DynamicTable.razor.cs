@@ -25,7 +25,6 @@ public partial class DynamicTable<TListItem> : ComponentBase
 	private bool isColumnsOpen;
 	private string? sortBy;
 	private bool sortAscending = true;
-
 	private bool isResizeMode;
 
 	protected override async Task OnInitializedAsync()

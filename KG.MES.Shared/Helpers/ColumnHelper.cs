@@ -27,7 +27,8 @@ public static class ColumnHelper
 				DisplayGroup = x.Attr.DisplayGroup,
 				IconConditions = x.Attr.IconConditions,
 				ShowTotal = x.Attr.ShowTotal,
-				Sortable = x.Attr.Sortable
+				Sortable = x.Attr.Sortable,
+				Filterable = x.Attr.Filterable
 			})
 			.ToList();
 	}
