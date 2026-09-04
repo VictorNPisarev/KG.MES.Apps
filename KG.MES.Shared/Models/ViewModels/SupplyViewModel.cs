@@ -8,16 +8,16 @@ public class SupplyViewModel
 {
 	public Guid Id { get; set; }
 
-	[Column("№ заказа", Order = 0, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" })]
+	[Column("№ заказа", Order = 0, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" }, Sortable = true)]
 	public string OrderNumber { get; set; } = string.Empty;
 
-	[Column("Дата запуска", Visible = false, DisplayFormat = "dd.MM.yyyy")]
+	[Column("Дата запуска", Visible = false, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? RtmDate { get; set; }
 
-	[Column("Готовность", Order = 1, DisplayFormat = "dd.MM.yyyy")]
+	[Column("Готовность", Order = 1, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? ReadyDate { get; set; }
 
-	[Column("Станок", Order = 2, IsBadge = true)]
+	[Column("Станок", Order = 2, IsBadge = true, Sortable = true)]
 	public string? Machine { get; set; }
 
 	public Guid ProductionOrderId { get; set; }

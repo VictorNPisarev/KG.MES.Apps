@@ -8,10 +8,10 @@ public class SalesOrderViewModel
 {
 	public Guid Id { get; set; }
 
-	[Column("№ заказа", Order = 1, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" })]
+	[Column("№ заказа", Order = 1, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" }, Sortable = true)]
 	public string OrderNumber { get; set; } = string.Empty;
 
-	[Column("Дата готовности", Order = 2, DisplayFormat = "dd.MM.yyyy")]
+	[Column("Дата готовности", Order = 2, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? ReadyDate { get; set; }
 
 	[Column("Окна, шт", Order = 6)]
@@ -35,7 +35,7 @@ public class SalesOrderViewModel
 	[Column("Оплачен, не запущен", Order = 12, IsBadge = true)]
 	public bool IsOnlyPaid { get; set; }
 
-	[Column("Дата запуска", Visible = false, DisplayFormat = "dd.MM.yyyy")]
+	[Column("Дата запуска", Visible = false, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime StartDate { get; set; }
 
 	public Guid? ProductionOrderId { get; set; }
@@ -47,12 +47,12 @@ public class SalesOrderViewModel
 
 	public Guid? ManagerId { get; set; }
 
-	[Column("Менеджер", Order = 4)]
+	[Column("Менеджер", Order = 4, Sortable = true)]
 	public string? ManagerName { get; set; }
 
 	public Guid? CustomerId { get; set; }
 
-	[Column("Контрагент", Order = 5)]
+	[Column("Контрагент", Order = 5, Sortable = true)]
 	public string? CustomerName { get; set; }
 
 	[Column("Стоимость", Order = 6)]

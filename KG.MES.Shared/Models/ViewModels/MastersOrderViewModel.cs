@@ -8,16 +8,16 @@ public class MastersOrderViewModel
 {
 	public Guid Id { get; set; }
 
-	[Column("№ заказа", Order = 1, IconConditions = new[] { "IsClaim:Claim", "IsOnlyPlate:Plate", "IsEconom:Econom", "IsTwoSidePaint:TwoSidePaint" })]
+	[Column("№ заказа", Order = 1, IconConditions = new[] { "IsClaim:Claim", "IsOnlyPlate:Plate", "IsEconom:Econom", "IsTwoSidePaint:TwoSidePaint" }, Sortable = true)]
 	public string OrderNumber { get; set; } = string.Empty;
 
-	[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name")]
+	[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name", Sortable = true)]
 	public string? CurrentStatus { get; set; }
 
-	[Column("Дата запуска", Order = 4, DisplayFormat = "dd.MM.yyyy")]
+	[Column("Дата запуска", Order = 4, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? RtmDate { get; set; }
 
-	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy")]
+	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? ReadyDate { get; set; }
 
 	[Column("Окна, шт", Order = 6)]
@@ -53,7 +53,7 @@ public class MastersOrderViewModel
 
 	public string? CurrentWorkplaceName { get; set; }
 
-	[Column("Станок", Order = 12, Visible = true, IsBadge = true)]
+	[Column("Станок", Order = 12, Visible = true, IsBadge = true, Sortable = true)]
 	public string? Machine { get; set; }
 
 	[Column("***", Order = 2, Visible = false, IconConditions = new[] { "IsClaim:Claim",
