@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using KG.MES.Shared.Attributes;
 
 namespace KG.MES.Shared.Models.Dto;
 

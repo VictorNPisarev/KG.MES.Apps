@@ -1,4 +1,5 @@
 using KG.MES.Shared.Models.Dto;
+using KG.MES.Shared.Models.ViewModels;
 using Microsoft.Extensions.Logging;
 
 namespace KG.MES.Shared.Services;

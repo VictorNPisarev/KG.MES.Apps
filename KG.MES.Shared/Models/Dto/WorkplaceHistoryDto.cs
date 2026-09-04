@@ -1,12 +1,10 @@
 using System.Text.Json.Serialization;
-using KG.MES.Shared.Attributes;
 
 namespace KG.MES.Shared.Models.Dto;
 
 public class WorkplaceHistoryDto
 {
 	[JsonPropertyName("operation_time")]
-	[Column("Время", Order = 4, DisplayFormat = "dd.MM.yyyy HH:mm", Sortable = true)]
 	public DateTime OperationTime { get; set; }
 
 	[JsonPropertyName("operation_type")]

@@ -1,9 +1,8 @@
-using System.Text.Json.Serialization;
 using KG.MES.Shared.Attributes;
-using KG.MES.Shared.Models.ViewModels;
+using KG.MES.Shared.Models.Dto;
 using Mapster;
 
-namespace KG.MES.Shared.Models.Dto;
+namespace KG.MES.Shared.Models.ViewModels;
 
 public class SupplyViewModel
 {

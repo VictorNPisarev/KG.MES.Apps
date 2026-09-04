@@ -1,7 +1,8 @@
 using KG.MES.Shared.Attributes;
+using KG.MES.Shared.Models.Dto;
 using Mapster;
 
-namespace KG.MES.Shared.Models.Dto;
+namespace KG.MES.Shared.Models.ViewModels;
 
 public class WorkplaceHistoryViewModel
 {
@@ -67,14 +68,6 @@ public class WorkplaceHistoryViewModel
 
 	public bool? IsCompleteTransfer { get; set; }
 
-
-	public WorkplaceHistoryViewModel() { }
-
-	public WorkplaceHistoryViewModel(WorkplaceHistoryDto dto)
-	{
-		dto.Adapt(this);
-	}
-
 	/// <summary>
 	/// Индикатор переходящих заказов. Если завершенный заказ был взят в работу раньше выбранного периода, то возвращаю -1.
 	/// Заказ взятый в работу, но не завершенный или завершенный позже выбранного периода - возвращяю 1.
@@ -111,5 +104,12 @@ public class WorkplaceHistoryViewModel
 		}
 
 		return 0;
+	}
+
+	public WorkplaceHistoryViewModel() { }
+
+	public WorkplaceHistoryViewModel(WorkplaceHistoryDto dto)
+	{
+		dto.Adapt(this);
 	}
 }

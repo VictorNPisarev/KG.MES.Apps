@@ -338,14 +338,7 @@ public partial class OrderDashboard<TOrder> : ComponentBase
 	{
 		if (e.OrderId == OrderId)
 		{
-			//order = await ApiService.GetOrderByIdAsync<TOrder>(Settings.CardEndpoint, OrderId);
-			var orderDto = await ApiService.GetOrderByIdAsync<TOrder>(Settings.CardEndpoint, OrderId);
-
-			if(orderDto != null)
-			{
-				orderDto.Adapt(order);
-				await InvokeAsync(StateHasChanged);
-			}
+			await LoadOrder();
 		}
 	}
 

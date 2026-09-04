@@ -1,8 +1,7 @@
-using System.Threading.Tasks;
-using KG.MES.Shared.Helpers;
 using KG.MES.Shared.Models.Dto;
-using KG.MES.Shared.Services;
 using Mapster;
+
+namespace KG.MES.Shared.Models.ViewModels;
 
 public class OrderSupplyViewModel
 {

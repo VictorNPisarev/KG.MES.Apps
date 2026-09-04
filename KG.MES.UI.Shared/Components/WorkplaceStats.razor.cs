@@ -4,6 +4,8 @@ using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Services;
 using Microsoft.AspNetCore.Components;
 using KG.MES.Shared.Extensions;
+using Mapster;
+using KG.MES.Shared.Models.ViewModels;
 
 namespace KG.MES.UI.Shared.Components;
 
@@ -15,15 +17,14 @@ public partial class WorkplaceStats
 	private List<WorkplaceDto> workplaces = [];
 	private WorkplaceStatsDto? stats;
 	private List<BlockedOrderDto> blocks = [];
-	private List<WorkplaceHistoryDto> history = [];
-	private List<WorkplaceHistoryViewModel> historyViewModel = [];
+	private List<WorkplaceHistoryViewModel> workplaceHistory = [];
 	private Guid? selectedWorkplaceId;
 	private WorkplaceDto? selectedWorkplace;
 	private DateTime dateFrom = DateTime.Now.AddDays(-7);
 	private DateTime dateTo = DateTime.Now;
 	private bool showDateFilter;
 	private string activeTab = "history";
-	private List<OrderWorkplaceDto> workplaceOrders = [];
+	private List<WorkplaceOrderViewModel> workplaceOrders = [];
 	private string orderFilter = "all";
 	private string historyFilter = "all";
 
@@ -51,9 +52,14 @@ public partial class WorkplaceStats
 		selectedWorkplaceId = id;
 		stats = await ApiService.GetWorkplaceStatsAsync(id);
 		blocks = await ApiService.GetWorkplaceBlocksAsync(id);
-		history = await ApiService.GetWorkplaceHistoryAsync(id, dateFrom, dateTo, 1000);
-		historyViewModel = new List<WorkplaceHistoryViewModel>().CreateWithTransferIndicators(history, dateFrom, dateTo);
-		workplaceOrders = await ApiService.GetActiveAndPendingOrdersAsync(id);
+		
+		var historyDto = await ApiService.GetWorkplaceHistoryAsync(id, dateFrom, dateTo, 1000);
+		workplaceHistory = new List<WorkplaceHistoryViewModel>().CreateWithTransferIndicators(historyDto, dateFrom, dateTo);
+		
+		var workplaceOrdersDto = await ApiService.GetActiveAndPendingOrdersAsync(id);
+		workplaceOrders = workplaceOrdersDto.Select(wp => wp.Adapt<WorkplaceOrderViewModel>()).ToList();
+
+
 		StateHasChanged();
 	}
 
@@ -62,8 +68,7 @@ public partial class WorkplaceStats
 		selectedWorkplaceId = null;
 		stats = null;
 		blocks.Clear();
-		history.Clear();
-		historyViewModel.Clear();
+		workplaceHistory.Clear();
 		workplaceOrders.Clear();
 		StateHasChanged();
 	}
@@ -74,10 +79,9 @@ public partial class WorkplaceStats
 
 		if (selectedWorkplaceId == null) return;
 		
-		history = await ApiService.GetWorkplaceHistoryAsync(
-			(Guid)selectedWorkplaceId, dateFrom, dateTo, 1000);
+		var historyDto = await ApiService.GetWorkplaceHistoryAsync((Guid)selectedWorkplaceId, dateFrom, dateTo, 1000);
 
-		historyViewModel = new List<WorkplaceHistoryViewModel>().CreateWithTransferIndicators(history, dateFrom, dateTo);
+		workplaceHistory = new List<WorkplaceHistoryViewModel>().CreateWithTransferIndicators(historyDto, dateFrom, dateTo);
 
 		StateHasChanged();
 	}
@@ -102,8 +106,8 @@ public partial class WorkplaceStats
 	//		: history.Where(h => h.OperationType == historyFilter).ToList();
 	private List<WorkplaceHistoryViewModel> filteredHistory =>
 		historyFilter == "all"
-			? historyViewModel
-			: historyViewModel.Where(h => h.OperationType == historyFilter).ToList();
+			? workplaceHistory
+			: workplaceHistory.Where(h => h.OperationType == historyFilter).ToList();
 
 	//private List<WorkplaceHistoryDto> distinctHistory => filteredHistory
 	//	.GroupBy(h => h.OrderNumber)
@@ -119,14 +123,14 @@ public partial class WorkplaceStats
 	private int TotalHistoryPlates => distinctHistory.Sum(h => h.PlateCount);
 	private decimal TotalHistoryPlateArea => distinctHistory.Sum(h => h.PlateArea ?? 0);
 
-	private List<OrderWorkplaceDto> filteredOrders => orderFilter == "all"
+	private List<WorkplaceOrderViewModel> filteredOrders => orderFilter == "all"
 		? workplaceOrders
 		: workplaceOrders
 			.Where(o => o.Status.ToLower() == orderFilter)
 			.OrderBy(w => w.ReadyDate)
 			.ToList();
 
-	private List<OrderWorkplaceDto> distinctOrders => filteredOrders
+	private List<WorkplaceOrderViewModel> distinctOrders => filteredOrders
 		.GroupBy(h => h.OrderNumber)
 		.Select(g => g.First())
 		.ToList();
