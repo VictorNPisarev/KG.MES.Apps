@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Components;
-using KG.MES.Shared.Models.Dto;
+using KG.MES.Shared.Models.ViewModels;
 using KG.MES.Shared.Services;
 using KG.MES.UI.Shared.Interfaces;
 using KG.MES.Shared.Interfaces;
 using KG.MES.Shared.Events;
 using Microsoft.Extensions.Logging;
+using KG.MES.Shared.Models.Dto;
+using Mapster;
 
 namespace KG.MES.UI.Shared.Components.Widgets;
 
@@ -48,22 +50,21 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 
 	private async Task LoadSupplies()
 	{
-		var supplyDtos = await ApiService.GetOrderSuppliesAsync(OrderId);
-		originalSupplies = supplyDtos.Select(s => new OrderSupplyViewModel(s, SupplyService)).ToList();
-		supplies = supplyDtos.Select(s => new OrderSupplyViewModel(s, SupplyService)).ToList();
+		supplies = await SupplyService.GetOrderSuppliesAsync(OrderId);
+		originalSupplies = supplies.Select(s => s.Adapt<OrderSupplyViewModel>()).ToList();
 
 		StateHasChanged();
 	}
 
 	private void EnterEditMode()
 	{
-		backup = supplies.Select(s => new OrderSupplyViewModel(s.ToDto(), SupplyService)).ToList();
+		backup = supplies.Select(s => s.Adapt<OrderSupplyViewModel>()).ToList();
 		EditMode = true;
 	}
 
 	private void CancelEdit()
 	{
-		supplies = backup.Select(b => new OrderSupplyViewModel(b.ToDto(), SupplyService)).ToList();
+		supplies = backup.ToList();
 		backup.Clear();
 		EditMode = false;
 		showComments.Clear();
@@ -71,9 +72,9 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 		openDropdowns.Clear();
 	}
 
-	private void SelectCondition(OrderSupplyViewModel supply, string conditionId)
+	private void SelectCondition(OrderSupplyViewModel supply, SupplyConditionDto conditionDto)
 	{
-		supply.SetCondition(conditionId);
+		supply.SetCondition(conditionDto.Id, conditionDto);
 	}
 
 	private void ToggleDropdown(string key)
@@ -162,9 +163,8 @@ public partial class OrderSuppliesWidget : ComponentBase, ISavableWidget
 		if (success)
 		{
 			ClearState();
-			var supplyDtos = await ApiService.GetOrderSuppliesAsync(OrderId);
-			originalSupplies = supplyDtos.Select(s => new OrderSupplyViewModel(s, SupplyService)).ToList(); 
-			supplies = supplyDtos.Select(s => new OrderSupplyViewModel(s, SupplyService)).ToList();
+			supplies = await SupplyService.GetOrderSuppliesAsync(OrderId);
+			originalSupplies = supplies.Select(s => s.Adapt<OrderSupplyViewModel>()).ToList(); 
 
 
 			// Публикую событие

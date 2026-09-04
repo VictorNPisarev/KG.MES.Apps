@@ -1,3 +1,5 @@
+namespace KG.MES.Shared.Models.Dto;
+
 public class CalculateReadyDateDto
 {
 	public DateTime StartDate { get; set; }

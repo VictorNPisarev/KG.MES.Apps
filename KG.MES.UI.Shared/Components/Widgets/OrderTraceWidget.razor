@@ -1,5 +1,5 @@
 @using KG.MES.Shared.Helpers
-@using KG.MES.Shared.Models.Dto
+@using KG.MES.Shared.Models.ViewModels
 @using KG.MES.Shared.Services
 
 @if (isLoading)
@@ -34,7 +34,7 @@ else if (orderTrace?.WorkplaceTraces != null && orderTrace.WorkplaceTraces.Any()
 		<div>
 			<table class="trace-table">
 				<tbody>
-					@foreach (var wp in orderTrace.WorkplaceTraces)
+					@foreach (WorkplaceTraceViewModel wp in orderTrace.WorkplaceTraces)
 					{
 						<tr>
 							<td class="trace-workplace">@wp.WorkplaceName</td>
@@ -73,27 +73,6 @@ else if (orderTrace?.WorkplaceTraces != null && orderTrace.WorkplaceTraces.Any()
 					}
 				</tbody>
 			</table>
-			@*@if (EditMode)
-			{
-				<div class="d-flex gap-2 mt-3 pt-2 border-top">
-					<button class="btn btn-sm btn-outline-success" @onclick="CompleteOrder"
-						disabled="@(isCompleting || isDeparturing)">
-						@if (isCompleting)
-						{
-							<span class="spinner-border spinner-border-sm me-1"></span>
-						}
-						Готов
-					</button>
-					<button class="btn btn-sm btn-outline-dark" @onclick="DepartureOrder"
-						disabled="@(isCompleting || isDeparturing)">
-						@if (isDeparturing)
-						{
-							<span class="spinner-border spinner-border-sm me-1"></span>
-						}
-						Отгружен
-					</button>
-				</div>
-			}*@
 		</div>
 	</div>
 }

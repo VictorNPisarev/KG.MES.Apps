@@ -28,15 +28,6 @@
 
 	<!-- Фильтры -->
 	<div class="row mt-4 g-2">
-		@*<div class="col-md-2">
-			<select class="form-select" @bind="selectedWorkplaceId">
-				<option value="">Все участки</option>
-				@foreach (var workplace in workplaces)
-				{
-					<option value="@workplace.Id">@workplace.Name</option>
-				}
-			</select>
-		</div>*@
 		<div class="col-md-2">
 			<div style="position: relative;">
 				<button class="form-control text-start d-flex justify-content-between align-items-center"
@@ -163,93 +154,6 @@
 					</RowTemplate>
 				</DynamicTable>
 
-				@*<table class="table table-hover">
-					<thead class="table-light">
-						<tr>
-							@foreach (var col in visibleData)
-							{
-								<th style="@(col.Setting.Width > 0 ? $"width: {col.Setting.Width}px;" : "")">
-									@col.Info.Title
-								</th>
-							}
-							<th style="width: 40px;"></th>
-						</tr>
-					</thead>
-					<tbody>
-						@foreach (var order in orders.Data)
-						{
-							<tr>
-								@foreach (var col in visibleData)
-								{
-									<td>
-										@if(order != null)
-										{
-											@if (col.Info.IsBadge)
-											{
-												var prop = order.GetType().GetProperty(col.Info.BadgeProperty ?? col.Info.PropertyName);
-												var value = prop?.GetValue(order);
-
-												<span class="badge @BadgeHelper.GetBadgeClass(value?.ToString())">
-													@BadgeHelper.GetFormattedBadgeValue(order, col.Info)
-												</span>
-											}
-											else
-											{
-												@if (col.Info.IconConditions?.Length > 0)
-												{
-													var icons = ColumnHelper.GetIcons(order, col.Info.IconConditions);
-													foreach (var icon in icons)
-													{
-														<i class="@icon.Class @icon.Css fs-6 me-1" title="@icon.Title"></i>
-													}
-												}
-												@ColumnHelper.GetFormattedValue(order, col.Info)
-											}
-											@if (!string.IsNullOrEmpty(col.Info.CommentField))
-											{
-													// Находим колонку комментария
-												var commentCol = visibleData.Any(c => c.Info.PropertyName == col.Info.CommentField);
-												
-												if (!commentCol)
-												{
-													var comment = order.GetType().GetProperty(col.Info.CommentField)?.GetValue(order)?.ToString();
-													if (!string.IsNullOrEmpty(comment))
-													{
-														<i class="bi bi-chat-left-text text-primary ms-1 small" 
-														title="@comment" 
-														style="cursor: help;"></i>
-													}
-												}
-											}
-										}
-									</td>
-								}
-								<td>
-									<div class="d-flex flex-row gap-2">
-										<button class="btn btn-sm btn-outline-primary"
-												@onclick="() => OpenOrder(order!)">
-											<i class="bi bi-eye"></i>
-										</button>
-										@if (Settings.CanEdit)
-										{
-											<button class="btn btn-sm btn-outline-success"
-												@onclick="() => EditOrder(order!)" title="Редактировать">
-												<i class="bi bi-pencil"></i>
-											</button>
-										}
-										@if (Settings.CanDelete)
-										{
-											<button class="btn btn-sm btn-outline-danger"
-												@onclick="() => DeleteOrder(order!)" title="Удалить">
-												<i class="bi bi-trash"></i>
-											</button>
-										}
-									</div>
-								</td>
-							</tr>
-						}
-					</tbody>
-				</table>*@
 			</div>
 			@if (useSplitView && selectedOrder != null)
 			{
@@ -269,9 +173,8 @@
 							</h5>
 							<button class="btn-close" @onclick="CloseOrder"></button>
 						</div>
-						<OrderDashboard @ref="dashboardRef" TOrder="TCardItem" OrderId="@GetOrderId(selectedOrder!)"
-							Settings="@Settings" OnClose="CloseOrder" ViewMode="DashboardViewMode.Tabs"
-							@key="@GetOrderId(selectedOrder)" />
+						<OrderDashboard @ref="dashboardRef" TOrder="TCardItem" LoadItem="LoadItem" OrderId="@GetOrderId(selectedOrder!)" 
+							Settings="@Settings" OnClose="CloseOrder" ViewMode="DashboardViewMode.Tabs" @key="@GetOrderId(selectedOrder)" />
 					</div>
 				</div>
 			}
@@ -359,9 +262,8 @@
 					<button type="button" class="btn-close" @onclick="() => dashboardRef!.CloseOrder()"></button>
 				</div>
 				<div class="modal-body">
-					<OrderDashboard @ref="dashboardRef" TOrder="TCardItem" OrderId="@GetOrderId(selectedOrder!)" 
-									Settings="@Settings"
-									OnClose="CloseOrder" />
+					<OrderDashboard @ref="dashboardRef" TOrder="TCardItem" LoadItem="LoadItem"
+						OrderId="@GetOrderId(selectedOrder!)" Settings="@Settings" OnClose="CloseOrder" />
 				</div>
 			</div>
 		</div>
