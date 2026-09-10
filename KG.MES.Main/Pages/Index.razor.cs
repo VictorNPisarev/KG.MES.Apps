@@ -16,10 +16,9 @@ public partial class Index
 	private string Endpoint => AppSettings.ListEndpoint;
 	private string CardEndpoint => AppSettings.CardEndpoint;
 
-
 	private async Task<PaginatedResponse<OrderViewModel>> LoadOrderViewModels(
 		Guid? workplaceId, Guid[]? workplaceIds, string? orderNumber,
-		int currentPage, int pageSize, string? sortBy, string? sortOrder)
+		int currentPage, int pageSize, string? sortBy, string? sortOrder, List<FilterCondition> filters)
 	{
 		var orders = await ApiService.GetOrdersAsync<OrderDto>(
 			endpoint: Endpoint,
@@ -29,7 +28,8 @@ public partial class Index
 			page: currentPage,
 			limit: pageSize,
 			sortBy: sortBy,
-			sortOrder: sortOrder
+			sortOrder: sortOrder,
+			filters : filters
 		);
 
 		return new PaginatedResponse<OrderViewModel>

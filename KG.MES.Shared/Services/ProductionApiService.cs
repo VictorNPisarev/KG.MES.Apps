@@ -229,7 +229,8 @@ public class ProductionApiService
 		int page = 1,
 		int limit = 50,
 		string? sortBy = null,
-		string? sortOrder = null)
+		string? sortOrder = null,
+		List<FilterCondition>? filters = null)
 	{
 		var queryParams = new Dictionary<string, string>
 		{
@@ -251,6 +252,15 @@ public class ProductionApiService
 
 		if (!string.IsNullOrEmpty(sortOrder))
 			queryParams["sortOrder"] = sortOrder;
+
+		if (filters?.Count > 0)
+		{
+			foreach (var filter in filters)
+			{
+				var filterJson = JsonSerializer.Serialize(filter);
+				queryParams[$"filter[{filter.Field}]"] = filterJson;
+			}
+		}
 
 		var query = string.Join("&", queryParams.Select(kv => $"{kv.Key}={kv.Value}"));
 

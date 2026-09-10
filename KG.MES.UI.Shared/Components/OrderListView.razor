@@ -1,5 +1,6 @@
 @using KG.MES.Shared.Helpers
 @using KG.MES.UI.Shared.Enums
+@typeparam TDto
 @typeparam TListItem
 @typeparam TCardItem
 
@@ -74,8 +75,9 @@
 				   @onkeyup="OnSearchKeyUp" />
 		</div>
 		<div class="col-md-2 d-flex gap-2">
-			<button class="btn btn-primary w-100" @onclick="ApplyFilters">
-				<i class="bi bi-search"></i> Найти
+			<button class="btn btn-primary w-100 btn-nowrap" @onclick="ApplyFilters">
+				<i class="bi bi-search"></i>
+				<span class="btn-text">Найти</span>
 			</button>
 			@* Кнопка Сброс/Восстановить *@
 			@if (savedFilter != null && !IsFilterSaved())
@@ -95,17 +97,16 @@
 				title="Сохранить фильтр" disabled="@IsFilterSaved()">
 				<i class="bi bi-floppy"></i>
 			</button>
-		</div>
+
 		@* Фильтр по полям *@
-		<div class="col-md-1">
 			<div class="position-relative">
 				<button class="btn btn-outline-secondary"
 						@onclick="ToggleAdvancedFilter" title="Расширенный фильтр" type="button">
-					<i class="bi bi-funnel"></i>
-					@if (HasAdvancedFilters)
+					<i class=@(HasAdvancedFilters ? "bi bi-funnel-fill filter-icon-active" : "bi bi-funnel")></i>
+					@*@if (HasAdvancedFilters)
 					{
 						<i class="bi bi-check-lg text-success ms-1"></i>
-					}
+					}*@
 				</button>
 
 				@if (showAdvancedFilter)
@@ -175,8 +176,8 @@
 		<div class="row g-0 d-flex w-100" style="flex-wrap: nowrap;">
 			<div class="@(useSplitView && selectedOrder != null ? "resizable-panel" : "table-responsive mt-3")"
 					id="split-panel" style="@(useSplitView && selectedOrder != null ? "width: " + savedPanelWidth : "width: 100%")">
-				@*<DynamicTable TListItem="TListItem" Items="orders.Data" ColumnInfos="columnInfos"*@
-				<DynamicTable TListItem="TListItem" Items="FilteredItems" ColumnInfos="columnInfos"
+				@*<DynamicTable TListItem="TListItem" Items="FilteredItems" ColumnInfos="columnInfos"*@
+				<DynamicTable TListItem="TListItem" Items="orders.Data" ColumnInfos="columnInfos"
 					ColumnSettings="columnSettings" TableKey="@tableKey" ShowActions="true"
 					OnSortChanged="HandleSortChanged" AllowSorting="true">
 					<RowActions>

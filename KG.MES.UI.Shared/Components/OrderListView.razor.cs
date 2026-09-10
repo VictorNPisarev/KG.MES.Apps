@@ -10,9 +10,13 @@ using System.Text.Json;
 using KG.MES.Shared.Models;
 using KG.MES.Shared.Events;
 using KG.MES.Shared.Interfaces;
+using KG.MES.Shared.Constants;
+using System.Reflection;
+using System.Text.Json.Serialization;
 
 namespace KG.MES.UI.Shared.Components;
-public partial class OrderListView<TListItem, TCardItem> : ComponentBase
+public partial class OrderListView<TDto, TListItem, TCardItem> : ComponentBase
+	where TDto : class
 	where TListItem : class
 	where TCardItem : class
 
@@ -22,7 +26,7 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 	[Parameter] public EventCallback<TListItem> OnEditOrder { get; set; }
 	[Parameter] public EventCallback<TListItem> OnDeleteOrder { get; set; }
 	[Parameter] public RenderFragment? HeaderActions { get; set; }
-	[Parameter] public Func<Guid?, Guid[]?, string?, int, int, string?, string?, Task<PaginatedResponse<TListItem>>>? LoadItems { get; set; }
+	[Parameter] public Func<Guid?, Guid[]?, string?, int, int, string?, string?, List<FilterCondition>, Task<PaginatedResponse<TListItem>>>? LoadItems { get; set; }
 	[Parameter] public Func<Guid, Task<TCardItem>>? LoadItem { get; set; }
 
 
@@ -52,7 +56,7 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 	private bool isColumnsOpen = false;
 	private bool useSplitView;
 	private string savedPanelWidth = "66%";
-	private DotNetObjectReference<OrderListView<TListItem, TCardItem>>? panelResizeRef;
+	private DotNetObjectReference<OrderListView<TDto, TListItem, TCardItem>>? panelResizeRef;
 	private string? lastReportedWidth;
 	private bool _panelResizeInitialized = false;
 	//private List<Guid> selectedWorkplaceIds = [];
@@ -228,6 +232,8 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 			//	sortOrder: sortOrder
 			//);
 
+			var filters = BuildFilterConditions();
+
 			if (LoadItems != null)
 			{
 				orders = await LoadItems(
@@ -237,7 +243,8 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 					currentPage,
 					pageSize,
 					sortBy,
-					sortOrder
+					sortOrder,
+					filters
 				);
 			}
 		}
@@ -572,7 +579,7 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 				{
 					bool b => b ? "Да" : "Нет",
 					null => "—",
-					_ => value.ToString() ?? "—"
+					_ => value.ToString()?.ToLower() ?? "—"
 				};
 			}).Distinct().OrderBy(v => v).ToList();
 
@@ -588,6 +595,7 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		get
 		{
 			var filtered = orders.Data;
+			var filters = new List<FilterCondition>();
 
 			foreach (var filter in selectedFilters.Where(f => f.Value.Count > 0))
 			{
@@ -614,10 +622,131 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		}
 	}
 
+	private List<FilterCondition> BuildFilterConditions()
+	{
+		var filters = new List<FilterCondition>();
+
+		foreach (var filter in selectedFilters.Where(f => f.Value.Count > 0))
+		{
+			var col = columnInfos.FirstOrDefault(c => c.Title == filter.Key);
+			if (col == null) continue;
+
+			var prop = typeof(TListItem).GetProperty(col.PropertyName);
+			if (prop == null) continue;
+
+			// Определяем оператор в зависимости от типа
+			var operatorType = GetOperatorForProperty(prop);
+
+			// Преобразуем значения
+			var convertedValues = filter.Value
+				.Select(v => ConvertFilterValue(v, prop.PropertyType))
+				.Where(v => v != null)
+				.ToList();
+
+			if (!convertedValues.Any())
+				continue;
+
+			var filterCondition = new FilterCondition
+			{
+				Field = GetDtoPropertyName(col.PropertyName),
+				Values = convertedValues!,
+				Operator = operatorType
+			};
+
+			// Если фильтр по строке с одним значением — используем Contains
+			if (prop.PropertyType == typeof(string) && convertedValues.Count == 1)
+			{
+				filterCondition.Operator = FilterOperators.Contains;
+				filterCondition.Value = convertedValues.First();
+				filterCondition.Values = null; // для Contains используем Value, не Values
+			}
+
+			filters.Add(filterCondition);
+		}
+
+		return filters;
+	}
+
+	/// <summary>
+	/// Определяет оператор фильтрации по типу свойства
+	/// </summary>
+	private string GetOperatorForProperty(PropertyInfo prop)
+	{
+		var type = prop.PropertyType;
+
+		// Для строк — IN (если несколько значений) или Contains (если одно)
+		if (type == typeof(string))
+			return FilterOperators.In;
+
+		// Для булевых значений — Equal
+		if (type == typeof(bool) || type == typeof(bool?))
+			return FilterOperators.Equal;
+
+		// Для чисел и дат — можно использовать Between, но по умолчанию IN
+		if (type == typeof(int) || type == typeof(int?) ||
+			type == typeof(decimal) || type == typeof(decimal?) ||
+			type == typeof(DateTime) || type == typeof(DateTime?))
+			return FilterOperators.In;
+
+		// Для остальных — IN
+		return FilterOperators.In;
+	}
+
 	private void ClearAdvancedFilters()
 	{
 		selectedFilters.Clear();
 		StateHasChanged();
+	}
+
+	private object? ConvertFilterValue(string value, Type targetType)
+	{
+		if (string.IsNullOrEmpty(value))
+			return null;
+
+		try
+		{
+			// Для булевых значений
+			if (targetType == typeof(bool))
+			{
+				if (value == "Да") return true;
+				if (value == "Нет") return false;
+				return bool.Parse(value);
+			}
+
+			// Для чисел
+			if (targetType == typeof(int) || targetType == typeof(int?))
+				return int.Parse(value);
+
+			if (targetType == typeof(decimal) || targetType == typeof(decimal?))
+				return decimal.Parse(value);
+
+			if (targetType == typeof(double) || targetType == typeof(double?))
+				return double.Parse(value);
+
+			// Для дат
+			if (targetType == typeof(DateTime) || targetType == typeof(DateTime?))
+				return DateTime.Parse(value);
+
+			// Для GUID
+			if (targetType == typeof(Guid) || targetType == typeof(Guid?))
+				return Guid.Parse(value);
+
+			// Для строк — возвращаем как есть
+			return value;
+		}
+		catch
+		{
+			return null;
+		}
+	}
+
+	private string GetDtoPropertyName(string viewModelPropertyName)
+	{
+		var dtoProp = typeof(TDto).GetProperty(viewModelPropertyName);
+		if (dtoProp == null) return viewModelPropertyName;
+
+		var jsonAttr = dtoProp.GetCustomAttribute<JsonPropertyNameAttribute>();
+		return jsonAttr?.Name ?? viewModelPropertyName;
 	}
 
 	public void Dispose()
