@@ -16,6 +16,8 @@ public partial class Index
 	private string Endpoint => AppSettings.ListEndpoint;
 	private string CardEndpoint => AppSettings.CardEndpoint;
 
+	private string? debugInfo;
+
 	private async Task<PaginatedResponse<OrderViewModel>> LoadOrderViewModels(
 		Guid? workplaceId, Guid[]? workplaceIds, string? orderNumber,
 		int currentPage, int pageSize, string? sortBy, string? sortOrder, List<FilterCondition> filters)
@@ -31,6 +33,8 @@ public partial class Index
 			sortOrder: sortOrder,
 			filters : filters
 		);
+
+		debugInfo = orders.request;
 
 		return new PaginatedResponse<OrderViewModel>
 		{

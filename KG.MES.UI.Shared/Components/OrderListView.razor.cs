@@ -5,18 +5,15 @@ using Microsoft.JSInterop;
 using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Services;
 using KG.MES.Shared.Helpers;
-using KG.MES.UI.Shared.Components;
 using System.Text.Json;
 using KG.MES.Shared.Models;
 using KG.MES.Shared.Events;
 using KG.MES.Shared.Interfaces;
 using KG.MES.Shared.Constants;
 using System.Reflection;
-using System.Text.Json.Serialization;
 
 namespace KG.MES.UI.Shared.Components;
-public partial class OrderListView<TDto, TListItem, TCardItem> : ComponentBase
-	where TDto : class
+public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 	where TListItem : class
 	where TCardItem : class
 
@@ -56,7 +53,7 @@ public partial class OrderListView<TDto, TListItem, TCardItem> : ComponentBase
 	private bool isColumnsOpen = false;
 	private bool useSplitView;
 	private string savedPanelWidth = "66%";
-	private DotNetObjectReference<OrderListView<TDto, TListItem, TCardItem>>? panelResizeRef;
+	private DotNetObjectReference<OrderListView<TListItem, TCardItem>>? panelResizeRef;
 	private string? lastReportedWidth;
 	private bool _panelResizeInitialized = false;
 	//private List<Guid> selectedWorkplaceIds = [];
@@ -232,7 +229,7 @@ public partial class OrderListView<TDto, TListItem, TCardItem> : ComponentBase
 			//	sortOrder: sortOrder
 			//);
 
-			var filters = BuildFilterConditions();
+			var filters = BuildFilterConditionsForIn();
 
 			if (LoadItems != null)
 			{
@@ -622,7 +619,7 @@ public partial class OrderListView<TDto, TListItem, TCardItem> : ComponentBase
 		}
 	}
 
-	private List<FilterCondition> BuildFilterConditions()
+	private List<FilterCondition> BuildFilterConditionsForIn()
 	{
 		var filters = new List<FilterCondition>();
 
@@ -634,13 +631,12 @@ public partial class OrderListView<TDto, TListItem, TCardItem> : ComponentBase
 			var prop = typeof(TListItem).GetProperty(col.PropertyName);
 			if (prop == null) continue;
 
-			// Определяем оператор в зависимости от типа
-			var operatorType = GetOperatorForProperty(prop);
+			var operatorType = FilterOperators.In; //GetOperatorForProperty(prop);
 
 			// Преобразуем значения
 			var convertedValues = filter.Value
-				.Select(v => ConvertFilterValue(v, prop.PropertyType))
-				.Where(v => v != null)
+				//.Select(v => ConvertFilterValue(v, prop.PropertyType))
+				.Where(v => !string.IsNullOrEmpty(v))
 				.ToList();
 
 			if (!convertedValues.Any())
@@ -648,7 +644,7 @@ public partial class OrderListView<TDto, TListItem, TCardItem> : ComponentBase
 
 			var filterCondition = new FilterCondition
 			{
-				Field = GetDtoPropertyName(col.PropertyName),
+				Field = col.PropertyName,
 				Values = convertedValues!,
 				Operator = operatorType
 			};
@@ -738,15 +734,6 @@ public partial class OrderListView<TDto, TListItem, TCardItem> : ComponentBase
 		{
 			return null;
 		}
-	}
-
-	private string GetDtoPropertyName(string viewModelPropertyName)
-	{
-		var dtoProp = typeof(TDto).GetProperty(viewModelPropertyName);
-		if (dtoProp == null) return viewModelPropertyName;
-
-		var jsonAttr = dtoProp.GetCustomAttribute<JsonPropertyNameAttribute>();
-		return jsonAttr?.Name ?? viewModelPropertyName;
 	}
 
 	public void Dispose()

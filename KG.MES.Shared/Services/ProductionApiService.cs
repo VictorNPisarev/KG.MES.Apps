@@ -6,6 +6,7 @@ using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Models.ViewModels;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 
 namespace KG.MES.Shared.Services;
 
@@ -15,10 +16,11 @@ public class ProductionApiService
 	private readonly ILogger<ProductionApiService> _logger;
 	private readonly IConfiguration _configuration;
 
+
 	public ProductionApiService(
 		HttpClient httpClient,
 		ILogger<ProductionApiService> logger,
-		IConfiguration configuration)
+		IConfiguration configuration, IJSRuntime jsRuntime)
 	{
 		_httpClient = httpClient;
 		_logger = logger;
@@ -255,11 +257,8 @@ public class ProductionApiService
 
 		if (filters?.Count > 0)
 		{
-			foreach (var filter in filters)
-			{
-				var filterJson = JsonSerializer.Serialize(filter);
-				queryParams[$"filter[{filter.Field}]"] = filterJson;
-			}
+			var filtersJson = JsonSerializer.Serialize(filters);
+			queryParams["filters"] = filtersJson;
 		}
 
 		var query = string.Join("&", queryParams.Select(kv => $"{kv.Key}={kv.Value}"));
@@ -272,8 +271,12 @@ public class ProductionApiService
 
 		var url = $"{BaseUrl}/{endpoint}?{query.TrimStart('&')}";
 
-		return await _httpClient.GetFromJsonAsync<PaginatedResponse<T>>(url)
+		var result = await _httpClient.GetFromJsonAsync<PaginatedResponse<T>>(url)
 			?? new PaginatedResponse<T>();
+
+		result.request = JsonSerializer.Serialize(filters).ToString();
+
+		return result;
 	}
 
 	public async Task<OrderDto?> GetOrderByIdAsync(Guid id)

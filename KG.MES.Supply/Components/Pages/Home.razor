@@ -4,5 +4,5 @@
 @using KG.MES.Shared.Models.Dto
 
 @*<OrderListView TOrder="SupplyDto" Settings="@AppSettings" />*@
-<OrderListView TDto="SupplyDto" TListItem="SupplyViewModel" LoadItems="LoadOrderViewModels"
+<OrderListView TListItem="SupplyViewModel" LoadItems="LoadOrderViewModels"
 	TCardItem="OrderViewModel" LoadItem="LoadOrderViewModel" Settings="@AppSettings" />
