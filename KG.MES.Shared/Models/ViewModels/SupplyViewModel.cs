@@ -17,7 +17,7 @@ public class SupplyViewModel
 	[Column("Готовность", Order = 1, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? ReadyDate { get; set; }
 
-	[Column("Станок", Order = 2, IsBadge = true, Sortable = true)]
+	[Column("Станок", Order = 2, IsBadge = true, Sortable = true, Filterable = true)]
 	public string? Machine { get; set; }
 
 	public Guid ProductionOrderId { get; set; }
@@ -35,43 +35,43 @@ public class SupplyViewModel
 
 	public bool IsTwoSidePaint { get; set; }
 
-	[Column("Пиломатериалы", Order = 4, IsBadge = true, DisplayGroup = "supply_status", CommentField = "LumberComment")]
+	[Column("Пиломатериалы", Order = 4, IsBadge = true, DisplayGroup = "supply_status", CommentField = "LumberComment", Filterable = true)]
 	public string? Lumber { get; set; }
 
 	[Column("Брус прим.", Order = 5, Visible = false, DisplayGroup = "supply_status")]
 	public string? LumberComment { get; set; }
 
-	[Column("ЛКМ", Order = 6, IsBadge = true, DisplayGroup = "supply_status", CommentField = "PaintComment")]
+	[Column("ЛКМ", Order = 6, IsBadge = true, DisplayGroup = "supply_status", CommentField = "PaintComment", Filterable = true)]
 	public string? Paint { get; set; }
 
 	[Column("ЛКМ прим.", Order = 7, Visible = false, DisplayGroup = "supply_status")]
 	public string? PaintComment { get; set; }
 
-	[Column("Стекло", Order = 8, IsBadge = true, DisplayGroup = "supply_status", CommentField = "GlassComment")]
+	[Column("Стекло", Order = 8, IsBadge = true, DisplayGroup = "supply_status", CommentField = "GlassComment", Filterable = true)]
 	public string? Glass { get; set; }
 
 	[Column("Стекло прим.", Order = 9, Visible = false, DisplayGroup = "supply_status")]
 	public string? GlassComment { get; set; }
 
-	[Column("Фурнитура", Order = 10, IsBadge = true, DisplayGroup = "supply_status", CommentField = "FurnitureComment")]
+	[Column("Фурнитура", Order = 10, IsBadge = true, DisplayGroup = "supply_status", CommentField = "FurnitureComment", Filterable = true)]
 	public string? Furniture { get; set; }
 
 	[Column("Фурнитура прим.", Order = 11, Visible = false, DisplayGroup = "supply_status")]
 	public string? FurnitureComment { get; set; }
 
-	[Column("ППС, В/О", Order = 12, IsBadge = true, DisplayGroup = "supply_status", CommentField = "AlumWaterShieldComment")]
+	[Column("ППС, В/О", Order = 12, IsBadge = true, DisplayGroup = "supply_status", CommentField = "AlumWaterShieldComment", Filterable = true)]
 	public string? AlumWaterShield { get; set; }
 
 	[Column("ППС, В/О прим.", Order = 13, Visible = false, DisplayGroup = "supply_status")]
 	public string? AlumWaterShieldComment { get; set; }
 
-	[Column("Отлив", Order = 14, IsBadge = true, DisplayGroup = "supply_status", CommentField = "WindowsillComment")]
+	[Column("Отлив", Order = 14, IsBadge = true, DisplayGroup = "supply_status", CommentField = "WindowsillComment", Filterable = true)]
 	public string? Windowsill { get; set; }
 
 	[Column("Отлив прим.", Order = 15, Visible = false, DisplayGroup = "supply_status")]
 	public string? WindowsillComment { get; set; }
 
-	[Column("Д/А", Order = 16, IsBadge = true, DisplayGroup = "supply_status", CommentField = "WoodAlumComment")]
+	[Column("Д/А", Order = 16, IsBadge = true, DisplayGroup = "supply_status", CommentField = "WoodAlumComment", Filterable = true)]
 	public string? WoodAlum { get; set; }
 
 	[Column("Д/А прим.", Order = 17, Visible = false, DisplayGroup = "supply_status")]

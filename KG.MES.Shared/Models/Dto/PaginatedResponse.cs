@@ -10,8 +10,6 @@ public class PaginatedResponse<T>
 	[JsonPropertyName("pagination")]
 	public PaginationInfo Pagination { get; set; } = new();
 
-	public string request = string.Empty;
-
 	// Удобные свойства для UI
 	public int Page => Pagination.Page;
 	public int Limit => Pagination.Limit;

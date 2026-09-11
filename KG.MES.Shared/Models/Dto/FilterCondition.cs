@@ -23,7 +23,7 @@ public class FilterCondition
 	/// Список значений для фильтрации (используется для IN-операций)
 	/// </summary>
 	[JsonPropertyName("values")]
-	public List<string>? Values { get; set; } = [];
+	public List<object>? Values { get; set; }
 
 	/// <summary>
 	/// Оператор сравнения: "eq", "contains", "in", "between", "gt", "lt", "gte", "lte"

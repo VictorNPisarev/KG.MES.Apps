@@ -274,8 +274,6 @@ public class ProductionApiService
 		var result = await _httpClient.GetFromJsonAsync<PaginatedResponse<T>>(url)
 			?? new PaginatedResponse<T>();
 
-		result.request = JsonSerializer.Serialize(filters).ToString();
-
 		return result;
 	}
 

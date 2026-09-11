@@ -32,16 +32,16 @@ public class MastersOrderViewModel
 	[Column("Щитовые, м2", Order = 9, DisplayFormat = "F2")]
 	public double? PlateArea { get; set; }
 
-	[Column("Эконом", Order = 10, IsBadge = true)]
+	[Column("Эконом", Order = 10, IsBadge = true, Filterable = true)]
 	public bool IsEconom { get; set; }
 
-	[Column("Рекламация", Order = 11, IsBadge = true)]
+	[Column("Рекламация", Order = 11, IsBadge = true, Filterable = true)]
 	public bool IsClaim { get; set; }
 
-	[Column("Оплачен, не запущен", Order = 12, IsBadge = true)]
+	[Column("Оплачен, не запущен", Order = 12, IsBadge = true, Filterable = true)]
 	public bool IsOnlyPaid { get; set; }
 
-	[Column("2-стор. покраска", Order = 13, IsBadge = true)]
+	[Column("2-стор. покраска", Order = 13, IsBadge = true, Filterable = true)]
 	public bool IsTwoSidePaint { get; set; }
 
 	public string? ProductionOrderId { get; set; }
@@ -53,7 +53,7 @@ public class MastersOrderViewModel
 
 	public string? CurrentWorkplaceName { get; set; }
 
-	[Column("Станок", Order = 12, Visible = true, IsBadge = true, Sortable = true)]
+	[Column("Станок", Order = 12, Visible = true, IsBadge = true, Sortable = true, Filterable = true)]
 	public string? Machine { get; set; }
 
 	[Column("***", Order = 2, Visible = false, IconConditions = new[] { "IsClaim:Claim",

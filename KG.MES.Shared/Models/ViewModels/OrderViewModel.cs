@@ -35,13 +35,13 @@ public class OrderViewModel
 	[Column("Эконом", Order = 10, IsBadge = true, Filterable = true)]
 	public bool IsEconom { get; set; }
 
-	[Column("Рекламация", Order = 11, IsBadge = true)]
+	[Column("Рекламация", Order = 11, IsBadge = true, Filterable = true)]
 	public bool IsClaim { get; set; }
 
-	[Column("Оплачен, не запущен", Order = 12, IsBadge = true)]
+	[Column("Оплачен, не запущен", Order = 12, IsBadge = true, Filterable = true)]
 	public bool IsOnlyPaid { get; set; }
 
-	[Column("2-стор. покраска", Order = 13, IsBadge = true)]
+	[Column("2-стор. покраска", Order = 13, IsBadge = true, Filterable = true)]
 	public bool IsTwoSidePaint { get; set; }
 
 	public string? ProductionOrderId { get; set; }

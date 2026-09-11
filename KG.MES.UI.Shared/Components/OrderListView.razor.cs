@@ -631,30 +631,28 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 			var prop = typeof(TListItem).GetProperty(col.PropertyName);
 			if (prop == null) continue;
 
-			var operatorType = FilterOperators.In; //GetOperatorForProperty(prop);
 
 			// Преобразуем значения
 			var convertedValues = filter.Value
-				//.Select(v => ConvertFilterValue(v, prop.PropertyType))
-				.Where(v => !string.IsNullOrEmpty(v))
+				.Select(v => ConvertFilterValue(v, prop.PropertyType))
+				//.Where(v => !string.IsNullOrEmpty(v))
 				.ToList();
 
 			if (!convertedValues.Any())
 				continue;
 
-			var filterCondition = new FilterCondition
-			{
-				Field = col.PropertyName,
-				Values = convertedValues!,
-				Operator = operatorType
-			};
+			var filterCondition = new FilterCondition ();
+			
+			filterCondition.Field = col.PropertyName;
+			filterCondition.Values = convertedValues!;
+			filterCondition.Operator = FilterOperators.In;
 
 			// Если фильтр по строке с одним значением — используем Contains
 			if (prop.PropertyType == typeof(string) && convertedValues.Count == 1)
 			{
 				filterCondition.Operator = FilterOperators.Contains;
 				filterCondition.Value = convertedValues.First();
-				filterCondition.Values = null; // для Contains используем Value, не Values
+				//filterCondition.Values = null; // для Contains используем Value, не Values
 			}
 
 			filters.Add(filterCondition);
