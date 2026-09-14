@@ -6,7 +6,6 @@ using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Models.ViewModels;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.JSInterop;
 
 namespace KG.MES.Shared.Services;
 
@@ -20,7 +19,7 @@ public class ProductionApiService
 	public ProductionApiService(
 		HttpClient httpClient,
 		ILogger<ProductionApiService> logger,
-		IConfiguration configuration, IJSRuntime jsRuntime)
+		IConfiguration configuration)
 	{
 		_httpClient = httpClient;
 		_logger = logger;
@@ -845,5 +844,45 @@ public class ProductionApiService
 			_logger.LogError(ex, "Error fetching orders for workplace {Id}", workplaceId);
 			return [];
 		}
+	}
+
+	public async Task<FilterFacetsResponseDto?> GetFilterFacetsAsync<T>(
+	FilterFacetsRequestDto request)
+	{
+		try
+		{
+			var url = $"{BaseUrl}/orders/facets";
+			var response = await _httpClient.PostAsJsonAsync(url, request);
+
+			if (!response.IsSuccessStatusCode) return null;
+
+			return await response.Content.ReadFromJsonAsync<FilterFacetsResponseDto>();
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching filter facets");
+			return null;
+		}
+	}
+
+	public async Task<FilterFacetsResponseDto?> GetFilterFacetsAsync<TDto>(string endpoint, FilterFacetsRequestDto request)
+		//List<string> fields, List<FilterCondition>? appliedFilters = null)
+	{
+		//await EnsureAuthorization();
+
+		//var request = new FilterFacetsRequestDto
+		//{
+		//	Fields = fields,
+		//	AppliedFilters = appliedFilters
+		//};
+
+		var url = $"{BaseUrl}/{endpoint}/facets";
+		var response = await _httpClient.PostAsJsonAsync(url, request);
+
+		if (!response.IsSuccessStatusCode)
+			return null;
+
+		return await response.Content.ReadFromJsonAsync<FilterFacetsResponseDto>();
+			//   ?? new FilterFacetsResponseDto();
 	}
 }

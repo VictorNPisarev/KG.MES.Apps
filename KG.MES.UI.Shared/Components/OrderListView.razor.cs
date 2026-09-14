@@ -65,9 +65,10 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 	private bool showAdvancedFilter;
 	private Dictionary<string, HashSet<string>> selectedFilters = [];
 	private HashSet<string> expandedGroups = [];
-
 	private bool HasActiveFilters => selectedFilters.Values.Any(v => v.Count > 0);
 	private List<ColumnInfo> filterableColumns => columnInfos.Where(c => c.Filterable).ToList();
+	private Dictionary<string, List<FacetValueDto>> facets = [];
+
 
 	private IconInfo testIcon = new IconInfo
 	{
@@ -82,6 +83,7 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 
 		await LoadSettings();
 		workplaces = await ApiService.GetAllWorkplacesAsync();
+		await LoadFacetsAsync();
 		await LoadOrders();
 
 		EventAggregator.Subscribe<OrderUpdatedEvent>(OnOrderUpdated);
@@ -515,22 +517,22 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 	}
 
 	// Фильтруемые поля из ColumnInfo
-	private Dictionary<string, List<string>> advancedFilterGroups => columnInfos
-		.Where(c => c.Filterable)
-		.ToDictionary(
-			c => c.Title,
-			c => orders.Data.Select(item =>
-			{
-				var prop = typeof(TListItem).GetProperty(c.PropertyName);
-				var value = prop?.GetValue(item);
-				return value switch
-				{
-					bool b => b ? "Да" : "Нет",
-					null => "—",
-					_ => value.ToString() ?? "—"
-				};
-			}).Distinct().ToList()
-		);
+	//private Dictionary<string, List<string>> advancedFilterGroups => columnInfos
+	//	.Where(c => c.Filterable)
+	//	.ToDictionary(
+	//		c => c.Title,
+	//		c => orders.Data.Select(item =>
+	//		{
+	//			var prop = typeof(TListItem).GetProperty(c.PropertyName);
+	//			var value = prop?.GetValue(item);
+	//			return value switch
+	//			{
+	//				bool b => b ? "Да" : "Нет",
+	//				null => "—",
+	//				_ => value.ToString() ?? "—"
+	//			};
+	//		}).Distinct().ToList()
+	//	);
 
 	private bool HasAdvancedFilters => selectedFilters.Values.Any(v => v.Count > 0);
 	private void ToggleAdvancedFilter() => showAdvancedFilter = !showAdvancedFilter;
@@ -554,7 +556,7 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		else
 			selectedFilters[group].Remove(value);
 
-		StateHasChanged();
+		//StateHasChanged();
 	}
 
 	private bool IsAdvancedFilterSelected(string group, string value) =>
@@ -748,5 +750,38 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		panelResizeRef?.Dispose();
 
 		EventAggregator.Unsubscribe<OrderUpdatedEvent>(OnOrderUpdated);
+	}
+
+	// Загрузка фасетов
+	private async Task LoadFacetsAsync()
+	{
+		var fields = columnInfos
+			.Where(c => c.Filterable)
+			.Select(c => c.PropertyName)
+			.ToList();
+
+		if (!fields.Any()) return;
+
+		var request = new FilterFacetsRequestDto { Fields = fields };
+		var response = await ApiService.GetFilterFacetsAsync<TListItem>(Endpoint, request);
+
+		facets = response?.Facets ?? [];
+	}
+
+	// Группы фильтров на основе фасетов
+	private Dictionary<string, List<FacetValueDto>> advancedFilterGroups
+	{
+		get
+		{
+			var result = new Dictionary<string, List<FacetValueDto>>();
+
+			foreach (var col in columnInfos.Where(c => c.Filterable))
+			{
+				if (facets.TryGetValue(col.PropertyName, out var values))
+					result[col.Title] = values;
+			}
+
+			return result;
+		}
 	}
 }
