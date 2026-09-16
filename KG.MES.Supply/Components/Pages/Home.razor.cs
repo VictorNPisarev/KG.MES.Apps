@@ -18,7 +18,7 @@ public partial class Home
 
 	private async Task<PaginatedResponse<SupplyViewModel>> LoadOrderViewModels(
 		Guid? workplaceId, Guid[]? workplaceIds, string? orderNumber,
-		int currentPage, int pageSize, string? sortBy, string? sortOrder)
+		int currentPage, int pageSize, string? sortBy, string? sortOrder, List<FilterCondition> filters)
 	{
 		var orders = await ApiService.GetOrdersAsync<SupplyDto>(
 			endpoint: Endpoint,
@@ -28,7 +28,8 @@ public partial class Home
 			page: currentPage,
 			limit: pageSize,
 			sortBy: sortBy,
-			sortOrder: sortOrder
+			sortOrder: sortOrder,
+			filters: filters
 		);
 
 		return new PaginatedResponse<SupplyViewModel>

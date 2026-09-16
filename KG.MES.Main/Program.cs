@@ -6,6 +6,7 @@ using KG.MES.Main.Services;
 using KG.MES.Shared.Helpers;
 using KG.MES.Shared.Interfaces;
 using KG.MES.Shared.Models.Config;
+using KG.MES.Shared.Serialization;
 using KG.MES.Shared.Services;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -4,6 +4,7 @@ using System.Text.Json;
 using KG.MES.Shared.Models;
 using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Models.ViewModels;
+using KG.MES.Shared.Serialization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -14,6 +15,13 @@ public class ProductionApiService
 	private readonly HttpClient _httpClient;
 	private readonly ILogger<ProductionApiService> _logger;
 	private readonly IConfiguration _configuration;
+
+	private static readonly JsonSerializerOptions jsonOptions = new()
+	{
+		Converters = { new TotalsDtoConverter() },
+		PropertyNameCaseInsensitive = true
+	};
+
 
 	public ProductionApiService(
 		HttpClient httpClient,
@@ -229,41 +237,61 @@ public class ProductionApiService
 		int page = 1,
 		int limit = 50,
 		string? sortBy = null,
-		string? sortOrder = null)
+		string? sortOrder = null,
+		List<FilterCondition>? filters = null)
 	{
-		var queryParams = new Dictionary<string, string>
+		var queryUrl = string.Empty;
+		try
 		{
-			["page"] = page.ToString(),
-			["limit"] = limit.ToString()
-		};
+			var queryParams = new Dictionary<string, string>
+			{
+				["page"] = page.ToString(),
+				["limit"] = limit.ToString()
+			};
 
-		//if (!string.IsNullOrEmpty(status))
-		//	queryParams["status"] = status;
+			//if (!string.IsNullOrEmpty(status))
+			//	queryParams["status"] = status;
 
-		if (workplaceId.HasValue && workplaceId != Guid.Empty)
-			queryParams["workplaceId"] = workplaceId.Value.ToString();
+			if (workplaceId.HasValue && workplaceId != Guid.Empty)
+				queryParams["workplaceId"] = workplaceId.Value.ToString();
 
-		if (!string.IsNullOrEmpty(orderNumber))
-			queryParams["orderNumber"] = orderNumber;
+			if (!string.IsNullOrEmpty(orderNumber))
+				queryParams["orderNumber"] = orderNumber;
 
-		if (!string.IsNullOrEmpty(sortBy))
-			queryParams["sortBy"] = sortBy;
+			if (!string.IsNullOrEmpty(sortBy))
+				queryParams["sortBy"] = sortBy;
 
-		if (!string.IsNullOrEmpty(sortOrder))
-			queryParams["sortOrder"] = sortOrder;
+			if (!string.IsNullOrEmpty(sortOrder))
+				queryParams["sortOrder"] = sortOrder;
 
-		var query = string.Join("&", queryParams.Select(kv => $"{kv.Key}={kv.Value}"));
+			if (filters?.Count > 0)
+			{
+				var filtersJson = JsonSerializer.Serialize(filters);
+				queryParams["filters"] = filtersJson;
+			}
 
-		if (workplaceIds?.Length > 0)
-		{
-			foreach (var id in workplaceIds)
-				query += $"&workplaceIds={id}";
+			var query = string.Join("&", queryParams.Select(kv => $"{kv.Key}={kv.Value}"));
+
+			if (workplaceIds?.Length > 0)
+			{
+				foreach (var id in workplaceIds)
+					query += $"&workplaceIds={id}";
+			}
+
+			var url = $"{BaseUrl}/{endpoint}?{query.TrimStart('&')}";
+
+			queryUrl = url;
+
+			var result = await _httpClient.GetFromJsonAsync<PaginatedResponse<T>>(url, jsonOptions)
+				?? new PaginatedResponse<T>();
+
+			return result;
 		}
-
-		var url = $"{BaseUrl}/{endpoint}?{query.TrimStart('&')}";
-
-		return await _httpClient.GetFromJsonAsync<PaginatedResponse<T>>(url)
-			?? new PaginatedResponse<T>();
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error method GetOrdersAsync<T>");
+			return new PaginatedResponse<T>();
+		}
 	}
 
 	public async Task<OrderDto?> GetOrderByIdAsync(Guid id)
@@ -834,5 +862,45 @@ public class ProductionApiService
 			_logger.LogError(ex, "Error fetching orders for workplace {Id}", workplaceId);
 			return [];
 		}
+	}
+
+	public async Task<FilterFacetsResponseDto?> GetFilterFacetsAsync<T>(
+	FilterFacetsRequestDto request)
+	{
+		try
+		{
+			var url = $"{BaseUrl}/orders/facets";
+			var response = await _httpClient.PostAsJsonAsync(url, request);
+
+			if (!response.IsSuccessStatusCode) return null;
+
+			return await response.Content.ReadFromJsonAsync<FilterFacetsResponseDto>();
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error fetching filter facets");
+			return null;
+		}
+	}
+
+	public async Task<FilterFacetsResponseDto?> GetFilterFacetsAsync<TDto>(string endpoint, FilterFacetsRequestDto request)
+		//List<string> fields, List<FilterCondition>? appliedFilters = null)
+	{
+		//await EnsureAuthorization();
+
+		//var request = new FilterFacetsRequestDto
+		//{
+		//	Fields = fields,
+		//	AppliedFilters = appliedFilters
+		//};
+
+		var url = $"{BaseUrl}/{endpoint}/facets";
+		var response = await _httpClient.PostAsJsonAsync(url, request);
+
+		if (!response.IsSuccessStatusCode)
+			return null;
+
+		return await response.Content.ReadFromJsonAsync<FilterFacetsResponseDto>();
+			//   ?? new FilterFacetsResponseDto();
 	}
 }

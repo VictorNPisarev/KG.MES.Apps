@@ -1,6 +1,8 @@
+using System.Reflection;
 using System.Text.Json;
 using KG.MES.Shared.Helpers;
 using KG.MES.Shared.Models;
+using KG.MES.Shared.Models.Dto;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -10,11 +12,13 @@ public partial class DynamicTable<TListItem> : ComponentBase
 	[Parameter] public IEnumerable<TListItem> Items { get; set; } = [];
 	[Parameter] public List<ColumnInfo> ColumnInfos { get; set; } = [];
 	[Parameter] public List<ColumnSetting> ColumnSettings { get; set; } = [];
+	[Parameter] public ITotalsDto? Totals { get; set; }
+	[Parameter] public bool ShowTotal { get; set; } = true;
 	[Parameter] public string TableKey { get; set; } = "dynamic-table";
 	[Parameter] public bool ShowActions { get; set; }
 	[Parameter] public RenderFragment? RowActions { get; set; }
 	[Parameter] public RenderFragment<TListItem>? RowTemplate { get; set; }
-	[Parameter] public bool ShowTotal { get; set; } = true;
+	[Parameter] public bool CalculateTotal { get; set; } = true;
 	[Parameter] public string? TotalDistinctBy { get; set; } // Чтобы в итого не попадали одинаковые заказы 
 															 // (например, если в таблице один и тот же заказ с разными статусами - история операций)
 	[Parameter] public bool AllowSorting { get; set; } = false;
@@ -25,11 +29,12 @@ public partial class DynamicTable<TListItem> : ComponentBase
 	private bool isColumnsOpen;
 	private string? sortBy;
 	private bool sortAscending = true;
-
 	private bool isResizeMode;
 
 	protected override async Task OnInitializedAsync()
 	{
+		//ShowTotal &= CalculateTotal;
+
 		columnInfos = ColumnHelper.GetColumns<TListItem>();
 
 		columnSettings = ColumnSettings?.Any() == true
@@ -260,4 +265,35 @@ public partial class DynamicTable<TListItem> : ComponentBase
 		public string Css { get; set; } = "";
 		public string Title { get; set; } = "";
 	}
+
+	private string GetTotalValue(ColumnInfo column)
+	{
+		if (Totals == null || !column.ShowTotal)
+			return string.Empty;
+
+		// По соглашению: WindowCount → WindowCountTotal
+		var totalPropertyName = $"{column.PropertyName}Total";
+
+		var totalProp = Totals.GetType().GetProperty(totalPropertyName,
+			BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+
+		if (totalProp == null)
+			return "—";
+
+		var value = totalProp.GetValue(Totals);
+		if (value == null)
+			return "—";
+
+		// Форматируем
+		return value switch
+		{
+			int i => i.ToString("N0"),
+			long l => l.ToString("N0"),
+			decimal d => d.ToString(column.DisplayFormat ?? "N2"),
+			double dbl => dbl.ToString(column.DisplayFormat ?? "N2"),
+			float f => f.ToString(column.DisplayFormat ?? "N2"),
+			_ => value.ToString() ?? "—"
+		};
+	}
+
 }

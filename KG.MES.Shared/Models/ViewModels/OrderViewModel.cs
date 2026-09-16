@@ -20,28 +20,28 @@ public class OrderViewModel
 	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? ReadyDate { get; set; }
 
-	[Column("Окна, шт", Order = 6)]
+	[Column("Окна, шт", Order = 6, ShowTotal = true)]
 	public int WindowCount { get; set; }
 
-	[Column("Окна, м2", Order = 7, DisplayFormat = "F2")]
+	[Column("Окна, м2", Order = 7, ShowTotal = true, DisplayFormat = "F2")]
 	public double? WindowArea { get; set; }
 
-	[Column("Щитовые, шт", Order = 8)]
+	[Column("Щитовые, шт", Order = 8, ShowTotal = true)]
 	public int PlateCount { get; set; }
 
-	[Column("Щитовые, м2", Order = 9, DisplayFormat = "F2")]
+	[Column("Щитовые, м2", Order = 9, ShowTotal = true, DisplayFormat = "F2")]
 	public double? PlateArea { get; set; }
 
-	[Column("Эконом", Order = 10, IsBadge = true)]
+	[Column("Эконом", Order = 10, IsBadge = true, Filterable = true)]
 	public bool IsEconom { get; set; }
 
-	[Column("Рекламация", Order = 11, IsBadge = true)]
+	[Column("Рекламация", Order = 11, IsBadge = true, Filterable = true)]
 	public bool IsClaim { get; set; }
 
-	[Column("Оплачен, не запущен", Order = 12, IsBadge = true)]
+	[Column("Оплачен, не запущен", Order = 12, IsBadge = true, Filterable = true)]
 	public bool IsOnlyPaid { get; set; }
 
-	[Column("2-стор. покраска", Order = 13, IsBadge = true)]
+	[Column("2-стор. покраска", Order = 13, IsBadge = true, Filterable = true)]
 	public bool IsTwoSidePaint { get; set; }
 
 	public string? ProductionOrderId { get; set; }
@@ -53,7 +53,7 @@ public class OrderViewModel
 
 	public string? CurrentWorkplaceName { get; set; }
 
-	[Column("Станок", Order = 12, Visible = true, IsBadge = true)]
+	[Column("Станок", Order = 12, Visible = true, IsBadge = true, Filterable = true)]
 	public string? Machine { get; set; }
 
 	[Column("***", Order = 2, Visible = false, IconConditions = new[] { "IsClaim:Claim",

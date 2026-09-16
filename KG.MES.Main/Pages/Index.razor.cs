@@ -1,3 +1,4 @@
+using System.Text.Json;
 using KG.MES.Shared.Models.Config;
 using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Models.ViewModels;
@@ -16,10 +17,9 @@ public partial class Index
 	private string Endpoint => AppSettings.ListEndpoint;
 	private string CardEndpoint => AppSettings.CardEndpoint;
 
-
-	private async Task<PaginatedResponse<OrderViewModel>> LoadOrderViewModels(
+	private async Task<PaginatedResponse<OrderViewModel>> LoadOrdersList(
 		Guid? workplaceId, Guid[]? workplaceIds, string? orderNumber,
-		int currentPage, int pageSize, string? sortBy, string? sortOrder)
+		int currentPage, int pageSize, string? sortBy, string? sortOrder, List<FilterCondition> selectedFilters)
 	{
 		var orders = await ApiService.GetOrdersAsync<OrderDto>(
 			endpoint: Endpoint,
@@ -29,17 +29,19 @@ public partial class Index
 			page: currentPage,
 			limit: pageSize,
 			sortBy: sortBy,
-			sortOrder: sortOrder
+			sortOrder: sortOrder,
+			filters: selectedFilters
 		);
 
 		return new PaginatedResponse<OrderViewModel>
 		{
 			Data = orders.Data.Select(o => o.Adapt<OrderViewModel>()).ToList(),
-			Pagination = orders.Pagination
+			Pagination = orders.Pagination,
+			Totals = orders.Totals
 		};
 	}
 
-	private async Task<OrderViewModel?> LoadOrderViewModel(Guid orderId)
+	private async Task<OrderViewModel?> LoadOrderDetails(Guid orderId)
 	{
 		var orderDto = await ApiService.GetOrderByIdAsync<OrderDto>(CardEndpoint, orderId);
 
