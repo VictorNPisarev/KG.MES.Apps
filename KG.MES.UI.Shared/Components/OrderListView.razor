@@ -170,7 +170,6 @@
 	else if (orders.Data.Any())
 	@*else if (FilteredItems.Any())*@
 	{
-		<pre class="small text-muted">@(((OrderTotalsDto?)totals)?.WindowCountTotal)</pre>
 		var visibleData = BuildVisibleColumns();
 		<div class="row g-0 d-flex w-100" style="flex-wrap: nowrap;">
 			<div class="@(useSplitView && selectedOrder != null ? "resizable-panel" : "table-responsive mt-3")"
