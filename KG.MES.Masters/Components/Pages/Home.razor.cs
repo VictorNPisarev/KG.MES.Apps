@@ -15,7 +15,7 @@ public partial class Home
 	private string Endpoint => AppSettings.ListEndpoint;
 	private string CardEndpoint => AppSettings.CardEndpoint;
 
-	private async Task<PaginatedResponse<MastersOrderViewModel>> LoadOrderViewModels(
+	private async Task<PaginatedResponse<MastersOrderViewModel>> LoadOrdersList(
 	Guid? workplaceId, Guid[]? workplaceIds, string? orderNumber,
 	int currentPage, int pageSize, string? sortBy, string? sortOrder, List<FilterCondition> filters)
 	{
@@ -34,11 +34,12 @@ public partial class Home
 		return new PaginatedResponse<MastersOrderViewModel>
 		{
 			Data = orders.Data.Select(o => o.Adapt<MastersOrderViewModel>()).ToList(),
-			Pagination = orders.Pagination
+			Pagination = orders.Pagination,
+			Totals = orders.Totals
 		};
 	}
 
-	private async Task<OrderViewModel?> LoadOrderViewModel(Guid orderId)
+	private async Task<OrderViewModel?> LoadOrderDetails(Guid orderId)
 	{
 		var orderDto = await ApiService.GetOrderByIdAsync<OrderDto>(CardEndpoint, orderId);
 

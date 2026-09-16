@@ -3,5 +3,5 @@
 @using KG.MES.Shared.Models.ViewModels
 
 @*<OrderListView TOrder="MastersOrderDto" Settings="@AppSettings"></OrderListView>*@
-<OrderListView TListItem="MastersOrderViewModel" LoadItems="LoadOrderViewModels" TCardItem="OrderViewModel"
-	LoadItem="LoadOrderViewModel" Settings="@AppSettings" />
+<OrderListView TListItem="MastersOrderViewModel" LoadItems="LoadOrdersList" TCardItem="OrderViewModel"
+	LoadItem="LoadOrderDetails" Settings="@AppSettings" />
