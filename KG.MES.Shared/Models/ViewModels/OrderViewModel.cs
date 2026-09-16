@@ -20,16 +20,16 @@ public class OrderViewModel
 	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? ReadyDate { get; set; }
 
-	[Column("Окна, шт", Order = 6)]
+	[Column("Окна, шт", Order = 6, ShowTotal = true)]
 	public int WindowCount { get; set; }
 
-	[Column("Окна, м2", Order = 7, DisplayFormat = "F2")]
+	[Column("Окна, м2", Order = 7, ShowTotal = true, DisplayFormat = "F2")]
 	public double? WindowArea { get; set; }
 
-	[Column("Щитовые, шт", Order = 8)]
+	[Column("Щитовые, шт", Order = 8, ShowTotal = true)]
 	public int PlateCount { get; set; }
 
-	[Column("Щитовые, м2", Order = 9, DisplayFormat = "F2")]
+	[Column("Щитовые, м2", Order = 9, ShowTotal = true, DisplayFormat = "F2")]
 	public double? PlateArea { get; set; }
 
 	[Column("Эконом", Order = 10, IsBadge = true, Filterable = true)]

@@ -172,42 +172,69 @@
 							</tr>
 						}
 					</tbody>
-					@if (ShowTotal && columnInfos.Any(c => c.ShowTotal))
+					@if (columnInfos.Any(c => c.ShowTotal))
 					{
-						<tfoot class="table-light fw-bold">
-							<tr>
-								@foreach (var col in BuildVisibleColumns())
-								{
-										<td>
-											@if (col.Info.ShowTotal)
-											{
-													var total = GetColumnTotal(col.Info);
-													@if (col.Info.Format == "F2")
-													{
-															@total.ToString("F2")
-													}
-													else
-													{
-															@total.ToString("0")
-													}
-											}
-											else
-											{
-												@if (col == visibleData.First())
+						@if (CalculateTotal)
+						{
+							<tfoot class="table-light fw-bold">
+								<tr>
+									@foreach (var col in BuildVisibleColumns())
+									{
+											<td>
+												@if (col.Info.ShowTotal)
 												{
-													<text>Итого:</text>
+														var total = GetColumnTotal(col.Info);
+														@if (col.Info.DisplayFormat == "F2")
+														{
+																@total.ToString("F2")
+														}
+														else
+														{
+																@total.ToString("0")
+														}
 												}
+												else
+												{
+													@if (col == visibleData.First())
+													{
+														<text>Итого:</text>
+													}
 
-													@* Пустая ячейка для несуммируемых колонок *@
+														@* Пустая ячейка для несуммируемых колонок *@
+												}
+											</td>
+									}
+									@if (ShowActions && RowTemplate != null)
+									{
+											<td></td>
+									}
+								</tr>
+							</tfoot>
+						}
+						else if (ShowTotal)
+						{
+							<tfoot class="table-light fw-bold">
+								<tr>
+									@foreach (var col in BuildVisibleColumns())
+									{
+										<td>
+											@if (col == BuildVisibleColumns().First())
+											{
+												<text>Итого:</text>
+											}
+											else if (col.Info.ShowTotal && Totals != null)
+											{
+												@GetTotalValue(col.Info)
 											}
 										</td>
-								}
-								@if (ShowActions && RowTemplate != null)
-								{
+									}
+									@if (ShowActions && RowTemplate != null)
+									{
 										<td></td>
-								}
-							</tr>
-						</tfoot>
+									}
+								</tr>
+							</tfoot>
+						}
 					}
 				</table>
 			}

@@ -68,6 +68,7 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 	private bool HasActiveFilters => selectedFilters.Values.Any(v => v.Count > 0);
 	private List<ColumnInfo> filterableColumns => columnInfos.Where(c => c.Filterable).ToList();
 	private Dictionary<string, List<FacetValueDto>> facets = [];
+	private ITotalsDto? totals;
 
 
 	private IconInfo testIcon = new IconInfo
@@ -245,6 +246,8 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 					sortOrder,
 					filters
 				);
+
+				totals = orders.Totals;
 			}
 		}
 		catch (Exception ex)

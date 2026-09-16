@@ -1,4 +1,5 @@
 @using KG.MES.Shared.Helpers
+@using KG.MES.Shared.Models.Dto
 @using KG.MES.UI.Shared.Enums
 @typeparam TListItem
 @typeparam TCardItem
@@ -110,11 +111,10 @@
 
 				@if (showAdvancedFilter)
 				{
-					<div class="position-fixed top-0 start-0 h-100"
-						style="z-index: 999; background: transparent;" @onclick="CloseAdvancedFilter"></div>
+					<div class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 999; background: transparent;" @onclick="CloseAdvancedFilter"></div>
 
 					<div class="advanced-filter-panel position-absolute top-100 start-0 bg-white border rounded shadow-sm p-2"
-						style="min-width: 250px; max-height: 300px; overflow-y: auto; z-index: 1000;">
+						style="min-width: 250px; max-height: 600px; overflow-y: auto; z-index: 1000;">
 						@foreach (var group in advancedFilterGroups)
 						{
 							<div class="filter-group-header mb-2 w-100">
@@ -167,9 +167,10 @@
 			<p class="text-muted mt-2">Загружаем заказы...</p>
 		</div>
 	}
-	@*else if (orders.Data.Any())*@
-	else if (FilteredItems.Any())
+	else if (orders.Data.Any())
+	@*else if (FilteredItems.Any())*@
 	{
+		<pre class="small text-muted">@(((OrderTotalsDto?)totals)?.WindowCountTotal)</pre>
 		var visibleData = BuildVisibleColumns();
 		<div class="row g-0 d-flex w-100" style="flex-wrap: nowrap;">
 			<div class="@(useSplitView && selectedOrder != null ? "resizable-panel" : "table-responsive mt-3")"
@@ -177,7 +178,7 @@
 				@*<DynamicTable TListItem="TListItem" Items="FilteredItems" ColumnInfos="columnInfos"*@
 				<DynamicTable TListItem="TListItem" Items="orders.Data" ColumnInfos="columnInfos"
 					ColumnSettings="columnSettings" TableKey="@tableKey" ShowActions="true"
-					OnSortChanged="HandleSortChanged" AllowSorting="true">
+					OnSortChanged="HandleSortChanged" AllowSorting="true" Totals="totals" ShowTotal="true" CalculateTotal="false">
 					<RowActions>
 						<div class="text-muted me-auto">
 							@if (orders.Data.Any())

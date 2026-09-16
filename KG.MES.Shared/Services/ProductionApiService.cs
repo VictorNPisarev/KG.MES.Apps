@@ -4,6 +4,7 @@ using System.Text.Json;
 using KG.MES.Shared.Models;
 using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Models.ViewModels;
+using KG.MES.Shared.Serialization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -14,6 +15,12 @@ public class ProductionApiService
 	private readonly HttpClient _httpClient;
 	private readonly ILogger<ProductionApiService> _logger;
 	private readonly IConfiguration _configuration;
+
+	private static readonly JsonSerializerOptions jsonOptions = new()
+	{
+		Converters = { new TotalsDtoConverter() },
+		PropertyNameCaseInsensitive = true
+	};
 
 
 	public ProductionApiService(
@@ -233,47 +240,58 @@ public class ProductionApiService
 		string? sortOrder = null,
 		List<FilterCondition>? filters = null)
 	{
-		var queryParams = new Dictionary<string, string>
+		var queryUrl = string.Empty;
+		try
 		{
-			["page"] = page.ToString(),
-			["limit"] = limit.ToString()
-		};
+			var queryParams = new Dictionary<string, string>
+			{
+				["page"] = page.ToString(),
+				["limit"] = limit.ToString()
+			};
 
-		//if (!string.IsNullOrEmpty(status))
-		//	queryParams["status"] = status;
+			//if (!string.IsNullOrEmpty(status))
+			//	queryParams["status"] = status;
 
-		if (workplaceId.HasValue && workplaceId != Guid.Empty)
-			queryParams["workplaceId"] = workplaceId.Value.ToString();
+			if (workplaceId.HasValue && workplaceId != Guid.Empty)
+				queryParams["workplaceId"] = workplaceId.Value.ToString();
 
-		if (!string.IsNullOrEmpty(orderNumber))
-			queryParams["orderNumber"] = orderNumber;
+			if (!string.IsNullOrEmpty(orderNumber))
+				queryParams["orderNumber"] = orderNumber;
 
-		if (!string.IsNullOrEmpty(sortBy))
-			queryParams["sortBy"] = sortBy;
+			if (!string.IsNullOrEmpty(sortBy))
+				queryParams["sortBy"] = sortBy;
 
-		if (!string.IsNullOrEmpty(sortOrder))
-			queryParams["sortOrder"] = sortOrder;
+			if (!string.IsNullOrEmpty(sortOrder))
+				queryParams["sortOrder"] = sortOrder;
 
-		if (filters?.Count > 0)
-		{
-			var filtersJson = JsonSerializer.Serialize(filters);
-			queryParams["filters"] = filtersJson;
+			if (filters?.Count > 0)
+			{
+				var filtersJson = JsonSerializer.Serialize(filters);
+				queryParams["filters"] = filtersJson;
+			}
+
+			var query = string.Join("&", queryParams.Select(kv => $"{kv.Key}={kv.Value}"));
+
+			if (workplaceIds?.Length > 0)
+			{
+				foreach (var id in workplaceIds)
+					query += $"&workplaceIds={id}";
+			}
+
+			var url = $"{BaseUrl}/{endpoint}?{query.TrimStart('&')}";
+
+			queryUrl = url;
+
+			var result = await _httpClient.GetFromJsonAsync<PaginatedResponse<T>>(url, jsonOptions)
+				?? new PaginatedResponse<T>();
+
+			return result;
 		}
-
-		var query = string.Join("&", queryParams.Select(kv => $"{kv.Key}={kv.Value}"));
-
-		if (workplaceIds?.Length > 0)
+		catch (Exception ex)
 		{
-			foreach (var id in workplaceIds)
-				query += $"&workplaceIds={id}";
+			_logger.LogError(ex, "Error method GetOrdersAsync<T>");
+			return new PaginatedResponse<T>();
 		}
-
-		var url = $"{BaseUrl}/{endpoint}?{query.TrimStart('&')}";
-
-		var result = await _httpClient.GetFromJsonAsync<PaginatedResponse<T>>(url)
-			?? new PaginatedResponse<T>();
-
-		return result;
 	}
 
 	public async Task<OrderDto?> GetOrderByIdAsync(Guid id)
