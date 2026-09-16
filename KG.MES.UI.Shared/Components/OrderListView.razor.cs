@@ -5,11 +5,12 @@ using Microsoft.JSInterop;
 using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Services;
 using KG.MES.Shared.Helpers;
-using KG.MES.UI.Shared.Components;
 using System.Text.Json;
 using KG.MES.Shared.Models;
 using KG.MES.Shared.Events;
 using KG.MES.Shared.Interfaces;
+using KG.MES.Shared.Constants;
+using System.Reflection;
 
 namespace KG.MES.UI.Shared.Components;
 public partial class OrderListView<TListItem, TCardItem> : ComponentBase
@@ -22,7 +23,7 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 	[Parameter] public EventCallback<TListItem> OnEditOrder { get; set; }
 	[Parameter] public EventCallback<TListItem> OnDeleteOrder { get; set; }
 	[Parameter] public RenderFragment? HeaderActions { get; set; }
-	[Parameter] public Func<Guid?, Guid[]?, string?, int, int, string?, string?, Task<PaginatedResponse<TListItem>>>? LoadItems { get; set; }
+	[Parameter] public Func<Guid?, Guid[]?, string?, int, int, string?, string?, List<FilterCondition>, Task<PaginatedResponse<TListItem>>>? LoadItems { get; set; }
 	[Parameter] public Func<Guid, Task<TCardItem>>? LoadItem { get; set; }
 
 
@@ -61,6 +62,13 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 	private SavedFilter? savedFilter;
 	private ElementReference pageContainer;
 	private double? scrollYBeforeModal;
+	private bool showAdvancedFilter;
+	private Dictionary<string, HashSet<string>> selectedFilters = [];
+	private HashSet<string> expandedGroups = [];
+	private bool HasActiveFilters => selectedFilters.Values.Any(v => v.Count > 0);
+	private List<ColumnInfo> filterableColumns => columnInfos.Where(c => c.Filterable).ToList();
+	private Dictionary<string, List<FacetValueDto>> facets = [];
+	private ITotalsDto? totals;
 
 
 	private IconInfo testIcon = new IconInfo
@@ -76,6 +84,7 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 
 		await LoadSettings();
 		workplaces = await ApiService.GetAllWorkplacesAsync();
+		await LoadFacetsAsync();
 		await LoadOrders();
 
 		EventAggregator.Subscribe<OrderUpdatedEvent>(OnOrderUpdated);
@@ -223,6 +232,8 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 			//	sortOrder: sortOrder
 			//);
 
+			var filters = BuildFilterConditionsForIn();
+
 			if (LoadItems != null)
 			{
 				orders = await LoadItems(
@@ -232,8 +243,11 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 					currentPage,
 					pageSize,
 					sortBy,
-					sortOrder
+					sortOrder,
+					filters
 				);
+
+				totals = orders.Totals;
 			}
 		}
 		catch (Exception ex)
@@ -505,6 +519,226 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		await LoadOrders();
 	}
 
+	// Фильтруемые поля из ColumnInfo
+	//private Dictionary<string, List<string>> advancedFilterGroups => columnInfos
+	//	.Where(c => c.Filterable)
+	//	.ToDictionary(
+	//		c => c.Title,
+	//		c => orders.Data.Select(item =>
+	//		{
+	//			var prop = typeof(TListItem).GetProperty(c.PropertyName);
+	//			var value = prop?.GetValue(item);
+	//			return value switch
+	//			{
+	//				bool b => b ? "Да" : "Нет",
+	//				null => "—",
+	//				_ => value.ToString() ?? "—"
+	//			};
+	//		}).Distinct().ToList()
+	//	);
+
+	private bool HasAdvancedFilters => selectedFilters.Values.Any(v => v.Count > 0);
+	private void ToggleAdvancedFilter() => showAdvancedFilter = !showAdvancedFilter;
+	private void CloseAdvancedFilter() => showAdvancedFilter = false;
+
+	private void ToggleAdvancedGroup(string group)
+	{
+		if (expandedGroups.Contains(group))
+			expandedGroups.Remove(group);
+		else
+			expandedGroups.Add(group);
+	}
+
+	private void ToggleAdvancedFilterValue(string group, string value, bool selected)
+	{
+		if (!selectedFilters.ContainsKey(group))
+			selectedFilters[group] = new HashSet<string>();
+
+		if (selected)
+			selectedFilters[group].Add(value);
+		else
+			selectedFilters[group].Remove(value);
+
+		//StateHasChanged();
+	}
+
+	private bool IsAdvancedFilterSelected(string group, string value) =>
+		selectedFilters.TryGetValue(group, out var values) && values.Contains(value);
+
+
+	// Уникальные значения для каждой фильтруемой колонки
+	private Dictionary<string, List<string>> GetFilterValues()
+	{
+		var result = new Dictionary<string, List<string>>();
+
+		foreach (var col in filterableColumns)
+		{
+			var values = orders.Data.Select(item =>
+			{
+				var prop = typeof(TListItem).GetProperty(col.PropertyName);
+				var value = prop?.GetValue(item);
+				return value switch
+				{
+					bool b => b ? "Да" : "Нет",
+					null => "—",
+					_ => value.ToString()?.ToLower() ?? "—"
+				};
+			}).Distinct().OrderBy(v => v).ToList();
+
+			result[col.Title] = values;
+		}
+
+		return result;
+	}
+
+	// Отфильтрованные элементы
+	private IEnumerable<TListItem> FilteredItems
+	{
+		get
+		{
+			var filtered = orders.Data;
+			var filters = new List<FilterCondition>();
+
+			foreach (var filter in selectedFilters.Where(f => f.Value.Count > 0))
+			{
+				var col = columnInfos.FirstOrDefault(c => c.Title == filter.Key);
+				if (col == null) continue;
+
+				var prop = typeof(TListItem).GetProperty(col.PropertyName);
+				if (prop == null) continue;
+
+				filtered = filtered.Where(item =>
+				{
+					var value = prop.GetValue(item);
+					var stringValue = value switch
+					{
+						bool b => b ? "Да" : "Нет",
+						null => "—",
+						_ => value.ToString() ?? "—"
+					};
+					return filter.Value.Contains(stringValue);
+				}).ToList();
+			}
+
+			return filtered;
+		}
+	}
+
+	private List<FilterCondition> BuildFilterConditionsForIn()
+	{
+		var filters = new List<FilterCondition>();
+
+		foreach (var filter in selectedFilters.Where(f => f.Value.Count > 0))
+		{
+			var col = columnInfos.FirstOrDefault(c => c.Title == filter.Key);
+			if (col == null) continue;
+
+			var prop = typeof(TListItem).GetProperty(col.PropertyName);
+			if (prop == null) continue;
+
+
+			// Преобразуем значения
+			var convertedValues = filter.Value
+				.Select(v => ConvertFilterValue(v, prop.PropertyType))
+				//.Where(v => !string.IsNullOrEmpty(v))
+				.ToList();
+
+			if (!convertedValues.Any())
+				continue;
+
+			var filterCondition = new FilterCondition ();
+			
+			filterCondition.Field = col.PropertyName;
+			filterCondition.Values = convertedValues!;
+			filterCondition.Operator = FilterOperators.In;
+
+			// Если фильтр по строке с одним значением — используем Contains
+			if (prop.PropertyType == typeof(string) && convertedValues.Count == 1)
+			{
+				filterCondition.Operator = FilterOperators.Contains;
+				filterCondition.Value = convertedValues.First();
+				//filterCondition.Values = null; // для Contains используем Value, не Values
+			}
+
+			filters.Add(filterCondition);
+		}
+
+		return filters;
+	}
+
+	/// <summary>
+	/// Определяет оператор фильтрации по типу свойства
+	/// </summary>
+	private string GetOperatorForProperty(PropertyInfo prop)
+	{
+		var type = prop.PropertyType;
+
+		// Для строк — IN (если несколько значений) или Contains (если одно)
+		if (type == typeof(string))
+			return FilterOperators.In;
+
+		// Для булевых значений — Equal
+		if (type == typeof(bool) || type == typeof(bool?))
+			return FilterOperators.Equal;
+
+		// Для чисел и дат — можно использовать Between, но по умолчанию IN
+		if (type == typeof(int) || type == typeof(int?) ||
+			type == typeof(decimal) || type == typeof(decimal?) ||
+			type == typeof(DateTime) || type == typeof(DateTime?))
+			return FilterOperators.In;
+
+		// Для остальных — IN
+		return FilterOperators.In;
+	}
+
+	private void ClearAdvancedFilters()
+	{
+		selectedFilters.Clear();
+		StateHasChanged();
+	}
+
+	private object? ConvertFilterValue(string value, Type targetType)
+	{
+		if (string.IsNullOrEmpty(value))
+			return null;
+
+		try
+		{
+			// Для булевых значений
+			if (targetType == typeof(bool))
+			{
+				if (value == "Да") return true;
+				if (value == "Нет") return false;
+				return bool.Parse(value);
+			}
+
+			// Для чисел
+			if (targetType == typeof(int) || targetType == typeof(int?))
+				return int.Parse(value);
+
+			if (targetType == typeof(decimal) || targetType == typeof(decimal?))
+				return decimal.Parse(value);
+
+			if (targetType == typeof(double) || targetType == typeof(double?))
+				return double.Parse(value);
+
+			// Для дат
+			if (targetType == typeof(DateTime) || targetType == typeof(DateTime?))
+				return DateTime.Parse(value);
+
+			// Для GUID
+			if (targetType == typeof(Guid) || targetType == typeof(Guid?))
+				return Guid.Parse(value);
+
+			// Для строк — возвращаем как есть
+			return value;
+		}
+		catch
+		{
+			return null;
+		}
+	}
+
 	public void Dispose()
 	{
 		try
@@ -519,5 +753,38 @@ public partial class OrderListView<TListItem, TCardItem> : ComponentBase
 		panelResizeRef?.Dispose();
 
 		EventAggregator.Unsubscribe<OrderUpdatedEvent>(OnOrderUpdated);
+	}
+
+	// Загрузка фасетов
+	private async Task LoadFacetsAsync()
+	{
+		var fields = columnInfos
+			.Where(c => c.Filterable)
+			.Select(c => c.PropertyName)
+			.ToList();
+
+		if (!fields.Any()) return;
+
+		var request = new FilterFacetsRequestDto { Fields = fields };
+		var response = await ApiService.GetFilterFacetsAsync<TListItem>(Endpoint, request);
+
+		facets = response?.Facets ?? [];
+	}
+
+	// Группы фильтров на основе фасетов
+	private Dictionary<string, List<FacetValueDto>> advancedFilterGroups
+	{
+		get
+		{
+			var result = new Dictionary<string, List<FacetValueDto>>();
+
+			foreach (var col in columnInfos.Where(c => c.Filterable))
+			{
+				if (facets.TryGetValue(col.PropertyName, out var values))
+					result[col.Title] = values;
+			}
+
+			return result;
+		}
 	}
 }
