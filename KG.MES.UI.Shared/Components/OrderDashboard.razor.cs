@@ -4,10 +4,12 @@ using KG.MES.Shared.Interfaces;
 using KG.MES.Shared.Models.Config;
 using KG.MES.Shared.Models.Dto;
 using KG.MES.Shared.Models.Enums;
+using KG.MES.Shared.Models.ViewModels;
 using KG.MES.Shared.Services;
 using KG.MES.UI.Shared.Components.Widgets;
 using KG.MES.UI.Shared.Enums;
 using KG.MES.UI.Shared.Interfaces;
+using Mapster;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
@@ -20,6 +22,7 @@ public partial class OrderDashboard<TOrder> : ComponentBase
 	[Parameter] public OrderViewSettings Settings { get; set; } = new();
 	[Parameter] public EventCallback OnClose { get; set; }
 	[Parameter] public DashboardViewMode ViewMode { get; set; } = DashboardViewMode.Grid;
+	[Parameter] public Func<Guid, Task<TOrder>>? LoadItem { get; set; }
 
 	[Inject] private ProductionApiService ApiService { get; set; } = null!;
 	[Inject] private IJSRuntime JSRuntime { get; set; } = null!;
@@ -27,7 +30,6 @@ public partial class OrderDashboard<TOrder> : ComponentBase
 
 	private TOrder? order;
 
-	private OrderDto? orderDto;
 	private DashboardSettings dashboardSettings = new();
 	private bool isLoading = true;
 	private bool showWidgetSettings;
@@ -147,8 +149,10 @@ public partial class OrderDashboard<TOrder> : ComponentBase
 		StateHasChanged();
 		try
 		{
-			order = await ApiService.GetOrderByIdAsync<TOrder>(Settings.CardEndpoint, OrderId);
-			//orderDto = await ApiService.GetOrderByIdAsync<OrderDto>(Settings.CardEndpoint, OrderId);
+			//order = await ApiService.GetOrderByIdAsync<TOrder>(Settings.CardEndpoint, OrderId);
+			//var orderDto = await ApiService.GetOrderByIdAsync<OrderDto>(Settings.CardEndpoint, OrderId);
+			if (LoadItem != null)
+				order = await LoadItem(OrderId);
 		}
 		finally
 		{
@@ -334,8 +338,7 @@ public partial class OrderDashboard<TOrder> : ComponentBase
 	{
 		if (e.OrderId == OrderId)
 		{
-			order = await ApiService.GetOrderByIdAsync<TOrder>(Settings.CardEndpoint, OrderId);
-			await InvokeAsync(StateHasChanged);
+			await LoadOrder();
 		}
 	}
 

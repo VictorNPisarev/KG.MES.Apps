@@ -1,5 +1,6 @@
 using System.Reflection;
 using KG.MES.Shared.Attributes;
+using KG.MES.Shared.Models.Enums;
 
 namespace KG.MES.Shared.Helpers;
 
@@ -19,14 +20,15 @@ public static class ColumnHelper
 			{
 				PropertyName = x.Property.Name,
 				Title = x.Attr!.Title,
-				Format = x.Attr.DisplayFormat,
+				DisplayFormat = x.Attr.DisplayFormat,
 				IsBadge = x.Attr.IsBadge,
 				BadgeGroup = x.Attr.BadgeGroup,
 				CommentField = x.Attr.CommentField,
 				DisplayGroup = x.Attr.DisplayGroup,
 				IconConditions = x.Attr.IconConditions,
 				ShowTotal = x.Attr.ShowTotal,
-				Sortable = x.Attr.Sortable
+				Sortable = x.Attr.Sortable,
+				Filterable = x.Attr.Filterable
 			})
 			.ToList();
 	}
@@ -38,14 +40,14 @@ public static class ColumnHelper
 
 		if (value == null) return null;
 
-		if (!string.IsNullOrEmpty(column.Format))
+		if (!string.IsNullOrEmpty(column.DisplayFormat))
 		{
 			if (value is DateTime dt)
-				return dt.ToString(column.Format);
+				return dt.ToString(column.DisplayFormat);
 			if (value is double d)
-				return d.ToString(column.Format);
+				return d.ToString(column.DisplayFormat);
 			if (value is decimal m)
-				return m.ToString(column.Format);
+				return m.ToString(column.DisplayFormat);
 		}
 
 		if (value is string s && !string.IsNullOrEmpty(column.DisplayGroup))

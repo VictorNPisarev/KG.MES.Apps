@@ -1,47 +1,80 @@
 using KG.MES.Shared.Attributes;
 using KG.MES.Shared.Models.Dto;
-using KG.MES.Shared.Interfaces;
+using Mapster;
 
 namespace KG.MES.Shared.Models.ViewModels;
 
-public class OrderViewModel : IListItemViewModel
+public class OrderViewModel
 {
-	[Column("№ заказа", Order = 1)]
+	public Guid Id { get; set; }
+
+	[Column("№ заказа", Order = 1, IconConditions = new[] { "IsClaim:Claim", "IsEconom:Econom" }, Sortable = true)]
 	public string OrderNumber { get; set; } = string.Empty;
 
-	[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name")]
-	public string? Status { get; set; }
+	[Column("Статус", Order = 3, IsBadge = true, DisplayGroup = "workplace_name", Sortable = true)]
+	public string? CurrentStatus { get; set; }
 
-	[Column("Дата запуска", Order = 4, DisplayFormat = "dd.MM.yyyy")]
+	[Column("Дата запуска", Order = 4, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? RtmDate { get; set; }
 
-	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy")]
+	[Column("Готовность", Order = 5, DisplayFormat = "dd.MM.yyyy", Sortable = true)]
 	public DateTime? ReadyDate { get; set; }
 
-	[Column("Окна, шт", Order = 6)]
+	[Column("Окна, шт", Order = 6, ShowTotal = true)]
 	public int WindowCount { get; set; }
 
-	[Column("Окна, м2", Order = 7, DisplayFormat = "F2")]
+	[Column("Окна, м2", Order = 7, ShowTotal = true, DisplayFormat = "F2")]
 	public double? WindowArea { get; set; }
 
-	[Column("Щитовые, шт", Order = 8)]
+	[Column("Щитовые, шт", Order = 8, ShowTotal = true)]
 	public int PlateCount { get; set; }
 
-	[Column("Щитовые, м2", Order = 9, DisplayFormat = "F2")]
+	[Column("Щитовые, м2", Order = 9, ShowTotal = true, DisplayFormat = "F2")]
 	public double? PlateArea { get; set; }
 
-	[Column("Эконом", Order = 10, IsBadge = true)]
+	[Column("Эконом", Order = 10, IsBadge = true, Filterable = true)]
 	public bool IsEconom { get; set; }
 
-	[Column("Рекламация", Order = 11, IsBadge = true)]
+	[Column("Рекламация", Order = 11, IsBadge = true, Filterable = true)]
 	public bool IsClaim { get; set; }
 
-	[Column("Оплачен, не запущен", Order = 12, IsBadge = true)]
+	[Column("Оплачен, не запущен", Order = 12, IsBadge = true, Filterable = true)]
 	public bool IsOnlyPaid { get; set; }
+
+	[Column("2-стор. покраска", Order = 13, IsBadge = true, Filterable = true)]
+	public bool IsTwoSidePaint { get; set; }
+
+	public string? ProductionOrderId { get; set; }
+
+	public string? CurrentWorkplaceId { get; set; }
 
 	[Column("Контрагент", Visible = false)]
 	public string CustomerName { get; set; } = string.Empty;
 
-	[Column("Станок", Visible = true)]
+	public string? CurrentWorkplaceName { get; set; }
+
+	[Column("Станок", Order = 12, Visible = true, IsBadge = true, Filterable = true)]
 	public string? Machine { get; set; }
+
+	[Column("***", Order = 2, Visible = false, IconConditions = new[] { "IsClaim:Claim",
+																		"IsEconom:Econom",
+																		"IsOnlyPaid:Paid",
+																		"IsTwoSidePaint:TwoSidePaint",
+																		"IsOnlyPlate:Plate" })]
+	public string OrderFlags { get; } = string.Empty;
+
+	public bool IsOnlyPlate
+	{
+		get
+		{
+			return WindowCount == 0 && PlateCount > 0;
+		}
+	}
+
+	public OrderViewModel() {}
+
+	public OrderViewModel(OrderDto orderDto)
+	{
+		orderDto.Adapt(this);
+	}
 }

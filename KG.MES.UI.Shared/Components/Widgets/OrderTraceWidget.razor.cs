@@ -1,8 +1,9 @@
 using KG.MES.Shared.Events;
 using KG.MES.Shared.Interfaces;
-using KG.MES.Shared.Models.Dto;
+using KG.MES.Shared.Models.ViewModels;
 using KG.MES.Shared.Services;
 using KG.MES.UI.Shared.Interfaces;
+using Mapster;
 using Microsoft.AspNetCore.Components;
 
 namespace KG.MES.UI.Shared.Components.Widgets;
@@ -16,8 +17,8 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 	[Inject] private ISocketService SocketService { get; set; } = null!;
 	[Inject] private IEventAggregator EventAggregator { get; set; } = null!;
 
-	private OrderTraceDto? orderTrace;
-	private OrderTraceDto? backupTrace;
+	private OrderTraceViewModel? orderTrace;
+	private OrderTraceViewModel? backupTrace;
 	private bool isLoading = true;
 	private bool EditMode;
 	private Dictionary<string, bool> openDropdowns = [];
@@ -28,7 +29,12 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 	protected override async Task OnInitializedAsync()
 	{
 		SocketService.OnMessage += OnSocketMessage;
-		orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
+		var orderTraceDto = await ApiService.GetOrderTraceAsync(OrderId);
+
+		if(orderTraceDto != null)
+		{
+			orderTrace = new OrderTraceViewModel(orderTraceDto);
+		}
 
 		if (orderTrace?.ProductionOrderId != Guid.Empty)
 		{
@@ -46,18 +52,23 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 		{
 			InvokeAsync(async () =>
 			{
-				orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
-				StateHasChanged();
+				var orderTraceDto = await ApiService.GetOrderTraceAsync(OrderId);
+
+				if (orderTraceDto != null)
+				{
+					orderTrace = new OrderTraceViewModel(orderTraceDto);
+					StateHasChanged();
+				}
 			});
 		}
 	}
 
 	private void EnterEditMode()
 	{
-		backupTrace = new OrderTraceDto
+		backupTrace = new OrderTraceViewModel
 		{
 			OrderNumber = orderTrace?.OrderNumber ?? "",
-			WorkplaceTraces = orderTrace?.WorkplaceTraces.Select(w => new WorkplaceTraceDto
+			WorkplaceTraces = orderTrace?.WorkplaceTraces.Select(w => new WorkplaceTraceViewModel
 			{
 				WorkplaceId = w.WorkplaceId,
 				WorkplaceName = w.WorkplaceName,
@@ -96,7 +107,7 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 			}
 		}
 
-		orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
+		orderTrace = await LoadOrderTrace();
 		EditMode = false;
 		openDropdowns.Clear();
 
@@ -124,7 +135,7 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 
 		if (success)
 		{
-			orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
+			orderTrace = await LoadOrderTrace();
 			EventAggregator.Publish(
 				new OrderUpdatedEvent 
 				{
@@ -146,7 +157,7 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 
 		if (success)
 		{
-			orderTrace = await ApiService.GetOrderTraceAsync(OrderId);
+			orderTrace = await LoadOrderTrace();
 			EventAggregator.Publish(
 				new OrderUpdatedEvent
 				{
@@ -157,6 +168,13 @@ public partial class OrderTraceWidget : ComponentBase, ISavableWidget
 
 		isDeparturing = false;
 		StateHasChanged();
+	}
+
+	private async Task<OrderTraceViewModel?> LoadOrderTrace()
+	{
+		var orderTraceDto = await ApiService.GetOrderTraceAsync(OrderId);
+
+		return orderTraceDto != null ? new OrderTraceViewModel(orderTraceDto) : null;
 	}
 
 	public bool HasUnsavedChanges() => EditMode && orderTrace != null && !orderTrace.Equals(backupTrace);

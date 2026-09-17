@@ -1,10 +1,9 @@
-namespace KG.MES.Shared.Models.Enums
+namespace KG.MES.Shared.Models.Enums;
+
+public enum WidgetType
 {
-	public enum WidgetType
-	{
-		Main,
-		Trace,
-		Comments,
-		Supplies
-	}
+	Main,
+	Trace,
+	Comments,
+	Supplies
 }

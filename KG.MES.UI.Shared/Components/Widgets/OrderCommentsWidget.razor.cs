@@ -1,8 +1,9 @@
 using KG.MES.Shared.Events;
 using KG.MES.Shared.Interfaces;
-using KG.MES.Shared.Models.Dto;
+using KG.MES.Shared.Models.ViewModels;
 using KG.MES.Shared.Services;
 using KG.MES.UI.Shared.Interfaces;
+using Mapster;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -16,8 +17,8 @@ public partial class OrderCommentsWidget : ComponentBase, ISavableWidget, IDispo
 	[Inject] IJSRuntime JSRuntime { get; set; } = null!;
 	[Inject] private IEventAggregator EventAggregator { get; set; } = null!;
 
-	private List<OrderCommentViewModel> comments = new();
-	private List<OrderCommentViewModel> originalComments = new();
+	private List<OrderCommentViewModel> comments = [];
+	private List<OrderCommentViewModel> originalComments = [];
 	private bool isLoading = true;
 
 	protected override async Task OnInitializedAsync()
@@ -30,16 +31,12 @@ public partial class OrderCommentsWidget : ComponentBase, ISavableWidget, IDispo
 	{
 		isLoading = true;
 		StateHasChanged();
-		comments = await ApiService.GetOrderCommentsAsync(OrderId);
+		
+		var commentsDto = await ApiService.GetOrderCommentsAsync(OrderId);
+
+		comments = commentsDto.Select(c => c.Adapt<OrderCommentViewModel>()).ToList();
 		// Глубокая копия для отслеживания изменений
-		originalComments = comments.Select(c => new OrderCommentViewModel
-		{
-			Id = c.Id,
-			Content = c.Content,
-			CreatedAt = c.CreatedAt,
-			UpdatedAt = c.UpdatedAt,
-			UserName = c.UserName
-		}).ToList();
+		originalComments = commentsDto.Select(c => c.Adapt<OrderCommentViewModel>()).ToList();
 		isLoading = false;
 		StateHasChanged();
 	}

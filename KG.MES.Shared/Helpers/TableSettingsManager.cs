@@ -1,48 +1,47 @@
 using System.Text.Json;
 
-namespace KG.MES.Shared.Helpers
+namespace KG.MES.Shared.Helpers;
+
+public static class TableSettingsManager
 {
-	public static class TableSettingsManager
+	private static readonly Dictionary<string, TableSettings> _cache = new();
+
+	public static List<ColumnSetting> GetSettings<TOrder>(string? json)
 	{
-		private static readonly Dictionary<string, TableSettings> _cache = new();
+		var tableKey = typeof(TOrder).Name;
+		var defaults = ColumnHelper.GetDefaultSettings<TOrder>();
 
-		public static List<ColumnSetting> GetSettings<TOrder>(string? json)
+		if (!string.IsNullOrEmpty(json))
 		{
-			var tableKey = typeof(TOrder).Name;
-			var defaults = ColumnHelper.GetDefaultSettings<TOrder>();
-
-			if (!string.IsNullOrEmpty(json))
+			try
 			{
-				try
+				var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+				var saved = JsonSerializer.Deserialize<List<ColumnSetting>>(json, options);
+
+				if (saved != null && saved.Count > 0)
 				{
-					var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-					var saved = JsonSerializer.Deserialize<List<ColumnSetting>>(json, options);
-
-					if (saved != null && saved.Count > 0)
+					// Дополняем дефолтными, если каких-то нет
+					foreach (var def in defaults)
 					{
-						// Дополняем дефолтными, если каких-то нет
-						foreach (var def in defaults)
-						{
-							if (!saved.Any(s => s.PropertyName == def.PropertyName))
-								saved.Add(def);
-						}
-						return saved;
+						if (!saved.Any(s => s.PropertyName == def.PropertyName))
+							saved.Add(def);
 					}
+					return saved;
 				}
-				catch { }
 			}
-
-			return defaults;
+			catch { }
 		}
 
-		public static List<ColumnSetting> GetDefaultSettings<TOrder>()
-		{
-			return ColumnHelper.GetDefaultSettings<TOrder>();
-		}
+		return defaults;
+	}
 
-		public static string Serialize(List<ColumnSetting> settings)
-		{
-			return JsonSerializer.Serialize(settings);
-		}
+	public static List<ColumnSetting> GetDefaultSettings<TOrder>()
+	{
+		return ColumnHelper.GetDefaultSettings<TOrder>();
+	}
+
+	public static string Serialize(List<ColumnSetting> settings)
+	{
+		return JsonSerializer.Serialize(settings);
 	}
 }

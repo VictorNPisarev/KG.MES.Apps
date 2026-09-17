@@ -4,7 +4,7 @@
 		<div class="spinner-border spinner-border-sm text-primary" role="status"></div>
 	</div>
 }
-else if (commerce != null)
+else if (commerceOrder != null)
 {
 	<div class="commerce-panel">
 		<h6 class="trace-title"><i class="bi bi-briefcase"></i> Коммерческая информация</h6>
@@ -12,15 +12,15 @@ else if (commerce != null)
 			<tbody>
 				<tr>
 					<td class="commerce-label">Менеджер</td>
-					<td><strong>@(commerce.Manager ?? "—")</strong></td>
+					<td><strong>@(commerceOrder.Manager ?? "—")</strong></td>
 				</tr>
 				<tr>
 					<td class="commerce-label">Контрагент</td>
-					<td><strong>@(commerce.CustomerName ?? "—")</strong></td>
+					<td><strong>@(commerceOrder.CustomerName ?? "—")</strong></td>
 				</tr>
 				<tr>
 					<td class="commerce-label">Цена</td>
-					<td><strong>@commerce.Price.ToString("C")</strong></td>
+					<td><strong>@commerceOrder.Price.ToString("C")</strong></td>
 				</tr>
 			</tbody>
 		</table>

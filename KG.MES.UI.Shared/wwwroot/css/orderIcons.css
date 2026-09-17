@@ -13,3 +13,13 @@
 .order-icon-plate {
 	color: #fd7e14 !important;
 }
+
+.icon-transfer-start {
+	color: #0066ff;
+	font-size: 1.25rem !important;
+}
+
+.icon-transfer-complete {
+	color: #009242;
+	font-size: 1.25rem !important;
+}

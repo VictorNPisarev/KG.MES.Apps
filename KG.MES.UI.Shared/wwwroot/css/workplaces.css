@@ -11,7 +11,7 @@
 .badge-workplace-остекление     { background: rgba(70,130,180,.25); color: #2c5678; }      /* SteelBlue */
 .badge-workplace-упаковка       { background: rgba(253,126,20,.25); color: #b85a0e; }      /* orange */
 .badge-workplace-готово         { background: rgba(25,135,84,.25); color: #157347; }
-.badge-workplace-отгружен       { background: rgba(139,69,19,.25); color: #6b3410; }       /* SaddleBrown */
+.badge-workplace-отгружен       { background: rgb(219, 250, 224); color: #016d18; }       /* Green */
 
 /* Специальные */
 .badge-рекламация               { background: rgba(139,0,0,.25); color: #6b0000; }         /* darkred */
